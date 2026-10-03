@@ -1313,9 +1313,12 @@ const NpcForge = (()=>{
         el.addEventListener('input', ()=>{ S[k] = el.value; save(); });
       }
     });
-// 检索框：只重渲不丢焦点
+// 检索框：只重渲不丢焦点；输入法组词期间不重绘，compositionend 再刷新
     const rq = root.querySelector('[data-nf="raceQ"]');
-    if(rq) rq.addEventListener('input', ()=>{ S.raceQ = rq.value; reraceKeepFocus(rq); });
+    if(rq){
+      rq.addEventListener('input', (e)=>{ S.raceQ = rq.value; if(e.isComposing) return; reraceKeepFocus(rq); });
+      rq.addEventListener('compositionend', ()=>{ S.raceQ = rq.value; reraceKeepFocus(rq); });
+    }
     // 三级树：大类
     root.querySelectorAll('[data-nf-cat]').forEach(b=>b.addEventListener('click', ()=>{
       S.ui.openCat = (S.ui.openCat === b.dataset.nfCat) ? '' : b.dataset.nfCat;

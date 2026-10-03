@@ -581,7 +581,7 @@ function raceAccHtml(){
     const matches = c.items.filter(hit);
     if(q && !matches.length) return '';
     const hasSel = R.race && c.items.indexOf(R.race)>=0;
-    const open = !!q || hasSel || (R.raceAcc && R.raceAcc===ci);
+    const open = !!q || (R.raceAcc!=null ? R.raceAcc===ci : !!hasSel);
     let lastFam = '';
     const rows = matches.map(r=>{
       const f = RACE_FAM[r]||'';
@@ -1052,11 +1052,14 @@ function renderRitual(keepScroll){
   rit.querySelectorAll('[data-hero]').forEach(el=>el.addEventListener('input', ()=>{ R.hero[el.dataset.hero]=el.value; }));
   rit.querySelectorAll('[data-cc]').forEach(el=>el.addEventListener('input', ()=>{ R.compCustom[el.dataset.cc]=el.value; }));
   rit.querySelectorAll('[data-rc]').forEach(el=>el.addEventListener('input', ()=>{ R[el.dataset.rc]=el.value; }));
-  /* 搜索框（触发重绘 + 焦点归还） */
-  const qRace = rit.querySelector('#race-q');
-  if(qRace) qRace.addEventListener('input', ()=>{ R.raceQ=qRace.value; rerenderKeepFocus('race-q', qRace); });
-  const qNpc = rit.querySelector('#npc-q');
-  if(qNpc) qNpc.addEventListener('input', ()=>{ R.npcSearch=qNpc.value; rerenderKeepFocus('npc-q', qNpc); });
+  /* 搜索框（触发重绘 + 焦点归还）；输入法组词期间不重绘，compositionend 再刷新，避免拼音被打断 */
+  const imeBind = (el, set) => {
+    if(!el) return;
+    el.addEventListener('input', (e)=>{ set(el.value); if(e.isComposing) return; rerenderKeepFocus(el.id, el); });
+    el.addEventListener('compositionend', ()=>{ set(el.value); rerenderKeepFocus(el.id, el); });
+  };
+  imeBind(rit.querySelector('#race-q'), v=>{ R.raceQ=v; });
+  imeBind(rit.querySelector('#npc-q'), v=>{ R.npcSearch=v; });
   /* 存档 / 重置 */
   const ps = rit.querySelector('#prof-save'); if(ps) ps.addEventListener('click', profileSave);
   const pl = rit.querySelector('#prof-load'); if(pl) pl.addEventListener('click', profileLoad);
