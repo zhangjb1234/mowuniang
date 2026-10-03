@@ -9019,7 +9019,7 @@ function bodyStep0(){
   <div class="rit-form"><label>自定义等级<span class="lv-wrap"><input id="lv-custom" type="number" min="1" max="220" value="${esc(String(R.pLevel||'').replace(/^Lv\./,''))}" placeholder="Lv.1 ~ 220（输入后回车或移开焦点即生效）"><button type="button" class="lv-roll" data-level-roll aria-label="等级随缘">随</button></span></label></div>
   <div class="sec-title">信仰 · 神缘之始</div>
   <div class="rit-hintbar"><p class="rit-hint">信仰即神缘，对象不固定——主神、堕落神、地方神明、魔王侧存在皆可侍奉，也可无信仰。它影响 NPC 好感与行为（同信仰者亲近、异信仰者或警戒），也影响你使用魔法/技能/道具的效果（同对象阵营的圣物祝福类效力加成）；检定上信仰负责神圣类与神缘检定。同对象行为得赐福，违背教义受削弱甚至惩罚；可以改宗，但旧神可能记仇。</p></div>
-  <div class="rit-grid cols-4">${(RT.faiths||[]).map(o=>optCard('faith',o,false)).join('')}</div>
+  <div class="rit-grid cols-4">${(RT.faiths||[]).map(o=>optCard('faith',o)).join('')}</div>
   ${(R.faith==='local'||R.faith==='custom')?`<div class="rit-form cwrap"><label class="wide">你信仰的是<input data-rc="faithCustom" type="text" value="${esc(R.faithCustom)}" placeholder="写下你侍奉的对象——地方神明或任意说得通的存在（由AI落进世界观）"></label></div>`:''}
   <div class="sec-title">资质 · 天赋之始<span class="rit-pool">${R.aptMode==='roll'?`骰点已掷 · 微调额度 <b>${R.tuneLeft!=null?R.tuneLeft:6}</b> / 6`:(`命运之余 <b>${APT_POOL-aptSum()}</b> / ${APT_POOL}`)}</span></div>
   <div class="rchip-row">
@@ -9761,7 +9761,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-03T23:36:12.744Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-03T23:45:22.865Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
