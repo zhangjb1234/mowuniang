@@ -557,8 +557,7 @@ function bodyStep0(){
   <p class="rit-hint">${R.aptMode==='roll'
     ? '4d6 取三高（信仰仍从 0 起步）；骰后送 6 点微调额度：＋消耗、−返还，可反复骰点取最后一次（重骰重置额度）。'
     : '剩余点数：'+String(APT_POOL-aptSum())+' / '+APT_POOL+(APT_POOL-aptSum()>0?'（点击 + 分配）':'（已分配完毕，点 − 可收回）')+(R.faith==='none'?'；无信仰时信仰点锁定为 0。':'')}</p>
-  ${APT_DEFS.map(([k,n,d])
-    =>`
+  ${APT_DEFS.map(([k,n,d])=>`
     <div class="rit-apt"><span class="ra-name">${n}<i>${d}</i></span>
       ${R.aptMode==='roll'
         ? `<button class="ra-btn" data-apt="${k}" data-d="-1" ${(R.apt[k]<=APT_MIN[k])||(R.tuneLeft!=null?R.tuneLeft:6)>=6?'disabled':''}>−</button>
