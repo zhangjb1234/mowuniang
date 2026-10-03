@@ -1,0 +1,17 @@
+{
+  "id": "b8e4d1c7-2f35-4a6e-9d81-7c3f5a2e9b40",
+  "scriptName": "魔典-界面",
+  "findRegex": "/[\\s\\S]*/s",
+  "replaceString": "```\n<body>\n<script>\n$('body').load('https://cdn.jsdelivr.net/gh/zhangjb1234/mowuniang@main/src/魔典/原型/dist/魔典原型.inline.html')\n</script>\n</body>\n```",
+  "trimStrings": [],
+  "placement": [
+    2
+  ],
+  "disabled": false,
+  "markdownOnly": true,
+  "promptOnly": false,
+  "runOnEdit": false,
+  "substituteRegex": 0,
+  "minDepth": null,
+  "maxDepth": null
+}

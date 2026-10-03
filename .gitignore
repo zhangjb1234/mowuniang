@@ -1,0 +1,10 @@
+﻿# 一次性调试产物（探针脚本 / 截图 / 抽取中间文件）—— 不进仓库
+_*.png
+_*.jpg
+src/魔典/原型/_extract/
+src/魔典/素材候选/_*.mjs
+src/魔典/原型/_probe*.mjs
+src/魔典/原型/_verify*.mjs
+src/魔典/原型/_chk*.mjs
+src/魔典/原型/_diag*.mjs
+src/魔典/原型/_st*.py

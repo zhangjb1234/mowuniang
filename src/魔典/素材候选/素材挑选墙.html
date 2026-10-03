@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>魔典 · 素材挑选墙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--desk:#171310;--desk2:#211a15;--vellum:#EBDFC4;--ink:#2C221A;--ink-soft:#4E4032;--cinnabar:#96372E;--gilt:#A98A46;--gilt-hi:#C9AE6D;--lapis:#2F4A5E;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(120% 90% at 50% 0%,#241c15 0%,var(--desk) 55%,#100d0a 100%);color:#cabfa8;font-family:'Noto Serif SC',serif;padding:44px 28px 80px;min-height:100vh}
+header{max-width:1180px;margin:0 auto 34px;text-align:center}
+h1{font-size:30px;font-weight:900;color:#e6d8b8;letter-spacing:.14em}
+.latin{font-family:'Cormorant Garamond',serif;letter-spacing:.42em;color:#A98A46;font-size:12px;text-transform:uppercase;margin-top:8px}
+.intro{max-width:860px;margin:14px auto 0;font-size:13.5px;line-height:2;color:#a89a80}
+.intro b{color:#e6d8b8}
+h2{max-width:1180px;margin:52px auto 18px;font-size:17px;font-weight:600;color:#d9c69a;letter-spacing:.1em;border-bottom:1px solid rgba(169,138,70,.25);padding-bottom:10px}
+.grid{max-width:1180px;margin:0 auto;display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.grid.seal,.grid.manuscript{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.card{background:linear-gradient(165deg,#241d16,#1b1510);border:1px solid rgba(169,138,70,.22);border-radius:10px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+.page-mock{aspect-ratio:4/3.4;background-size:cover;background-position:center;position:relative}
+.page-mock::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 60px rgba(43,30,14,.28)}
+.pm-inner{position:absolute;inset:14px 16px;padding:10px 14px;display:flex;flex-direction:column}
+.pm-chapter{color:#2F4A5E;font-weight:900;font-size:15px;letter-spacing:.12em;border-bottom:2px solid rgba(47,74,94,.55);padding-bottom:5px;filter:saturate(.9)}
+.pm-body{margin-top:9px;color:#2C221A;font-size:12.5px;line-height:1.85;text-align:justify}
+.pm-drop{float:left;font-size:40px;line-height:.95;font-weight:900;color:var(--gilt);margin:2px 7px 0 0;text-shadow:0 1px 0 rgba(43,34,26,.3)}
+.pm-dlg{margin-top:7px;color:#7c2f28;font-size:12.5px;font-weight:600}
+.pm-mind{margin-top:auto;align-self:flex-start;max-width:88%;transform:rotate(-1.6deg);border-left:3px solid var(--cinnabar);background:rgba(235,223,196,.55);padding:4px 9px;color:#6d3730;font-size:11.5px;font-style:italic}
+.pm-folio{margin-top:8px;text-align:center;color:#4E4032;font-size:10.5px;letter-spacing:.18em}
+.css-vellum{background:
+ radial-gradient(140% 110% at 30% 10%,rgba(255,248,232,.35),transparent 55%),
+ radial-gradient(90% 90% at 80% 95%,rgba(148,116,64,.30),transparent 60%),
+ url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.055'/></svg>"),
+ linear-gradient(158deg,#efe3c6,#e6d5b2 48%,#dcc79e)}
+.cover-mock{aspect-ratio:4/3.1;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center}
+.cm-frame{position:relative;width:76%;height:76%;border:2px solid rgba(201,174,109,.8);outline:1px solid rgba(201,174,109,.35);outline-offset:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:rgba(14,10,7,.28);text-align:center;padding:10px}
+.cm-corner{position:absolute;width:30px;height:30px}.cm-corner.tl{top:5px;left:5px}.cm-corner.br{bottom:5px;right:5px}
+.cm-latin{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.34em;color:#e3ce96}
+.cm-title{font-size:23px;font-weight:900;color:#ecd9a2;text-shadow:0 1px 2px rgba(0,0,0,.6),0 0 18px rgba(201,174,109,.25);letter-spacing:.1em}
+.cm-rule{width:56%;height:1px;background:linear-gradient(90deg,transparent,#d3b26a,transparent)}
+.cm-sub{font-size:11.5px;color:#d8c48e;letter-spacing:.3em}
+.cm-seal{position:absolute;right:-13px;bottom:-13px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#b04a3e,#7c231c 70%);box-shadow:0 2px 6px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.25)}
+.desk-mock{aspect-ratio:16/8;background-size:cover;background-position:center;position:relative}
+.css-desk{background:radial-gradient(120% 90% at 50% -10%,rgba(224,158,74,.16),transparent 52%),radial-gradient(150% 130% at 50% 50%,#2a211a,#171310 72%)}
+.svg-seal-bg{background:linear-gradient(158deg,#efe3c6,#e2cfa8);display:flex;align-items:center;justify-content:center;position:relative}
+.svg-seal-bg .chip-cap{position:absolute;bottom:0;left:0}
+.dm-page,.dm-page2{position:absolute;top:16%;bottom:16%;width:26%;background:linear-gradient(158deg,#efe3c6,#e2cfA8);border-radius:2px;box-shadow:0 10px 26px rgba(0,0,0,.55)}
+.dm-page{left:8%;transform:rotate(-2deg)}
+.dm-page2{right:8%;transform:rotate(1.6deg);background:linear-gradient(158deg,#ead9b8,#dcc79e)}
+.chip-mock{aspect-ratio:1/.9;background-size:cover;background-position:center;display:flex;align-items:flex-end}
+.chip-mock.tall{aspect-ratio:3/4}
+.chip-cap{display:block;width:100%;padding:7px 10px;font-size:11px;color:#e6d8b8;background:linear-gradient(transparent,rgba(12,9,6,.85));letter-spacing:.1em}
+.meta{display:flex;gap:12px;padding:12px 14px;border-top:1px solid rgba(169,138,70,.16)}
+.num{flex:none;width:34px;height:34px;border:1px solid rgba(201,174,109,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#e3ce96;font-weight:900;font-size:14px}
+.mt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mt b{font-size:12.5px;color:#ddd0b4;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt i{font-style:normal;font-size:11px;color:#8d8069;font-family:'Noto Sans SC',sans-serif}
+.mt a{color:#a8925e}
+.lic{font-style:normal;font-size:11px;font-weight:500}
+.lic.ok{color:#9db38a}.lic.warn{color:#d3a05e}
+.rec{font-style:normal;font-size:11px;color:#e3ce96}
+footer{max-width:1180px;margin:60px auto 0;border-top:1px solid rgba(169,138,70,.22);padding-top:22px;font-size:12.5px;line-height:2;color:#a89a80}
+footer b{color:#e6d8b8}
+footer code{color:#d3b26a}
+@media (max-width:560px){body{padding:28px 14px 60px}.grid{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header>
+  <h1>魔典 · 素材挑选墙</h1>
+  <div class="latin">Candlelit Codex · Texture Council</div>
+  <p class="intro">每张候选图都已经做成<b>真实使用场景</b>：羊皮纸直接排上正文、皮革直接做成书封、木纹直接垫底。
+  你看到的墨迹、金字、便签都是<b>最终效果的真实预览</b>，不是示意图。<br>
+  挑法：直接回复<b>编号</b>（每张图左下角圆牌），比如「书页 03、封面 12、桌面 17」；也可以说「都不顺眼，再换一批」。
+  编号 00 是不用任何图片的纯 CSS 方案——最轻最快，和任何底图都不冲突，也可以和真底图混用。</p>
+</header>
+<section data-sec="parchment"><h2>壹 · 羊皮纸书页底（正文阅读面，最重要，挑 1-2 张）</h2><div class="grid parchment"><figure class="card page-card" id="item-00">
+  <div class="page-mock css-vellum">
+    <div class="pm-inner">
+      <div class="pm-chapter">第一章 · 雷斯卡特耶的黄昏</div>
+      <p class="pm-body"><span class="pm-drop">黄</span>昏沉入地平线，最后的钟声从教团大教堂的塔顶落下来。你把行囊往肩上一甩，走进了灯火次第亮起的市集，空气里浮着烤栗子与铁器的气味。</p>
+      <p class="pm-dlg">「晚归的旅人，可需要在下的引路灯火？」</p>
+      <div class="pm-mind">她在心底轻笑：这个人，闻起来有远方的味道。</div>
+      <div class="pm-folio">第十七页 · 圣历一〇四七年 霜月</div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">00</span><div class="mt"><b>纯 CSS 程序化羊皮</b><i>零图片 · 渐变+噪点+边缘氧化，最轻最快，永远不发黄发灰不一致</i><em class="lic ok">零依赖 · 我的默认推荐路线</em></div></figcaption>
+  </figure><figure class="card page-card" id="item-01">
+  <div class="page-mock" style="background-image:url('parchment-pergament-1-jpg.jpg')">
+    <div class="pm-inner">
+      <div class="pm-chapter">第一章 · 雷斯卡特耶的黄昏</div>
+      <p class="pm-body"><span class="pm-drop">黄</span>昏沉入地平线，最后的钟声从教团大教堂的塔顶落下来。你把行囊往肩上一甩，走进了灯火次第亮起的市集，空气里浮着烤栗子与铁器的气味。</p>
+      <p class="pm-dlg">「晚归的旅人，可需要在下的引路灯火？」</p>
+      <div class="pm-mind">她在心底轻笑：这个人，闻起来有远方的味道。</div>
+      <div class="pm-folio">第十七页 · 圣历一〇四七年 霜月</div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">01</span><div class="mt">
+    <b>Pergament.1.jpg</b>
+    <i>1024×1024 · 162KB · <a href="https://commons.wikimedia.org/wiki/File:Pergament.1.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Membeth</em>
+    <em class="rec">我的推荐 · 首选书页底·纹理最细最亮，长文阅读最干净</em>
+  </div></figcaption>
+  </figure>
+<figure class="card page-card" id="item-02">
+  <div class="page-mock" style="background-image:url('parchment-pergament-2-jpg.jpg')">
+    <div class="pm-inner">
+      <div class="pm-chapter">第一章 · 雷斯卡特耶的黄昏</div>
+      <p class="pm-body"><span class="pm-drop">黄</span>昏沉入地平线，最后的钟声从教团大教堂的塔顶落下来。你把行囊往肩上一甩，走进了灯火次第亮起的市集，空气里浮着烤栗子与铁器的气味。</p>
+      <p class="pm-dlg">「晚归的旅人，可需要在下的引路灯火？」</p>
+      <div class="pm-mind">她在心底轻笑：这个人，闻起来有远方的味道。</div>
+      <div class="pm-folio">第十七页 · 圣历一〇四七年 霜月</div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">02</span><div class="mt">
+    <b>Pergament.2.jpg</b>
+    <i>1024×1024 · 73KB · <a href="https://commons.wikimedia.org/wiki/File:Pergament.2.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Membeth</em>
+    
+  </div></figcaption>
+  </figure>
+<figure class="card page-card" id="item-03">
+  <div class="page-mock" style="background-image:url('parchment-pergament-0-jpg.jpg')">
+    <div class="pm-inner">
+      <div class="pm-chapter">第一章 · 雷斯卡特耶的黄昏</div>
+      <p class="pm-body"><span class="pm-drop">黄</span>昏沉入地平线，最后的钟声从教团大教堂的塔顶落下来。你把行囊往肩上一甩，走进了灯火次第亮起的市集，空气里浮着烤栗子与铁器的气味。</p>
+      <p class="pm-dlg">「晚归的旅人，可需要在下的引路灯火？」</p>
+      <div class="pm-mind">她在心底轻笑：这个人，闻起来有远方的味道。</div>
+      <div class="pm-folio">第十七页 · 圣历一〇四七年 霜月</div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">03</span><div class="mt">
+    <b>Pergament.0.jpg</b>
+    <i>3300×2550 · 952KB · <a href="https://commons.wikimedia.org/wiki/File:Pergament.0.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · Tim Jones</em>
+    <em class="rec">我的推荐 · 想要更旧更手抄的质感选它</em>
+  </div></figcaption>
+  </figure>
+<figure class="card page-card" id="item-04">
+  <div class="page-mock" style="background-image:url('parchment-parchment-00-jpg.jpg')">
+    <div class="pm-inner">
+      <div class="pm-chapter">第一章 · 雷斯卡特耶的黄昏</div>
+      <p class="pm-body"><span class="pm-drop">黄</span>昏沉入地平线，最后的钟声从教团大教堂的塔顶落下来。你把行囊往肩上一甩，走进了灯火次第亮起的市集，空气里浮着烤栗子与铁器的气味。</p>
+      <p class="pm-dlg">「晚归的旅人，可需要在下的引路灯火？」</p>
+      <div class="pm-mind">她在心底轻笑：这个人，闻起来有远方的味道。</div>
+      <div class="pm-folio">第十七页 · 圣历一〇四七年 霜月</div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">04</span><div class="mt">
+    <b>Parchment.00.jpg</b>
+    <i>2978×2240 · 806KB · <a href="https://commons.wikimedia.org/wiki/File:Parchment.00.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · Caleb Kimbrough</em>
+    
+  </div></figcaption>
+  </figure></div></section>
+<section data-sec="leather"><h2>贰 · 皮革封面（开局 <start> 楼的书封，挑 1 张）</h2><div class="grid leather"><figure class="card cover-card" id="item-05">
+  <div class="cover-mock" style="background-image:url('leather-leathertexture-jpg.jpg')">
+    <div class="cm-frame">
+      <svg class="cm-corner tl" viewBox="0 0 40 40"><path d="M2 38V12Q2 2 12 2h26" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="10" cy="10" r="2.6" fill="#C9AE6D"/></svg>
+      <svg class="cm-corner br" viewBox="0 0 40 40"><path d="M38 2v26q0 10-10 10H2" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="30" cy="30" r="2.6" fill="#C9AE6D"/></svg>
+      <div class="cm-latin">ICONOGRAPHIA MONSTRORVM</div>
+      <div class="cm-title">魔物娘图鉴 · 魔典</div>
+      <div class="cm-rule"></div>
+      <div class="cm-sub">佳婿手录 · 卷一</div>
+      <div class="cm-seal"></div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">05</span><div class="mt">
+    <b>LeatherTexture.jpg</b>
+    <i>3456×2304 · 480KB · <a href="https://commons.wikimedia.org/wiki/File:LeatherTexture.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Gaz Davidson (user:bitplane)</em>
+    
+  </div></figcaption>
+  </figure>
+<figure class="card cover-card" id="item-06">
+  <div class="cover-mock" style="background-image:url('leather-leather-brown-jpg.jpg')">
+    <div class="cm-frame">
+      <svg class="cm-corner tl" viewBox="0 0 40 40"><path d="M2 38V12Q2 2 12 2h26" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="10" cy="10" r="2.6" fill="#C9AE6D"/></svg>
+      <svg class="cm-corner br" viewBox="0 0 40 40"><path d="M38 2v26q0 10-10 10H2" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="30" cy="30" r="2.6" fill="#C9AE6D"/></svg>
+      <div class="cm-latin">ICONOGRAPHIA MONSTRORVM</div>
+      <div class="cm-title">魔物娘图鉴 · 魔典</div>
+      <div class="cm-rule"></div>
+      <div class="cm-sub">佳婿手录 · 卷一</div>
+      <div class="cm-seal"></div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">06</span><div class="mt">
+    <b>Leather brown.jpg</b>
+    <i>2048×1536 · 472KB · <a href="https://commons.wikimedia.org/wiki/File:Leather_brown.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Gregory Schick aka leadgolem</em>
+    
+  </div></figcaption>
+  </figure>
+<figure class="card cover-card" id="item-07">
+  <div class="cover-mock" style="background-image:url('leather-free-antique-leather-book-cover-texture-for-laye.jpg')">
+    <div class="cm-frame">
+      <svg class="cm-corner tl" viewBox="0 0 40 40"><path d="M2 38V12Q2 2 12 2h26" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="10" cy="10" r="2.6" fill="#C9AE6D"/></svg>
+      <svg class="cm-corner br" viewBox="0 0 40 40"><path d="M38 2v26q0 10-10 10H2" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="30" cy="30" r="2.6" fill="#C9AE6D"/></svg>
+      <div class="cm-latin">ICONOGRAPHIA MONSTRORVM</div>
+      <div class="cm-title">魔物娘图鉴 · 魔典</div>
+      <div class="cm-rule"></div>
+      <div class="cm-sub">佳婿手录 · 卷一</div>
+      <div class="cm-seal"></div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">07</span><div class="mt">
+    <b>Free antique leather book cover texture for la</b>
+    <i>2848×4272 · 1643KB · <a href="https://commons.wikimedia.org/wiki/File:Free_antique_leather_book_cover_texture_for_layers_(2978544161).jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · Pink Sherbet Photography from USA</em>
+    <em class="rec">我的推荐 · 封面首选·正中古书做旧感</em>
+  </div></figcaption>
+  </figure>
+<figure class="card cover-card" id="item-08">
+  <div class="cover-mock" style="background-image:url('leather-free-vintage-antique-leather-book-cover-texture-.jpg')">
+    <div class="cm-frame">
+      <svg class="cm-corner tl" viewBox="0 0 40 40"><path d="M2 38V12Q2 2 12 2h26" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="10" cy="10" r="2.6" fill="#C9AE6D"/></svg>
+      <svg class="cm-corner br" viewBox="0 0 40 40"><path d="M38 2v26q0 10-10 10H2" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="30" cy="30" r="2.6" fill="#C9AE6D"/></svg>
+      <div class="cm-latin">ICONOGRAPHIA MONSTRORVM</div>
+      <div class="cm-title">魔物娘图鉴 · 魔典</div>
+      <div class="cm-rule"></div>
+      <div class="cm-sub">佳婿手录 · 卷一</div>
+      <div class="cm-seal"></div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">08</span><div class="mt">
+    <b>Free vintage antique leather book cover textur</b>
+    <i>2848×4272 · 1661KB · <a href="https://commons.wikimedia.org/wiki/File:Free_vintage_antique_leather_book_cover_texture_for_layers_(2981931138).jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · Pink Sherbet Photography from USA</em>
+    
+  </div></figcaption>
+  </figure>
+<figure class="card cover-card" id="item-09">
+  <div class="cover-mock" style="background-image:url('leather-free-dirty-distressed-scratched-leather-texture-.jpg')">
+    <div class="cm-frame">
+      <svg class="cm-corner tl" viewBox="0 0 40 40"><path d="M2 38V12Q2 2 12 2h26" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="10" cy="10" r="2.6" fill="#C9AE6D"/></svg>
+      <svg class="cm-corner br" viewBox="0 0 40 40"><path d="M38 2v26q0 10-10 10H2" fill="none" stroke="#C9AE6D" stroke-width="2"/><circle cx="30" cy="30" r="2.6" fill="#C9AE6D"/></svg>
+      <div class="cm-latin">ICONOGRAPHIA MONSTRORVM</div>
+      <div class="cm-title">魔物娘图鉴 · 魔典</div>
+      <div class="cm-rule"></div>
+      <div class="cm-sub">佳婿手录 · 卷一</div>
+      <div class="cm-seal"></div>
+    </div>
+  </div>
+  <figcaption class="meta"><span class="num">09</span><div class="mt">
+    <b>Free dirty distressed scratched leather textur</b>
+    <i>3277×2844 · 910KB · <a href="https://commons.wikimedia.org/wiki/File:Free_dirty_distressed_scratched_leather_texture_for_layers_creative_commons_(3005071597).jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · Pink Sherbet Photography from USA</em>
+    
+  </div></figcaption>
+  </figure></div></section>
+<section data-sec="wood"><h2>叁 · 木质桌面（书页四周的深色世界，挑 1 张）</h2><div class="grid wood"><figure class="card desk-card" id="item-18">
+  <div class="desk-mock css-desk">
+    <div class="dm-page"></div><div class="dm-page2"></div>
+  </div>
+  <figcaption class="meta"><span class="num">18</span><div class="mt"><b>纯 CSS 深色书案</b><i>烛光晕+暗角，零图片 · 桌面其实大半在阴影里，真木纹露出来的地方不多</i><em class="lic ok">零依赖 · 可与真木纹混用</em></div></figcaption>
+  </figure><figure class="card desk-card" id="item-10">
+  <div class="desk-mock" style="background-image:url('wood-wooden-texture-jpg.jpg')">
+    <div class="dm-page"></div><div class="dm-page2"></div>
+  </div>
+  <figcaption class="meta"><span class="num">10</span><div class="mt">
+    <b>Wooden Texture.jpg</b>
+    <i>1225×1371 · 457KB · <a href="https://commons.wikimedia.org/wiki/File:Wooden_Texture.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · 同许可共享 · HutchDoesStuff</em>
+    <em class="rec">我的推荐 · 桌面推荐·红褐深调，与烛光晕最合</em>
+  </div></figcaption>
+  </figure>
+<figure class="card desk-card" id="item-11">
+  <div class="desk-mock" style="background-image:url('woodx-texture-de-noyer-jpg.jpg')">
+    <div class="dm-page"></div><div class="dm-page2"></div>
+  </div>
+  <figcaption class="meta"><span class="num">11</span><div class="mt">
+    <b>Texture de noyer.jpg</b>
+    <i>3072×2304 · 698KB · <a href="https://commons.wikimedia.org/wiki/File:Texture_de_noyer.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · 同许可共享 · Cyril5555</em>
+    
+  </div></figcaption>
+  </figure></div></section>
+<section data-sec="seal"><h2>肆 · 火漆与徽章装饰（任务契约/成就盖章，可选）</h2><div class="grid seal"><figure class="card chip-card" id="item-19">
+  <div class="chip-mock svg-seal-bg">
+    <svg viewBox="0 0 120 120" width="72%" aria-label="程序化火漆">
+      <defs><radialGradient id="wax" cx="38%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#b04a3e"/><stop offset="55%" stop-color="#96372E"/><stop offset="100%" stop-color="#6d231c"/>
+      </radialGradient></defs>
+      <path d="M60 8c14-3 30 4 36 14 8 2 14 12 12 22 6 8 4 20-2 26 2 12-8 22-18 24-4 10-18 16-28 12-10 4-24-2-28-12-12-2-20-14-18-24-8-8-6-22 2-28-2-10 6-20 16-22C46 12 52 10 60 8Z" fill="url(#wax)" opacity="0.97"/>
+      <circle cx="60" cy="60" r="40" fill="none" stroke="#7c231c" stroke-width="2.5" opacity="0.8"/>
+      <circle cx="60" cy="60" r="35" fill="none" stroke="#c46a5c" stroke-width="1" opacity="0.7"/>
+      <path d="M42 66q9-8 18-2 9-6 18 2v12q-9-6-18 0-9-6-18 0Z" fill="none" stroke="#5d1a13" stroke-width="2.6" stroke-linejoin="round"/>
+      <ellipse cx="60" cy="48" rx="7" ry="9" fill="none" stroke="#5d1a13" stroke-width="2.4"/>
+      <circle cx="60" cy="48" r="2.6" fill="#5d1a13"/>
+      <ellipse cx="40" cy="34" rx="14" ry="6" fill="#ffffff" opacity="0.13" transform="rotate(-28 40 34)"/>
+    </svg>
+    <span class="chip-cap">程序化 SVG 火漆 · 任意缩放不糊</span>
+  </div>
+  <figcaption class="meta"><span class="num">19</span><div class="mt"><b>纯 SVG 火漆（书瞳纹）</b><i>零图片 · 颜色精确对朱砂色板，盖在任务/成就卡上最利落</i><em class="lic ok">零依赖 · 我的推荐</em></div></figcaption>
+  </figure><figure class="card chip-card" id="item-12"><div class="chip-mock" style="background-image:url('seal-sealing-wax-on-letters-jpg.jpg')"><span class="chip-cap">任务契约 · 火漆</span></div><figcaption class="meta"><span class="num">12</span><div class="mt">
+    <b>Sealing wax on letters.jpg</b>
+    <i>5464×2720 · 282KB · <a href="https://commons.wikimedia.org/wiki/File:Sealing_wax_on_letters.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · 同许可共享 · Simon A. Eugster</em>
+    
+  </div></figcaption></figure>
+<figure class="card chip-card" id="item-13"><div class="chip-mock" style="background-image:url('sealx-empreinte-sceau-au-monogramme-lv-r-volution-fran.jpg')"><span class="chip-cap">任务契约 · 火漆</span></div><figcaption class="meta"><span class="num">13</span><div class="mt">
+    <b>Empreinte Sceau au monogramme LV, Révolution f</b>
+    <i>3000×1996 · 172KB · <a href="https://commons.wikimedia.org/wiki/File:Empreinte_Sceau_au_monogramme_LV,_R%C3%A9volution_fran%C3%A7aise,_NE604.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Unknown authorUnknown author</em>
+    
+  </div></figcaption></figure></div></section>
+<section data-sec="manuscript"><h2>伍 · 手抄本装饰页（扉页/图鉴插页，可选）</h2><div class="grid manuscript"><figure class="card chip-card" id="item-14"><div class="chip-mock tall" style="background-image:url('manuscript-illuminated-letter-s-whole-page-inc-text-wellcom.jpg')"><span class="chip-cap">扉页 / 章节插页</span></div><figcaption class="meta"><span class="num">14</span><div class="mt">
+    <b>Illuminated letter 'S'(whole page inc. text) W</b>
+    <i>2656×3804 · 1850KB · <a href="https://commons.wikimedia.org/wiki/File:Illuminated_letter_%27S%27(whole_page_inc._text)_Wellcome_L0041108.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · 未知</em>
+    
+  </div></figcaption></figure>
+<figure class="card chip-card" id="item-15"><div class="chip-mock tall" style="background-image:url('manuscript-bruges-public-library-manuscript-8-psalter-with-.jpg')"><span class="chip-cap">扉页 / 章节插页</span></div><figcaption class="meta"><span class="num">15</span><div class="mt">
+    <b>Bruges Public Library Manuscript 8 - Psalter w</b>
+    <i>2247×3112 · 1092KB · <a href="https://commons.wikimedia.org/wiki/File:Bruges_Public_Library_Manuscript_8_-_Psalter_with_liturgical_Calendar_-_Ghent,_13th_century_-_From_Ten_Duinen_Abbey.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic warn">需署名 · 同许可共享 · Bruges Public Library</em>
+    
+  </div></figcaption></figure>
+<figure class="card chip-card" id="item-16"><div class="chip-mock tall" style="background-image:url('manuscript-trota-of-sallerno-manuscript-jpg.jpg')"><span class="chip-cap">扉页 / 章节插页</span></div><figcaption class="meta"><span class="num">16</span><div class="mt">
+    <b>Trota of Sallerno manuscript.jpg</b>
+    <i>4101×5507 · 1881KB · <a href="https://commons.wikimedia.org/wiki/File:Trota_of_Sallerno_manuscript.jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Richard of Salerno</em>
+    <em class="rec">我的推荐 · 扉页/图鉴插页推荐·中世纪女医者手抄本，气场正合</em>
+  </div></figcaption></figure>
+<figure class="card chip-card" id="item-17"><div class="chip-mock tall" style="background-image:url('manuscript-fragmentary-manuscript-of-bruno-wurzburg-s-comme.jpg')"><span class="chip-cap">扉页 / 章节插页</span></div><figcaption class="meta"><span class="num">17</span><div class="mt">
+    <b>Fragmentary manuscript of Bruno Wurzburg's com</b>
+    <i>4167×2938 · 748KB · <a href="https://commons.wikimedia.org/wiki/File:Fragmentary_manuscript_of_Bruno_Wurzburg%27s_commentary_on_Psalms_(page_1_crop).jpg" target="_blank" rel="noreferrer">来源</a></i>
+    <em class="lic ok">公有领域 · 随意用 · Uncookedspoon</em>
+    
+  </div></figcaption></figure></div></section>
+<footer>
+<b>授权说明</b>：全部来自 Wikimedia Commons 可再利用授权条目。「公有领域/CC0」可随意使用；「需署名」交付时我会在文件头写入作者与来源；「同许可共享」意味着成品里这张图须以相同许可发布。
+<br>03 Pergament.0.jpg — 需署名（Tim Jones）<br>04 Parchment.00.jpg — 需署名（Caleb Kimbrough）<br>07 Free antique leather book cove — 需署名（Pink Sherbet Photography from USA）<br>08 Free vintage antique leather b — 需署名（Pink Sherbet Photography from USA）<br>09 Free dirty distressed scratche — 需署名（Pink Sherbet Photography from USA）<br>10 Wooden Texture.jpg — 需署名 · 同许可共享（HutchDoesStuff）<br>11 Texture de noyer.jpg — 需署名 · 同许可共享（Cyril5555）<br>12 Sealing wax on letters.jpg — 需署名 · 同许可共享（Simon A. Eugster）<br>14 Illuminated letter 'S'(whole p — 需署名（未知）<br>15 Bruges Public Library Manuscri — 需署名 · 同许可共享（Bruges Public Library）
+<br><b>性能承诺</b>：你选定后，原图会被压缩成 ≤150KB 的 WebP 再用（书页底图是要铺满全屏的，原始 1-2MB 的 JPEG 直接上会拖慢每层楼）。装饰小件转 SVG 或小尺寸内联。
+<br><b>未验证项</b>：本墙仅本地预览；真酒馆 iframe 内的加载与缓存行为，真机阶段验收。
+</footer>
+<script>
+const q=new URLSearchParams(location.search);const only=q.get('only');
+if(only){document.querySelectorAll('section').forEach(s=>{if(s.dataset.sec!==only)s.style.display='none'});document.querySelector('header').style.display='none';document.querySelector('footer').style.display='none';document.body.style.padding='14px';}
+</script>
+</body></html>
