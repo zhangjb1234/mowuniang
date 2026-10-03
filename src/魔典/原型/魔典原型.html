@@ -2888,7 +2888,7 @@ function renderDex(){
 }
 function renderDexRaces(){
   const DX = window.MODIAN_DEX||{};
-  const unlocked = window.__dexUnlocked===true;
+  const unlocked = true; /* 名册默认开放 · 密语封印已废 */
   const cats = DX.cats||[];
   const total = cats.reduce((s,c)=>s+c.races.length,0);
   const metList = Stat.get('图鉴.已遭遇种族', []) || [];
@@ -2920,6 +2920,7 @@ function renderDexRaces(){
       <dl class="dd-fields">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
       ${r.intro?`<div class="dd-lore"><div class="dw-cardlabel">图鉴条目 · 卡内</div><p>${esc(r.intro)}</p></div>`:''}
       ${wikiBlock(r)}
+      ${r.en?`<div class="dd-lore"><div class="dw-cardlabel">英文 WIKI · MGE Wiki</div><p><a class="dex-enlink" href="https://mgewiki.moe/index.php/${encodeURIComponent(r.en.replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(r.en)} · 前往英文 wiki ↗</a></p></div>`:''}
       <div class="dw-cardlabel">你的图鉴 · 交往关系</div>
       ${emptyNote('与此族尚无羁绊。')}
     </div>`;}
@@ -3066,7 +3067,7 @@ function renderArtes(){
   ${skKeys.length ? skKeys.map(k=>{ const s=sk[k]||{}; return `
     <div class="plaque"><h4>${esc(k)}<span class="k-latin">${esc([s.类别,s.等级].filter(Boolean).join(' · ')||'技能')}</span></h4>
     <div class="p-desc">${esc(s.效果||'—')}${s.消耗?`<br>消耗 · ${esc(s.消耗)}`:''}</div></div>`; }).join('') : emptyNote('尚未习得任何技能。')}
-  ${ti.length ? `<div class="sec-title">阶序 · 十阶位</div><div class="dex-legend">${ti.map((s,i)=>`${i?'<span class="dl-arrow">·</span>':''}<span class="dl-step">${esc(s)}</span>`).join('')}</div>`:''}`;
+  ${ti.length ? `<div class="sec-title">阶序 · 十一位阶</div><div class="dex-legend">${ti.map((s,i)=>`${i?'<span class="dl-arrow">·</span>':''}<span class="dl-step">${esc(s)}</span>`).join('')}</div>`:''}`;
 }
 
 /* —— 肆 · 魔物娘档案（羁绊） —— */
@@ -3400,6 +3401,9 @@ window.__MODIAN = { showFloor, openInsert, parseFloor, notify, diag,
 .race-item{padding:4px 8px;border:1px solid rgba(120,88,40,.35);border-radius:3px;background:rgba(246,242,231,.5);font-size:12px;color:var(--ink-soft);text-align:center;letter-spacing:.06em;transition:all .18s}
 .race-item:hover{border-color:var(--gilt);box-shadow:0 5px 12px rgba(96,66,28,.2),inset 0 1px 0 rgba(255,255,255,.7)}
 .race-item.sel{background:rgba(150,55,46,.12);border-color:var(--cinnabar);color:var(--cinnabar);font-weight:600}
+.race-fam{grid-column:1/-1;font-size:10.5px;letter-spacing:.14em;color:var(--gilt-dim);border-bottom:1px solid rgba(120,96,56,.22);padding:3px 2px 2px;margin-top:2px}
+.dex-enlink{color:var(--lapis);text-decoration:none;border-bottom:1px dashed rgba(67,97,122,.5)}
+.dex-enlink:hover{color:var(--gilt)}
 /* 羁绊名册 */
 .bnd-item{margin-bottom:10px;border:1px solid rgba(120,88,40,.4);border-radius:4px;background:linear-gradient(172deg,rgba(246,242,231,.72),rgba(239,234,221,.48));transition:border-color .22s,box-shadow .22s}
 .bnd-item.active{border-color:var(--cinnabar);box-shadow:0 0 0 1px var(--cinnabar),0 8px 18px rgba(150,55,46,.14)}
