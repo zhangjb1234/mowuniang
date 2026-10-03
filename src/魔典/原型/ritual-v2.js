@@ -373,7 +373,7 @@ const MAX_BONDS = (RT.rules && RT.rules.maxBonds) || 4;
 const APT_DEFS = [['ling','灵感','洞察与学习·信息与熟练度'],['mei','魅力','言谈交际·说服而非交战'],['ti','体质','耐力根基·后续扩展体质池'],['xin','信仰','神恩强度·对象不固定']];
 const APT_MIN = {ling:1,mei:1,ti:1,xin:0};
 const APT_POOL = (RT.rules && RT.rules.aptitude && RT.rules.aptitude.pool) || 30;
-const LEVEL_PRESETS = ['','Lv.10','Lv.30','Lv.50','Lv.70','Lv.90','Lv.110','Lv.130','Lv.150','Lv.170','Lv.190','Lv.210'];
+const LEVEL_PRESETS = ['Lv.10','Lv.30','Lv.50','Lv.70','Lv.90','Lv.110','Lv.130','Lv.150','Lv.170','Lv.190','Lv.210'];
 
 const tomeEl = document.getElementById('tome');
 const rit = document.createElement('section');
@@ -538,12 +538,13 @@ function bodyStep0(){
     <label class="wide">势力<input data-hero="faction" type="text" value="${esc(R.hero.faction)}" placeholder="留空由命运与基调斟酌"></label>
     <label class="wide">前尘往事<input data-hero="bg" type="text" value="${esc(R.hero.bg)}" placeholder="你睁开眼之前的来历"></label>
     <label class="wide">服装<input data-hero="outfit" type="text" value="${esc(R.hero.outfit)}" placeholder="当前衣着，留空由AI按设定拟定"></label>
-    <label class="wide">行囊<textarea data-hero="inventory" rows="1" placeholder="随身之物与资产——原文档照搬，留空由AI按设定拟定">${esc(R.hero.inventory)}</textarea></label>
+    <label class="wide">行囊<textarea data-hero="inventory" rows="3" placeholder="随身之物与资产——原文档照搬，留空由AI按设定拟定">${esc(R.hero.inventory)}</textarea></label>
   </div>
   <div class="sec-title">初始等级</div>
-  <div class="rchip-row">${LEVEL_PRESETS.map((o,ix)=>`<button class="rchip${(R.pLevel||'')===o?' on':''}" data-pl="${ix}">${ix===0?'按命运基调':'T'+ix+' / '+o}</button>`).join('')}</div>
-  <div class="rit-form"><label>自定义等级<span class="lv-wrap"><input id="lv-custom" type="number" min="1" max="220" value="" placeholder="Lv.1 ~ 220"><button type="button" class="lv-roll" id="lv-apply">定</button><button type="button" class="lv-roll" data-level-roll aria-label="等级随缘">随</button></span></label></div>
+  <div class="rchip-row">${LEVEL_PRESETS.map((o,ix)=>`<button class="rchip${(R.pLevel||'')===o?' on':''}" data-pl="${ix}">${'T'+(ix+1)+' / '+o}</button>`).join('')}</div>
+  <div class="rit-form"><label>自定义等级<span class="lv-wrap"><input id="lv-custom" type="number" min="1" max="220" value="${esc(String(R.pLevel||'').replace(/^Lv\./,''))}" placeholder="Lv.1 ~ 220（输入后回车或移开焦点即生效）"><button type="button" class="lv-roll" data-level-roll aria-label="等级随缘">随</button></span></label></div>
   <div class="sec-title">信仰 · 神缘之始</div>
+  <div class="rit-hintbar"><p class="rit-hint">信仰即神缘，对象不固定——主神、堕落神、地方神明、魔王侧存在皆可侍奉，也可无信仰。它影响 NPC 好感与行为（同信仰者亲近、异信仰者或警戒），也影响你使用魔法/技能/道具的效果（同对象阵营的圣物祝福类效力加成）；检定上信仰负责神圣类与神缘检定。同对象行为得赐福，违背教义受削弱甚至惩罚；可以改宗，但旧神可能记仇。</p></div>
   <div class="rit-grid cols-4">${(RT.faiths||[]).map(o=>optCard('faith',o,false)).join('')}</div>
   ${(R.faith==='local'||R.faith==='custom')?`<div class="rit-form cwrap"><label class="wide">你信仰的是<input data-rc="faithCustom" type="text" value="${esc(R.faithCustom)}" placeholder="local=地方神 / custom=任意说得通的对象"></label></div>`:''}
   <div class="sec-title">资质 · 天赋之始<span class="rit-pool">${R.aptMode==='roll'?`骰点已掷`:(`命运之余 <b>${APT_POOL-aptSum()}</b> / ${APT_POOL}`)}</span></div>
@@ -962,12 +963,12 @@ function renderRitual(keepScroll){
   rit.querySelectorAll('[data-pl]').forEach(b=>b.addEventListener('click', ()=>{
     const ix=+b.dataset.pl; R.pLevel = LEVEL_PRESETS[ix]||''; renderRitual(true);
   }));
-  const la = rit.querySelector('#lv-apply');
-  if(la) la.addEventListener('click', ()=>{
-    const v=parseInt((rit.querySelector('#lv-custom')||{}).value,10);
-    if(!v||v<1||v>220){ notify('自定义等级请输入 1-220','warn',3000); return; }
-    R.pLevel='Lv.'+v; renderRitual(true);
-    notify('初始等级设为 Lv.'+v,'gild',1800);
+  const lvc = rit.querySelector('#lv-custom');
+  if(lvc) lvc.addEventListener('change', ()=>{
+    const v = parseInt(lvc.value, 10);
+    if(!v || v<1 || v>220){ notify('自定义等级请输入 1-220','warn',3000); return; }
+    R.pLevel = 'Lv.'+v; renderRitual(true);
+    notify('初始等级设为 Lv.'+v,'gild',1500);
   });
   const lvRoll = rit.querySelector('[data-level-roll]');
   if(lvRoll) lvRoll.addEventListener('click', ()=>{
