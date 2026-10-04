@@ -5108,7 +5108,7 @@ const NpcForge = (()=>{
 
   function fresh(){
     return {
-      name:'', race:'', tier:'', gender:'女',
+      name:'', race:'', tier:'', gender:'人类女性',
       // 四个可手填维度；空 = 交由 AI 依生成规则补全
       look:'', age:'', persona:'', attitude:'', bg:'', note:'',
       keys:[], keyInput:'', husband:false, created:[],
@@ -5117,7 +5117,7 @@ const NpcForge = (()=>{
     };
   }
   let S = fresh();
-  try{ const raw = localStorage.getItem(KEY); if(raw){ const o=JSON.parse(raw); S = Object.assign(fresh(), o, { ui:fresh().ui }); } }catch(e){}
+  try{ const raw = localStorage.getItem(KEY); if(raw){ const o=JSON.parse(raw); S = Object.assign(fresh(), o, { ui:fresh().ui }); if(S.gender==='女') S.gender='人类女性'; if(S.gender==='男') S.gender='人类男性'; } }catch(e){}
   const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify({...S, ui:fresh().ui})); }catch(e){} };
 
   /* —— 跨帧探测酒馆助手世界书 API（iframe 里本上下文没有） —— */
@@ -5176,11 +5176,17 @@ const NpcForge = (()=>{
     { k:'attitude', lab:'初始态度', rule:'基于种族性格 + 当前情境 + 玩家阵营声望' },
     { k:'bg',       lab:'经历',     rule:'基于种族习性与当前世界局势，补一段可信的过往' },
   ];
+  /* 性别：三档固定 + 自定义（__custom__ 哨兵 = 选中自定义但尚未输入文字） */
+  const GENDERS = ['人类女性', '人类男性', '魔物娘'];
+  function genderText(){
+    if(GENDERS.includes(S.gender)) return S.gender;
+    return (S.gender && S.gender !== '__custom__') ? S.gender : '';
+  }
   function buildContent(){
     const L = [];
     L.push(S.name);
     if(S.race) L.push('种族：' + S.race);
-    L.push('性别：' + S.gender);
+    if(genderText()) L.push('性别：' + genderText());
     if(S.age) L.push('年龄：' + S.age.trim());
     const r = raceOf(S.race);
     if(r){
@@ -5216,7 +5222,7 @@ const NpcForge = (()=>{
     const r = raceOf(S.race);
     const bits = [];
     if(S.name.trim()) bits.push('姓名：' + S.name.trim());
-    bits.push('性别：' + (S.gender || '女'));
+    if(genderText()) bits.push('性别：' + genderText());
     if(S.race.trim()) bits.push('种族：' + S.race.trim());
     if(r){ bits.push('所属谱系：' + r.cat + ' · ' + r.fam + (r.habitat ? ('（栖息地：' + r.habitat + '）') : '')); }
     if(String(S.age).trim()) bits.push('年龄：' + String(S.age).trim());
@@ -5228,7 +5234,10 @@ const NpcForge = (()=>{
   async function aiFill(dim){
     const dimDef = DIMS.find(x=>x.k===dim);
     if(!dimDef) return { ok:false, msg:'未知的补全维度。' };
-    const gen = api('generate');
+    /* 优先 generateRaw：自带 prompt 序列，绕开预设的思维链/流程提示词与聊天历史——
+       立契补全是独立小任务，走 generate 会被主预设卷进去（正文易为空）。
+       权威签名：JS-Slash-Runner @types/function/generate.d.ts */
+    const gen = api('generateRaw') || api('generate');
     if(!gen) return { ok:false, msg:'未接入酒馆助手生成接口——AI 补全要在酒馆里、且酒馆助手已启用时才可用（浏览器直开没有模型可调）。' };
     if(!S.name.trim() && !S.race.trim()) return { ok:false, msg:'至少先定名或选个种族，AI 才有落笔的根据。' };
     S.ui.busy[dim] = true; save(); if(insertOpen) openInsert(insertOpen);
@@ -5238,11 +5247,19 @@ const NpcForge = (()=>{
         aiContext(),
         '',
         '任务：只写「' + dimDef.lab + '」这一项（规则：' + dimDef.rule + '）。',
-        '要求：贴合魔物娘图鉴世界观与当前对话语境；直接输出正文，60~120字；不要标题、引号、列表或任何解释；使用中文。'
+        '要求：贴合魔物娘图鉴世界观；直接输出正文，60~120字；不要标题、引号、列表或任何解释；使用中文。'
       ].join('\n');
-      const raw = await gen({ user_input: prompt, should_stream:false, should_silence:true });
-      let txt = String(raw || '').trim();
-      if(!txt) throw new Error('AI 返回为空');
+      const raw = await gen({
+        user_input: prompt,
+        ordered_prompts: [
+          { role:'system', content:'你是《魔物娘图鉴世界》角色卡的 NPC 设定助手。直接输出被要求的设定文本，不要任何标题、引号、列表、思维链或解释。' },
+          'user_input',
+        ],
+        should_stream:false, should_silence:true,
+      });
+      /* 容错：默认返回字符串，若返回详情对象则取 content */
+      let txt = (typeof raw === 'string') ? raw.trim() : (raw && typeof raw.content === 'string' ? raw.content.trim() : '');
+      if(!txt) throw new Error('AI 返回为空（' + (typeof raw === 'object' && raw ? '对象:' + Object.keys(raw).join('/') : typeof raw) + '）');
       txt = txt.replace(/^["“”「『]+|["“”」』]+$/g, '').trim();
       if(!txt) throw new Error('AI 返回为空');
       S[dim] = txt.slice(0, 400);
@@ -5375,7 +5392,8 @@ const NpcForge = (()=>{
         <div class="nf-col-r">
           <div class="nf-f"><label>姓名<input type="text" data-nf="name" value="${esc(S.name)}" placeholder="她叫什么"></label></div>
           <div class="nf-2col">
-            <div class="nf-f"><label>性别<select data-nf-sel="gender">${['女','男','其它'].map(x=>`<option${S.gender===x?' selected':''}>${x}</option>`).join('')}</select></label></div>
+            <div class="nf-f"><label>性别<select data-nf-sel="gender">${GENDERS.map(x=>`<option${S.gender===x?' selected':''}>${x}</option>`).join('')}<option${GENDERS.includes(S.gender)?'':' selected'} value="__custom__">自定义</option></select></label></div>
+            ${GENDERS.includes(S.gender)?'':`<div class="nf-f"><label>自定义性别<input type="text" data-nf="gender" value="${esc(S.gender==='__custom__'?'':S.gender)}" placeholder="例：半魔化男子 / 无性别 / 双生体……"></label></div>`}
             <div class="nf-f"><label>实力阶层<select data-nf-sel="tier">
               <option value="">（未定 · 由 AI 依种族基准拟定）</option>
               ${TIER_NAMES.map(t=>`<option${S.tier===t?' selected':''}>${esc(t)}</option>`).join('')}
@@ -5496,6 +5514,7 @@ const NpcForge = (()=>{
     // 下拉：性别 / 实力阶层
     root.querySelectorAll('[data-nf-sel]').forEach(el=>el.addEventListener('change', ()=>{
       S[el.dataset.nfSel] = el.value; save();
+      if(el.dataset.nfSel==='gender') openInsert(insertOpen); // 选「自定义」时露出输入框
     }));
     // AI 补全（单维度）
     root.querySelectorAll('[data-nf-ai]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -9817,7 +9836,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-04T00:43:28.095Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-04T01:00:35.825Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
