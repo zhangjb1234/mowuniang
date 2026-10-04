@@ -579,6 +579,9 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 .dd-fields dd{color:var(--ink);line-height:1.65}
 .dd-lore{border:1px solid rgba(120,96,56,.4);border-radius:4px;background:rgba(251,247,235,.4);padding:11px 14px;margin-bottom:12px}
 .dd-lore p{font-size:13.5px;line-height:1.9;text-align:justify;color:var(--ink-soft);margin:6px 0 0}
+/* 中文 wiki 排版：小节标题（==xx== 清洗后为【xx】）+ 段落 */
+.wk-h{margin:12px 0 2px;padding:3px 9px;background:rgba(169,138,70,.14);border-left:3px solid var(--gilt);font-weight:700;font-size:12.5px;letter-spacing:.14em;color:var(--lapis)}
+.dd-lore .wk-h:first-of-type{margin-top:4px}
 .dw-cardlabel{font-family:var(--font-sans);font-size:11px;letter-spacing:.22em;color:var(--gilt-dim);margin:4px 0 2px}
 /* ══════════ 立契 NPC · 自定义角色模块 ══════════ */
 .npcforge{margin:10px 0 4px}
@@ -2818,7 +2821,13 @@ function openInsert(k){
   const ifs = document.getElementById('insert-fs');
   if(ifs) ifs.addEventListener('click', toggleFullscreen);
   bindInsert(m.key);
-  requestAnimationFrame(()=>insertEl.querySelectorAll('.m-fill').forEach(f=>{ f.style.width = f.dataset.w+'%'; }));
+  requestAnimationFrame(()=>{
+    insertEl.querySelectorAll('.m-fill').forEach(f=>{ f.style.width = f.dataset.w+'%'; });
+    if(preserve){
+      const nb = insertEl.querySelector('.insert-body');
+      if(nb && prevSt) nb.scrollTop = Math.min(prevSt, Math.max(0, nb.scrollHeight - nb.clientHeight));
+    }
+  });
 }
 function closeInsert(){
   insertOpen = null;
@@ -2844,24 +2853,49 @@ function bindInsert(key){
   };
   if(btn) btn.addEventListener('click', tryUnlock);
   if(inp) inp.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
-  // 名册交互：搜索 / 排法 / 详情 / 返回
+  // 名册交互：搜索 / 排法 / 详情 / 返回 / 女主档案
   const qi = insertEl.querySelector('#dex-q');
-  if(qi) qi.addEventListener('input', ()=>{ window.__dexQ = qi.value; refreshDexList(); });
-  insertEl.querySelectorAll('.dw-tab[data-mode]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexMode = b.dataset.mode; openInsert('dex'); }));
-  insertEl.querySelectorAll('[data-race]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexDetail = b.dataset.race; openInsert('dex'); }));
+  if(qi) qi.addEventListener('input', ()=>refreshDexList());   // 只重刷列表，不重建输入框：IME 拼音与滚动都不受扰
+  insertEl.querySelectorAll('.dw-tab[data-mode]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexMode = b.dataset.mode; openInsert('dex'); }));  // openInsert 默认保留滚动
+  const bindRaceCells = (scope)=>scope.querySelectorAll('[data-race]').forEach(b=>b.addEventListener('click', ()=>{
+    const body = insertEl.querySelector('.insert-body');
+    window.__dexListScroll = body ? body.scrollTop : 0;        // 记住名册位置，返回时还原
+    window.__dexDetail = b.dataset.race;
+    openInsert('dex', { top:true });
+  }));
+  bindRaceCells(insertEl);
+  insertEl.querySelectorAll('[data-heroine]').forEach(b=>b.addEventListener('click', ()=>{
+    const body = insertEl.querySelector('.insert-body');
+    window.__dexListScroll = body ? body.scrollTop : 0;
+    const h = (D.heroines||[])[+b.dataset.heroine];
+    if(h){ const c = window.__wikiCache || (window.__wikiCache={}); delete c['wb:'+h.name]; }  // 每次点开现取世界书，改动即所见
+    window.__heroineDetail = +b.dataset.heroine;
+    openInsert('dex', { top:true });
+  }));
   const bk = insertEl.querySelector('[data-dback]');
-  if(bk) bk.addEventListener('click', ()=>{ window.__dexDetail = null; openInsert('dex'); });
+  if(bk) bk.addEventListener('click', ()=>{ window.__dexDetail = null; openInsert('dex'); restoreDexListScroll(); });
+  const hbk = insertEl.querySelector('[data-hback]');
+  if(hbk) hbk.addEventListener('click', ()=>{ window.__heroineDetail = null; openInsert('dex'); restoreDexListScroll(); });
+}
+function restoreDexListScroll(){
+  requestAnimationFrame(()=>{
+    const b = insertEl.querySelector('.insert-body');
+    if(b && window.__dexListScroll) b.scrollTop = Math.min(window.__dexListScroll, Math.max(0, b.scrollHeight - b.clientHeight));
+  });
 }
 function refreshDexList(){
-  const i = insertEl.querySelector('#dex-q');
-  const pos = i ? { s: i.selectionStart, e: i.selectionEnd } : null;
-  const body = insertEl.querySelector('.insert-body');
-  const st = body ? body.scrollTop : 0;
-  openInsert('dex');
-  const i2 = insertEl.querySelector('#dex-q');
-  if(i2 && pos){ i2.focus(); i2.setSelectionRange(pos.s, pos.e); }
-  const b2 = insertEl.querySelector('.insert-body');
-  if(b2) b2.scrollTop = st;
+  /* 只重刷 .dex-list：搜索框不动（焦点/IME/滚动全保留） */
+  const listEl = insertEl.querySelector('.dex-list');
+  const qi = insertEl.querySelector('#dex-q');
+  if(!listEl || !qi){ openInsert('dex'); return; }
+  window.__dexQ = qi.value;
+  listEl.innerHTML = buildDexList();
+  listEl.querySelectorAll('[data-race]').forEach(b=>b.addEventListener('click', ()=>{
+    const body = insertEl.querySelector('.insert-body');
+    window.__dexListScroll = body ? body.scrollTop : 0;
+    window.__dexDetail = b.dataset.race;
+    openInsert('dex', { top:true });
+  }));
 }
 function meter(label, val, max, color=['#A98A46','#C9AE6D']){
   const pct = max>0 ? Math.round(Math.max(0,Math.min(val,max))/max*100) : 0;
@@ -2897,41 +2931,125 @@ function mgeCleanWiki(wt){
     .replace(/\n{3,}/g,'\n\n')
     .trim();
 }
+function wikiHtml(t){
+  /* 中文 wiki 清洗稿排版：【小节】行 → 小节标题，其余按段落 + 换行保留 */
+  let out = ''; const para = [];
+  const flush = ()=>{ if(para.length){ out += '<p>' + para.map(s=>esc(s)).join('<br>') + '</p>'; para.length = 0; } };
+  for(const ln of String(t).split('\n')){
+    const m = ln.match(/^\s*【([^】]+)】\s*$/);
+    if(m){ flush(); out += `<div class="wk-h">${esc(m[1])}</div>`; }
+    else para.push(ln);
+  }
+  flush();
+  return out;
+}
 function wikiBlock(r){
   const c = window.__wikiCache || (window.__wikiCache = {});
   const name = r.name;
-  if(c[name] === undefined){
-    c[name] = null;
-    (async()=>{
-      try{
-        const ctl = new AbortController();
-        const tm = setTimeout(()=>{ try{ ctl.abort(); }catch(e){} }, 12000);
-        const res = await fetch(WIKI_API + '?action=parse&redirects=1&prop=wikitext&format=json&origin=*&page=' + encodeURIComponent(name), { signal: ctl.signal });
-        clearTimeout(tm);
-        const dd = await res.json();
-        const wt = dd && dd.parse && dd.parse.wikitext && dd.parse.wikitext['*'];
-        c[name] = wt ? mgeCleanWiki(wt).slice(0, 1800) : false;
-      }catch(e){ c[name] = false; }
-      try{
-        if(insertOpen==='dex' && window.__dexDetail === r.no){
-          const b = insertEl.querySelector('.insert-body');
-          const st = b ? b.scrollTop : 0;
-          openInsert('dex');
-          const b2 = insertEl.querySelector('.insert-body');
-          if(b2) b2.scrollTop = st;
-        }
-      }catch(e){}
-    })();
-    return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><div class="empty-note">正在连接中文wiki，翻取原文……</div></div>`;
+  const shell = inner => `<div class="dd-lore" id="dex-wiki"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div>${inner}</div>`;
+  if(c[name] === undefined || c[name] === null){
+    if(c[name] === undefined){
+      c[name] = null;
+      (async()=>{
+        try{
+          const ctl = new AbortController();
+          const tm = setTimeout(()=>{ try{ ctl.abort(); }catch(e){} }, 12000);
+          const res = await fetch(WIKI_API + '?action=parse&redirects=1&prop=wikitext&format=json&origin=*&page=' + encodeURIComponent(name), { signal: ctl.signal });
+          clearTimeout(tm);
+          const dd = await res.json();
+          const wt = dd && dd.parse && dd.parse.wikitext && dd.parse.wikitext['*'];
+          c[name] = wt ? mgeCleanWiki(wt).slice(0, 2600) : false;
+        }catch(e){ c[name] = false; }
+        try{
+          /* 就地替换 wiki 块：不再整页重开插页，滚动位置与输入焦点都不受扰动 */
+          if(insertOpen==='dex' && window.__dexDetail === r.no){
+            const el = insertEl.querySelector('#dex-wiki');
+            if(el) el.outerHTML = wikiBlock(r);
+          }
+        }catch(e){}
+      })();
+    }
+    return shell('<div class="empty-note">正在连接中文wiki，翻取原文……</div>');
   }
-  if(c[name] === null) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><div class="empty-note">正在连接中文wiki，翻取原文……</div></div>`;
-  if(c[name] === false) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 未能接驳 — 以卡内条目为准</div></div>`;
-  return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><p>${esc(c[name])}</p></div>`;
+  if(c[name] === false) return shell('<div class="empty-note">未能接驳中文wiki — 以卡内条目为准。</div>');
+  return shell(wikiHtml(c[name]));
 }
-function cameo(ch, sub){
-  return `<div class="cameo"><span class="cameo-ch">${esc(ch)}</span><span class="cameo-sub">${esc(sub||'')}</span></div>`;
+function cameo(ch, sub, img){
+  /* 图片钩子：数据里给 img 字段（URL / data URI）即出图，不给保持字牌 */
+  return `<div class="cameo">${img?`<img class="cameo-img" src="${esc(img)}" alt="">`:`<span class="cameo-ch">${esc(ch)}</span>`}<span class="cameo-sub">${esc(sub||'')}</span></div>`;
+}
+function dexApi(name){
+  const fr = [window];
+  try{ if(window.parent && window.parent!==window) fr.push(window.parent); }catch(e){}
+  try{ if(window.top && window.top!==window) fr.push(window.top); }catch(e){}
+  for(const f of fr){ try{ if(typeof f[name]==='function') return f[name].bind(f); }catch(e){} }
+  return null;
+}
+async function fetchHeroineWb(name){
+  /* 读角色卡绑定世界书（primary + additional），按条目名/关键词匹配女主 —— 每次打开详情现取，条目被 AI 改了显示就跟着变 */
+  try{
+    const namesFn = dexApi('getCharWorldbookNames');
+    const getFn = dexApi('getWorldbook');
+    if(!namesFn || !getFn) return null;
+    const cb = await namesFn('current');
+    const books = [];
+    if(cb && cb.primary) books.push(cb.primary);
+    if(cb && Array.isArray(cb.additional)) books.push(...cb.additional);
+    for(const wbn of books){
+      let entries = null;
+      try{ entries = await getFn(wbn); }catch(e){ continue; }
+      const hit = (entries||[]).find(e=>{
+        if(!e) return false;
+        if(e.name && (e.name === name || e.name.includes(name))) return true;
+        const ks = (e.strategy && e.strategy.keys) || [];
+        return ks.some(k=> typeof k==='string' && k.length>=2 && (k === name || name.includes(k)));
+      });
+      if(hit && hit.content) return hit.content;
+    }
+    return false;
+  }catch(e){ return null; }
+}
+function heroineWbBlock(h){
+  const key = 'wb:'+h.name;
+  const c = window.__wikiCache || (window.__wikiCache = {});
+  const shell = inner => `<div class="dd-lore" id="dex-wb"><div class="dw-cardlabel">世界书 · 实时条目（随设定更新）</div>${inner}</div>`;
+  if(c[key] === undefined || c[key] === null){
+    if(c[key] === undefined){
+      c[key] = null;
+      (async()=>{
+        const txt = await fetchHeroineWb(h.name);
+        c[key] = (txt === null) ? false : txt;
+        try{
+          if(insertOpen==='dex' && window.__heroineDetail != null && (D.heroines||[])[window.__heroineDetail] && D.heroines[window.__heroineDetail].name === h.name){
+            const el = insertEl.querySelector('#dex-wb');
+            if(el) el.outerHTML = heroineWbBlock(h);
+          }
+        }catch(e){}
+      })();
+    }
+    return shell('<div class="empty-note">正在翻检世界书条目……</div>');
+  }
+  if(!c[key]) return shell('<div class="empty-note">未在绑定世界书中找到该条目 — 以卡内简介为准。</div>');
+  return shell(wikiHtml(c[key]));
+}
+function renderHeroineDetail(i){
+  const hs = D.heroines||[];
+  const h = hs[i];
+  if(!h){ window.__heroineDetail = null; return renderDex(); }
+  const b = (Stat.get('羁绊', {}) || {})[h.name];
+  return `
+  <div class="dex-detail">
+    <button class="dd-back" data-hback>${ICON.chevL}<span>返回图鉴</span></button>
+    <div class="dd-hero">${cameo(h.name.slice(0,1),'女主档案',h.img)}
+      <div class="dd-id"><div class="dd-no">女主档案 · ${b?esc(b.关系||'结缘'):'未结缘'}</div>
+        <div class="dd-nm">${esc(h.name)}</div></div></div>
+    ${h.intro?`<div class="dd-lore"><div class="dw-cardlabel">名册 · 卡内简介</div><p>${esc(h.intro)}</p></div>`:''}
+    ${b?`<div class="dd-lore"><div class="dw-cardlabel">羁绊 · 当前</div><p>关系 · ${esc(b.关系||'初识')}　心防 · ${esc(b.心防||'第一道·未解')}　好感度 · ${b.好感度??0}/100　开发度 · ${b.开发度??0}/100</p></div>`:''}
+    ${heroineWbBlock(h)}
+  </div>`;
 }
 function renderDex(){
+  if(window.__heroineDetail != null) return renderHeroineDetail(window.__heroineDetail);
   const hs = (D.heroines||[]);
   const xj = Stat.get('心界住民', g(D,'schemaDefaults.心界住民', null));
   const bondsAll = Stat.get('羁绊', {}) || {};
@@ -2941,7 +3059,7 @@ function renderDex(){
   ${hs.length ? `<div class="dex-wall">${hs.map((h,i)=>{
     const b = bondsAll[h.name];
     return `
-    <div class="dex-cell${b?' bonded':''}">${cameo(h.name.slice(0,1),'女主档案')}
+    <div class="dex-cell${b?' bonded':''}" data-heroine="${i}" role="button" title="点开查看档案">${cameo(h.name.slice(0,1),'女主档案',h.img)}
       <div class="dc-name">${esc(h.name)}</div>
       ${h.intro?`<div class="dc-intro">${esc(h.intro)}</div>`:''}
       <div class="dc-bond">${b?`结缘 · ${esc(b.关系||'未记')} · 好感 ${b.好感度??0}`:'未结缘'}</div></div>`; }).join('')}</div>` : emptyNote('图鉴数据提取缺失——见 _extract-report.md')}
@@ -2979,45 +3097,58 @@ function renderDexRaces(){
       const rows = [['科属',r.family2||r.family],['类型',r.type||catName],['栖息地',r.habitat2||r.habitat],['性格',r.character],['食谱',r.food],['特征',r.feat],['别名',r.alias]].filter(([,v])=>v);
       return `<div class="dex-detail">
       <button class="dd-back" data-dback>${ICON.chevL}<span>返回名册</span></button>
-      <div class="dd-hero">${cameo(r.name.slice(0,1),'NO.'+r.no)}
+      <div class="dd-hero">${cameo(r.name.slice(0,1),'NO.'+r.no,r.img)}
         <div class="dd-id"><div class="dd-no">NO.${r.no} · ${esc(catName)}</div>
           <div class="dd-nm">${esc(r.name)}</div>
           ${r.en?`<div class="dd-en">${esc(r.en)}</div>`:''}</div></div>
       <dl class="dd-fields">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
       ${r.intro?`<div class="dd-lore"><div class="dw-cardlabel">图鉴条目 · 卡内</div><p>${esc(r.intro)}</p></div>`:''}
       ${wikiBlock(r)}
-      ${r.en?`<div class="dd-lore"><div class="dw-cardlabel">英文 WIKI · MGE Wiki</div><p><a class="dex-enlink" href="https://mgewiki.moe/index.php/${encodeURIComponent(r.en.replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(r.en)} · 前往英文 wiki ↗</a></p></div>`:''}
       <div class="dw-cardlabel">你的图鉴 · 交往关系</div>
       ${emptyNote('与此族尚无羁绊。')}
     </div>`;}
   }
-  // 名册模式（搜索 + 三种排法）
   const mode = window.__dexMode||'type';
   const q = (window.__dexQ||'').trim();
-  const raceCell = (r,cat)=>`<button class="dex-slot${metSet.has(r.name)?' met':''}" data-race="${r.no}">${cameo(r.name.slice(0,1),'NO.'+r.no)}<span class="ds-nm">${esc(r.name)}</span>${r.en?`<span class="ds-en">${esc(r.en)}</span>`:''}${metSet.has(r.name)?'<span class="ds-met">已遭遇</span>':''}</button>`;
-  const match = (r,cat)=>{ if(!q) return true; const s=(r.name+' '+r.en+' '+r.no+' '+(r.family||'')+' '+(r.habitat||'')+' '+cat).toLowerCase(); return s.includes(q.toLowerCase()); };
-  let body = '';
   const tap = `<div class="dw-searchbar"><input id="dex-q" type="search" autocomplete="off" placeholder="搜索名称 / 编号 / 类型 / 科属 / 栖息地" value="${esc(q)}"><span class="dw-tabs">${[['type','大类'],['family','科属'],['number','编号']].map(([v,n])=>`<button class="dw-tab${mode===v?' on':''}" data-mode="${v}">${n}</button>`).join('')}</span></div>`;
+  return head + tap + `<div class="dex-list">${buildDexList()}</div>`;
+}
+/* 名册列表构建器（搜索 / 三种排法）——单列刷新用，不动搜索框与滚动 */
+function dexNoRange(rs){
+  const nos = (rs||[]).map(r=>r.no).filter(Boolean).sort();
+  if(!nos.length) return '';
+  return nos[0]===nos[nos.length-1] ? `【No.${nos[0]}】` : `【No.${nos[0]}～${nos[nos.length-1]}】`;
+}
+function buildDexList(){
+  const DX = window.MODIAN_DEX||{};
+  const cats = DX.cats||[];
+  const metSet = new Set(Stat.get('图鉴.已遭遇种族', []) || []);
+  const mode = window.__dexMode||'type';
+  const q = (window.__dexQ||'').trim();
+  const raceCell = (r,cat)=>`<button class="dex-slot${metSet.has(r.name)?' met':''}" data-race="${r.no}">${cameo(r.name.slice(0,1),'NO.'+r.no,r.img)}<span class="ds-nm">${esc(r.name)}</span>${(r.family2||r.family)?`<span class="ds-fam">${esc(r.family2||r.family)}</span>`:''}${r.en?`<span class="ds-en">${esc(r.en)}</span>`:''}${metSet.has(r.name)?'<span class="ds-met">已遭遇</span>':''}</button>`;
+  const match = (r,cat)=>{ if(!q) return true; const s=(r.name+' '+r.en+' '+r.no+' '+(r.family||'')+' '+(r.habitat||'')+' '+cat).toLowerCase(); return s.includes(q.toLowerCase()); };
   if(mode==='number'){
-    const all = cats.flatMap(c=>c.races.map(r=>({...r,cat:c.name}))).sort((a,b)=>a.no.localeCompare(b.no));
-    const list = all.filter(r=>match(r,''));
-    body = `<div class="dex-grid">${list.map(r=>raceCell(r,'')).join('')}</div>${list.length?'':emptyNote('没有匹配的记录。')}`;
-  }else if(mode==='family'){
-    const fams = {};
-    cats.forEach(c=>c.races.forEach(r=>{ const f=r.family||'未归科属'; (fams[f]=fams[f]||[]).push({...r,cat:c.name}); }));
-    body = Object.entries(fams).map(([f,rs])=>{
-      const list = rs.filter(r=>match(r,f));
+    /* 编号排法：按大类分组（原序），组内按编号升序；组头带编号区间 */
+    return cats.map(c=>{
+      const list = c.races.filter(r=>match(r,c.name)).slice().sort((a,b)=>String(a.no).localeCompare(String(b.no)));
       if(!list.length && q) return '';
-      return `<div class="dw-region">${esc(f)}<span>${rs.length} 种族</span></div><div class="dex-grid">${list.map(r=>raceCell(r,'')).join('')}</div>`;
-    }).join('') || emptyNote('没有匹配的记录。');
-  }else{
-    body = cats.map(c=>{
-      const list = c.races.filter(r=>match(r,c.name));
-      if(!list.length && q) return '';
-      return `<div class="dw-region">${esc(c.name)}<span>${c.races.length} 种族${c.alts?` · 异写 ${esc(c.alts)}`:''}</span></div><div class="dex-grid">${list.map(r=>raceCell(r,c.name)).join('')}</div>`;
+      return `<div class="dw-region">${esc(c.name)}<span>${dexNoRange(c.races)} · ${c.races.length} 种族</span></div><div class="dex-grid">${list.map(r=>raceCell(r,c.name)).join('')}</div>`;
     }).join('') || emptyNote('没有匹配的记录。');
   }
-  return head + tap + `<div class="dex-list">${body}</div>`;
+  if(mode==='family'){
+    const fams = {};
+    cats.forEach(c=>c.races.forEach(r=>{ const f=r.family||'未归科属'; (fams[f]=fams[f]||[]).push({...r,cat:c.name}); }));
+    return Object.entries(fams).map(([f,rs])=>{
+      const list = rs.filter(r=>match(r,f));
+      if(!list.length && q) return '';
+      return `<div class="dw-region">${esc(f)}<span>${dexNoRange(rs)} · ${rs.length} 种族</span></div><div class="dex-grid">${list.map(r=>raceCell(r,'')).join('')}</div>`;
+    }).join('') || emptyNote('没有匹配的记录。');
+  }
+  return cats.map(c=>{
+    const list = c.races.filter(r=>match(r,c.name));
+    if(!list.length && q) return '';
+    return `<div class="dw-region">${esc(c.name)}<span>${dexNoRange(c.races)} · ${c.races.length} 种族${c.alts?` · 异写 ${esc(c.alts)}`:''}</span></div><div class="dex-grid">${list.map(r=>raceCell(r,c.name)).join('')}</div>`;
+  }).join('') || emptyNote('没有匹配的记录。');
 }
 /* —— 零 · 总览（旧 home 签：一屏总账） —— */
 function renderHome(){
