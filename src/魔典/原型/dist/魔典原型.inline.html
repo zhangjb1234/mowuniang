@@ -7655,8 +7655,12 @@ function bindInsert(key){
     badge.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); dexToggleLock(); } });
   }
   // 名册交互：搜索 / 排法 / 详情 / 返回
+  // 搜索框输入法守卫：组词期间（isComposing）只记值不重绘，否则 IME 组词被 DOM 重建掐断，拼音永远变不成汉字
   const qi = insertEl.querySelector('#dex-q');
-  if(qi) qi.addEventListener('input', ()=>{ window.__dexQ = qi.value; refreshDexList(); });
+  if(qi){
+    qi.addEventListener('input', (e)=>{ window.__dexQ = qi.value; if(e.isComposing) return; refreshDexList(); });
+    qi.addEventListener('compositionend', ()=>{ window.__dexQ = qi.value; refreshDexList(); });
+  }
   // 换排法：同一份名册重排，保留滚动位置（不传 {top}）
   insertEl.querySelectorAll('.dw-tab[data-mode]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexMode = b.dataset.mode; openInsert('dex'); }));
   // 点魔物娘 = 换视图（名册 → 详情），从顶部看详情
@@ -11097,7 +11101,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-04T15:59:03.364Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-04T16:14:07.576Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
