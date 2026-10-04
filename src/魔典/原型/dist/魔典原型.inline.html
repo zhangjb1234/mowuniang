@@ -497,6 +497,7 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 .insert-head .ih-emblem{width:30px;height:30px;color:var(--cinnabar)}
 .insert-head h3{font-size:18px;font-weight:700;letter-spacing:.16em;color:var(--ink)}
 .insert-head .ih-latin{font-family:var(--font-latin);font-size:10.5px;letter-spacing:.3em;color:var(--gilt-dim);text-transform:uppercase;margin-top:2px}
+.insert-head .ih-ver{letter-spacing:.08em;opacity:.6;text-transform:none}
 .insert-head .ih-tools{margin-left:auto;display:flex;align-items:center;gap:10px}
 .insert-head .ih-close{width:30px;height:30px;border-radius:50%;border:1px solid rgba(120,88,40,.5);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:all .25s}
 .insert-head .ih-close:hover{background:var(--cinnabar);color:#F6F2E7;border-color:var(--cinnabar);transform:rotate(90deg)}
@@ -6792,6 +6793,10 @@ const ScrollOps = (()=>{
   return { render, bind, _state:()=>({from,to,target,busy}) };
 })();
 
+/* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
+   作用=用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」，终结版本对不上号的排查。 */
+const UI_VER = '1004l';
+
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
   {key:'dex',    tab:'图鉴', name:'魔物娘图鉴', latin:'Iconographia', icon:'dex',    side:'R', render: renderDex},
@@ -6911,8 +6916,10 @@ tabsEl.parentNode.querySelectorAll('.thumb-tab[data-mod]').forEach(b=>b.addEvent
   closeToc(); closeLetter();                     // 互斥：开一个先收其它
   openInsert(k);
 }));
-function openInsert(k){
+function openInsert(k, opts){
+  const o = opts || {};
   const m = MODULES.find(x=>x.key===k);
+  const prevSt = (()=>{ const b = insertEl.querySelector('.insert-body'); return b ? b.scrollTop : 0; })();
   insertOpen = k;
   insertEl.parentNode.querySelectorAll('.thumb-tab[data-mod]').forEach(b=>b.classList.toggle('active', b.dataset.mod===k));
   insertEl.classList.toggle('from-left', m.side==='L');
@@ -6923,7 +6930,7 @@ function openInsert(k){
   //   实测证据：insert-head 高度 2128px，而外层 .insert 只有 420px。
   insertEl.innerHTML = `
     <div class="insert-head"><span class="ih-emblem">${ICON[m.icon]}</span>
-      <div><h3>${m.name}</h3><div class="ih-latin">${m.latin}</div></div>
+      <div><h3>${m.name}</h3><div class="ih-latin">${m.latin}<span class="ih-ver"> · UI v${UI_VER}</span></div></div>
       <div class="ih-tools">
         <button class="ih-close" id="insert-x" aria-label="合上插页">${ICON.x}</button>
       </div></div>
@@ -6936,7 +6943,8 @@ function openInsert(k){
   bindInsert(m.key);
   requestAnimationFrame(()=>{
     insertEl.querySelectorAll('.m-fill').forEach(f=>{ f.style.width = f.dataset.w+'%'; });
-    if(preserve){
+    // 默认保留滚动；进详情等传 {top:true} 才回到顶部。o.top 由调用方显式传入。
+    if(!o.top){
       const nb = insertEl.querySelector('.insert-body');
       if(nb && prevSt) nb.scrollTop = Math.min(prevSt, Math.max(0, nb.scrollHeight - nb.clientHeight));
     }
@@ -9967,7 +9975,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-04T01:56:33.466Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-04T02:27:03.455Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
