@@ -1098,6 +1098,50 @@ const NpcForge = (()=>{
   const entryName = (n)=> PREFIX + n;
   const cleanKeys = ()=> S.keys.map(k=>String(k).trim()).filter(Boolean);
 
+  /* —— AI 补全：单维度静默生成（走酒馆助手 generate，不落楼） —— */
+  function aiContext(){
+    const r = raceOf(S.race);
+    const bits = [];
+    if(S.name.trim()) bits.push('姓名：' + S.name.trim());
+    bits.push('性别：' + (S.gender || '女'));
+    if(S.race.trim()) bits.push('种族：' + S.race.trim());
+    if(r){ bits.push('所属谱系：' + r.cat + ' · ' + r.fam + (r.habitat ? ('（栖息地：' + r.habitat + '）') : '')); }
+    if(String(S.age).trim()) bits.push('年龄：' + String(S.age).trim());
+    if(S.tier) bits.push('实力：' + S.tier);
+    if(String(S.note||'').trim()) bits.push('额外线索：' + String(S.note).trim());
+    for(const d of DIMS){ const v = String(S[d.k]||'').trim(); if(v) bits.push(d.lab + '（已定）：' + v); }
+    return bits.join('\n');
+  }
+  async function aiFill(dim){
+    const dimDef = DIMS.find(x=>x.k===dim);
+    if(!dimDef) return { ok:false, msg:'未知的补全维度。' };
+    const gen = api('generate');
+    if(!gen) return { ok:false, msg:'未接入酒馆助手生成接口——AI 补全要在酒馆里、且酒馆助手已启用时才可用（浏览器直开没有模型可调）。' };
+    if(!S.name.trim() && !S.race.trim()) return { ok:false, msg:'至少先定名或选个种族，AI 才有落笔的根据。' };
+    S.ui.busy[dim] = true; save(); if(insertOpen) openInsert(insertOpen);
+    try{
+      const prompt = [
+        '你在为《魔物娘图鉴世界》角色卡的「立契 NPC」补全人设。以下是目前已知的角色信息：',
+        aiContext(),
+        '',
+        '任务：只写「' + dimDef.lab + '」这一项（规则：' + dimDef.rule + '）。',
+        '要求：贴合魔物娘图鉴世界观与当前对话语境；直接输出正文，60~120字；不要标题、引号、列表或任何解释；使用中文。'
+      ].join('\n');
+      const raw = await gen({ user_input: prompt, should_stream:false, should_silence:true });
+      let txt = String(raw || '').trim();
+      if(!txt) throw new Error('AI 返回为空');
+      txt = txt.replace(/^["“”「『]+|["“”」』]+$/g, '').trim();
+      if(!txt) throw new Error('AI 返回为空');
+      S[dim] = txt.slice(0, 400);
+      save();
+      return { ok:true, msg: dimDef.lab + '已由 AI 拟定，可再手改。' };
+    }catch(e){
+      return { ok:false, msg:'AI 补全失败：' + ((e && e.message) || e) };
+    }finally{
+      S.ui.busy[dim] = false; save(); if(insertOpen) openInsert(insertOpen);
+    }
+  }
+
   /* 校验：{ok:false,msg} 或 {ok:true,keys} */
   function validate(){
     if(!S.name.trim()) return { ok:false, msg:'请先为这位角色定名。' };
