@@ -83,8 +83,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 /* 天头 / 地脚 */
 .folio-head,.folio-foot{position:relative;z-index:2;flex:none;display:flex;align-items:baseline;justify-content:space-between;padding:14px 30px 10px;color:var(--ink-faint);font-size:12px;letter-spacing:.16em}
-.folio-head{border-bottom:1px solid rgba(120,88,40,.22)}
-.folio-head .wh-latin{font-family:var(--font-latin);letter-spacing:.3em;font-size:11px;color:var(--gilt-dim)}
+/* 天头：时间/地点是每页的处境锚点，须与正文同色系才读得出来。
+   原为 --ink-faint + 12px，在羊皮纸(--vellum)底上对比过弱，看着像脚注。
+   提到 --ink/14px/500 字重，字距收至 .1em（字号变大后 .16em 会显松垮）。 */
+.folio-head{border-bottom:1px solid rgba(120,88,40,.34);color:var(--ink);font-size:14px;font-weight:500;letter-spacing:.1em}
+/* 右列「时段·月相·天气」由 gilt-dim 提到 gilt：仍是暖金，但不再读不出来 */
+.folio-head .wh-latin{font-family:var(--font-latin);letter-spacing:.3em;font-size:12px;color:var(--gilt)}
+/* 窄屏回落：14px 的天头 + 宽字距在手机屏上会把右列挤出可视区 */
+@media (max-width:560px){
+  .folio-head{font-size:13px;letter-spacing:.06em;padding:12px 18px 9px}
+  .folio-head .wh-latin{letter-spacing:.18em;font-size:11px}
+}
 .folio-foot{border-top:1px solid rgba(120,88,40,.22);padding:10px 30px 14px;font-size:11.5px}
 .folio-foot .ff-scribe{color:var(--gilt-dim);font-style:normal;letter-spacing:.08em}
 .folio-foot .ff-side{display:flex;align-items:baseline;gap:12px}
@@ -113,6 +122,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .prose p.no-indent{text-indent:0}
 /* （已按反馈移除首字下沉/放大：正文段落与扉页一律常规字号起笔） */
 .dlg{color:#7C2F28;font-weight:600}
+/* 单星号强调 *…*：AI 正文里的星号是强调记号，不是正文。
+   与 .dlg（对白·朱红）分色：强调走青蓝（--lapis），一眼分得开谁是对白、谁是着重。 */
+.prose .em{color:var(--lapis);font-weight:500;border-bottom:1px solid rgba(47,74,94,.28)}
 
 
 /* 心语便签（去斜体：正文一律正立，斜体只留给批注性文字） */
@@ -122,6 +134,39 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* 预设留言笺 */
 .preset-note{max-width:88%;margin:16px auto 16px 6%;background:linear-gradient(172deg,rgba(243,238,224,.8),rgba(236,228,206,.68));border-left:3px solid var(--lapis);padding:8px 13px 8px 12px;color:var(--ink-soft);font-size:13.5px;line-height:1.8;box-shadow:0 4px 14px rgba(96,66,28,.14);border-radius:2px 6px 6px 2px;position:relative}
 .preset-note .pn-label{display:block;font-family:var(--font-latin);font-size:9px;letter-spacing:.3em;color:var(--lapis-hi);margin-bottom:3px}
+
+/* ── 预设留言笺（移植自租借男友「猫爪笺 / 小此笺」，改绘为魔典羊皮纸＋雕版画描金） ──
+   猫神留言（Reborn 小猫之神）：<details><summary>…留言…</summary>…</details>
+   小此留言（Izumi 泉此方）：<tucao> 吐槽/创作思路/小此对话、<konatan_chat> 情感陪伴
+   两者都是「读标签」，魔典只解析不生成。 */
+.note-slip{position:relative;max-width:88%;margin:18px auto 18px 6%;padding:11px 15px 12px 14px;border-radius:2px 7px 7px 2px;box-shadow:0 6px 18px rgba(96,66,28,.17);overflow:hidden}
+.note-slip::before{content:'';position:absolute;inset:0;opacity:.5;pointer-events:none;background-image:repeating-linear-gradient(135deg,rgba(150,120,70,.05) 0 2px,transparent 2px 5px)}
+/* 猫爪笺：朱印色边（左缘），猫神系 */
+.note-slip.cat{background:linear-gradient(172deg,rgba(246,240,228,.92),rgba(236,226,208,.8));border-left:3px solid var(--cinnabar)}
+.note-slip.cat::after{content:'';position:absolute;top:0;right:0;border-style:solid;border-width:0 15px 15px 0;border-color:transparent var(--vellum-aged) transparent transparent;opacity:.85}
+/* 小此笺：青金石色边（左缘），小此系 */
+.note-slip.konata{background:linear-gradient(172deg,rgba(240,243,242,.92),rgba(228,233,234,.8));border-left:3px solid var(--lapis)}
+.note-slip.konata::after{content:'';position:absolute;top:0;right:0;border-style:solid;border-width:0 15px 15px 0;border-color:transparent rgba(206,214,212,.9) transparent transparent;opacity:.85}
+/* 笺头：头像 + 标题 + 印记 */
+.note-slip .ns-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;position:relative;z-index:1}
+.note-slip .ns-avatar{flex:none;width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:top;border:1px solid rgba(96,66,28,.45);box-shadow:0 2px 6px rgba(96,66,28,.22);background:var(--vellum)}
+.note-slip .ns-avatar.paw{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:linear-gradient(168deg,#B04A3E,#8E3229);color:#F6EFE2;border:none;box-shadow:0 2px 6px rgba(96,26,19,.3)}
+.note-slip .ns-avatar.paw svg{width:17px;height:17px}
+.note-slip .ns-title{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.note-slip .ns-cn{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--ink)}
+.note-slip .ns-latin{font-family:var(--font-latin);font-size:8.5px;letter-spacing:.26em;color:var(--lapis-hi);text-transform:uppercase}
+/* 笺头右侧印记：猫=「喵」，小此=「此」 */
+.note-slip .ns-seal{flex:none;margin-left:auto;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:1px solid rgba(96,66,28,.4);transform:rotate(-8deg)}
+.note-slip.cat .ns-seal{background:var(--cinnabar);color:#F6EFE2;border-color:rgba(120,40,32,.6)}
+.note-slip.konata .ns-seal{background:var(--gilt);color:#4A3616;border-color:rgba(138,112,64,.6);transform:rotate(8deg)}
+/* 笺身 */
+.note-slip .ns-body{position:relative;z-index:1;font-size:13.5px;line-height:1.85;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word}
+/* 笺内分段（同一锚点上的多条吐槽） */
+.note-slip .ns-seg{margin-top:9px;padding-top:8px;border-top:1px dashed rgba(120,98,66,.34)}
+.note-slip .ns-seg:first-child{margin-top:0;padding-top:0;border-top:none}
+.note-slip .ns-seg-tag{display:inline-block;margin:0 0 4px;padding:1px 7px;font-size:9.5px;letter-spacing:.16em;border-radius:9px;border:1px solid rgba(120,98,66,.4);color:var(--gilt-dim);background:rgba(169,138,70,.1)}
+/* 窄屏：贴齐版心 */
+@media (max-width:760px){.note-slip{max-width:96%;margin-left:2%}}
 
 /* 大陆见闻·旅志剪页 */
 .news-clip{margin:18px 4%;background:linear-gradient(180deg,rgba(246,242,231,.7),rgba(239,234,221,.5));border:1px solid rgba(47,74,94,.34);border-radius:3px;overflow:hidden;box-shadow:0 6px 18px rgba(96,66,28,.14)}
@@ -508,6 +553,25 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 /* 插页通用料件 */
 .sec-title{display:flex;align-items:center;gap:10px;margin:18px 0 9px;color:var(--lapis);font-size:13.5px;font-weight:700;letter-spacing:.2em}
 .sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(47,74,94,.4),transparent)}
+
+/* 总览专用：十一阶阶梯 + 左右并排（生命·法力 | 八维） */
+.tiers{display:flex;gap:4px;justify-content:center;margin:2px 0 4px}
+.tiers i{width:10px;height:10px;transform:rotate(45deg);border:1px solid var(--gilt-dim);background:transparent;border-radius:1px;display:block}
+.tiers i.on{background:var(--cinnabar);border-color:var(--cinnabar-hi);box-shadow:0 0 5px rgba(150,55,46,.4)}
+.tiername{text-align:center;color:var(--ink-soft);font-size:12px;font-weight:700;letter-spacing:.2em}
+.ov-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:720px){.ov-2col{grid-template-columns:1fr}}
+.radarwrap{display:flex;justify-content:center;padding:2px 0}
+.radarwrap svg{overflow:visible;max-width:100%;height:auto}
+.radarwrap .rlab{font-family:var(--font-sans);font-size:10.5px;fill:var(--lapis);font-weight:700}
+.radarwrap .rval{font-family:var(--font-latin);font-size:12px;fill:var(--ink);font-weight:700}
+.radarwrap .rplus{font-size:9px;fill:var(--cinnabar)}
+/* 战斗封条（总览置顶） */
+.battle-flag{border:1px solid rgba(150,55,46,.42);border-radius:3px;background:linear-gradient(180deg,rgba(150,55,46,.14),rgba(150,55,46,.05));padding:8px 11px 7px;margin:8px 0 2px}
+.battle-flag .bf-t{display:flex;align-items:center;gap:7px;font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--cinnabar-deep)}
+.battle-flag .bf-n{margin-top:3px;font-size:12.5px;font-weight:700;color:var(--ink)}
+.battle-flag .bf-r{margin-top:2px;font-size:11px;color:var(--ink-soft)}
+.battle-flag .m-track{background:rgba(109,35,28,.14)}
 .sec-title.sv-cinnabar{color:var(--cinnabar)}.sec-title.sv-cinnabar::after{background:linear-gradient(90deg,rgba(150,55,46,.4),transparent)}
 .plaque{background:linear-gradient(172deg,rgba(246,242,231,.72),rgba(239,234,221,.5));border:1px solid rgba(120,88,40,.35);border-radius:4px;padding:11px 14px;margin-bottom:9px;box-shadow:0 4px 12px rgba(96,66,28,.1)}
 .plaque h4{font-size:14.5px;font-weight:700;letter-spacing:.1em;color:var(--ink);display:flex;align-items:baseline;gap:8px}
@@ -551,16 +615,76 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 .dw-tab{padding:5px 13px;border:1px solid rgba(120,96,56,.4);border-radius:14px;background:transparent;font-size:11.5px;font-family:var(--font-sans);letter-spacing:.1em;color:var(--ink-soft);transition:all .22s}
 .dw-tab:hover{border-color:var(--gilt)}
 .dw-tab.on{background:rgba(150,55,46,.12);border-color:var(--cinnabar);color:var(--cinnabar)}
-.dw-region{display:flex;align-items:baseline;gap:10px;margin:14px 0 8px;font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--lapis)}
-.dw-region::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(47,74,94,.35),transparent)}
-.dw-region span{font-weight:400;font-size:10.5px;font-family:var(--font-sans);color:var(--ink-faint);letter-spacing:.06em}
 .dex-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:4px}
 .dex-slot{display:flex;flex-direction:column;gap:6px;padding:8px 8px 9px;background:linear-gradient(170deg,rgba(251,247,235,.55),rgba(236,226,200,.35));border:1px solid rgba(120,96,56,.38);border-radius:4px;text-align:center;transition:transform .24s var(--ease-spring),box-shadow .24s,border-color .24s}
 .dex-slot:hover{box-shadow:0 10px 22px rgba(96,66,28,.26),inset 0 1px 0 rgba(255,255,255,.55);border-color:var(--cinnabar)}
 .dex-slot .ds-nm{font-weight:700;font-size:13.5px;letter-spacing:.06em;color:var(--ink)}
-.dex-slot .ds-en{font-size:10px;font-family:var(--font-latin);letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase}
 .dex-slot.met{border-color:rgba(169,138,70,.75);box-shadow:0 0 0 1px rgba(169,138,70,.4)}
+.dex-slot.locked{opacity:.5;cursor:default}
+.dex-slot.locked .ds-nm{letter-spacing:.3em;color:var(--ink-faint)}
 .ds-met{margin-top:1px;align-self:center;font-size:9.5px;font-family:var(--font-sans);letter-spacing:.18em;color:var(--gilt-dim);border:1px solid rgba(169,138,70,.55);border-radius:9px;padding:1px 7px}
+/* —— 图鉴 · 内分栏（住民 / 女主 / 魔物娘）——
+   三个大类共用一个「图鉴」标签。刻意复用名册里既有的 .dw-tabs/.dw-tab 视觉
+   （同一套描金描边 + .on 朱砂），而不是另造一套卡片按钮——同一界面里出现两种
+   分栏样式就是割裂。也刻意不吸顶：浮在正文上的控件会压住内容，且不属于这套
+   书页语言；需要换类时滚回顶部即可。
+
+   排版：早先用 flex + 内容宽度，三个药丸全挤在左侧，右边空出一大片 —— 而下面
+   恰好是一条通栏的 .dex-grid，空白与网格不对齐，视觉上就是「缺了一块」。
+   现改为 grid 三等分：每格等宽、文字居中，左右边缘与下方卡片网格严格对齐，
+   空白被均匀摊进三格，不再偏在一侧。 */
+.dx-subtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}
+.dx-subtab{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;padding:7px 10px;
+  border:1px solid rgba(120,96,56,.4);border-radius:14px;background:rgba(251,247,235,.42);
+  font-family:var(--font-sans);font-size:12px;letter-spacing:.14em;color:var(--ink-soft);cursor:pointer;transition:all .22s}
+.dx-subtab:hover{border-color:var(--gilt);color:var(--ink)}
+.dx-subtab .dxs-ic{flex:none;display:block;width:14px;height:14px;color:var(--gilt-dim);transition:color .22s}
+.dx-subtab .dxs-ic svg{width:100%;height:100%;display:block}
+/* 「心界住民」四字在窄屏单格里会挤爆 —— 允许换行成两行（.dxs-lb 去掉 nowrap），
+   按钮高度由 grid 拉伸对齐，三格始终等宽等高。 */
+.dx-subtab .dxs-lb{line-height:1.35}
+.dx-subtab.on{background:rgba(150,55,46,.12);border-color:var(--cinnabar);color:var(--cinnabar)}
+.dx-subtab.on .dxs-ic{color:var(--cinnabar)}
+.dx-subpane{animation:mgeDexPane .3s var(--ease-out)}
+@keyframes mgeDexPane{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (max-width:760px){.dx-subtabs{gap:6px;margin:0 0 11px}.dx-subtab{flex-direction:column;gap:4px;padding:7px 4px;font-size:11px;letter-spacing:.04em}.dx-subtab .dxs-ic{width:13px;height:13px}}
+/* 实体化四阶段轨：不用箭头横排（阶段名因住民而异，横排必然要前端编名字），
+   改成一列四行——序号 + 门槛 + 达标勾，差额直接印在门槛后面。 */
+.as-track{display:flex;flex-direction:column;margin:2px 0 8px;border-top:1px solid rgba(120,96,56,.24)}
+.as-row{display:flex;align-items:center;gap:11px;padding:8px 2px;border-bottom:1px solid rgba(120,96,56,.16);opacity:.5;transition:opacity .25s}
+.as-row.done{opacity:1}
+.as-row.cur{background:linear-gradient(90deg,rgba(150,55,46,.09),transparent)}
+.as-no{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1px solid currentColor;border-radius:50%;
+  font-family:var(--font-latin);font-size:10.5px;font-weight:700;color:var(--ink-faint)}
+.as-row.done .as-no{color:var(--gilt-dim);background:rgba(169,138,70,.14)}
+.as-row.cur .as-no{color:var(--cinnabar);border-width:1.6px}
+.as-hint{flex:1;font-size:12px;letter-spacing:.1em;color:var(--ink-soft)}
+.as-row.done .as-hint{color:var(--ink)}
+.as-mark{flex:none;font-size:12px;color:var(--gilt)}
+.as-note{padding:9px 12px;border:1px dashed rgba(96,66,28,.4);border-radius:4px;font-size:11.5px;line-height:1.8;color:var(--ink-faint);letter-spacing:.04em}
+.as-note b{color:var(--gilt-dim);font-weight:600}
+/* —— 魔物娘名册 · 种类折叠 ——
+   28 大类 / 79 科属平铺会撑出几千像素，读者找不到东西。按种类折叠成手风琴，
+   标题栏常驻（种类名 + 成员数），点标题才展开该类的卡片网格。 */
+.dw-foldbar{display:flex;align-items:center;gap:8px;margin:0 0 4px}
+.dw-foldbar .dfb-note{flex:1;font-size:10.5px;font-family:var(--font-sans);color:var(--ink-faint);letter-spacing:.06em;text-align:left;line-height:1.5}
+.dw-foldbtn{padding:4px 12px;border:1px solid rgba(120,96,56,.4);border-radius:14px;background:transparent;font-family:var(--font-sans);font-size:11.5px;letter-spacing:.1em;color:var(--ink-soft);white-space:nowrap;transition:all .22s}
+.dw-foldbtn:hover{border-color:var(--gilt);color:var(--ink)}
+.dex-cat{margin:0}
+.dw-cat-h{display:flex;align-items:center;gap:9px;width:100%;margin:15px 0 0;padding:0 0 7px;background:none;border:none;border-bottom:1px solid rgba(47,74,94,.22);
+  font-family:var(--font-serif);font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--lapis);cursor:pointer;text-align:left;transition:color .25s}
+.dw-cat-h:hover{color:var(--cinnabar)}
+.dw-cat-h::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(47,74,94,.35),transparent)}
+.dw-cat-h .dc-caret{flex:none;display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;color:var(--gilt-dim);transform:rotate(0deg);transition:transform .3s var(--ease-out)}
+.dw-cat-h .dc-caret svg{width:11px;height:11px;display:block}
+.dw-cat-h.on .dc-caret{transform:rotate(90deg)}
+.dw-cat-h .dc-n{font-weight:400;font-size:10.5px;font-family:var(--font-sans);color:var(--ink-faint);letter-spacing:.06em}
+.dw-cat-b{display:none;padding-top:9px}
+.dw-cat-b.on{display:block;animation:mgeDexCat .34s var(--ease-out)}
+@keyframes mgeDexCat{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+/* 编号前缀：卡片名一律「NO.001 阿娜温」，与详情页 NO. 字段同源（r.no） */
+.dex-slot .ds-nm{display:flex;align-items:baseline;justify-content:center;gap:5px}
+.dex-slot .ds-no{flex:none;font-family:var(--font-latin);font-size:9px;font-weight:700;line-height:1.35;letter-spacing:.04em;color:var(--gilt-dim);border:1px solid rgba(169,138,70,.45);border-radius:3px;padding:0 3px}
 .dex-cell.bonded{border-color:rgba(150,55,46,.55)}
 .dex-cell.bonded .dc-bond{color:var(--cinnabar)}
 .src-note{display:none}
@@ -574,12 +698,28 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 .dd-id{padding-top:6px}
 .dd-no{font-family:var(--font-sans);font-size:11px;letter-spacing:.18em;color:var(--gilt-dim)}
 .dd-nm{font-size:26px;font-weight:700;letter-spacing:.08em;margin:4px 0 2px}
-.dd-en{font-family:var(--font-latin);font-size:13px;letter-spacing:.3em;color:var(--ink-faint);text-transform:uppercase}
-.dd-fields{display:grid;grid-template-columns:auto 1fr;gap:5px 13px;font-size:13px;margin:4px 0 12px;border-top:1px dashed rgba(120,96,56,.3);padding-top:11px}
+/* 两列：标签列按内容宽（nowrap 保证不折），值列吃掉剩余全部宽度。
+   首列 minmax(0,auto) + 值列 minmax(0,1fr)：两侧都可压缩，
+   窄屏时值列不会被标签顶出横向滚动条。 */
+.dd-fields{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:5px 13px;font-size:13px;margin:4px 0 12px;border-top:1px dashed rgba(120,96,56,.3);padding-top:11px}
 .dd-fields dt{color:var(--gilt-dim);font-family:var(--font-sans);font-size:12px;letter-spacing:.14em;white-space:nowrap}
-.dd-fields dd{color:var(--ink);line-height:1.65}
+/* 行长自适应。踩过的坑：这里原本写 max-width:38em（为正文页 .tome 760px 设的），
+   但图鉴详情页的插页内容区有 700px，38em≈500px 直接砍掉 200px —— 文字全挤在左边、
+   右侧空出一大片（实测 dd 494 / p 513 / 内容区 700）。
+   ⚠ 第二次踩坑：改成 min(38em,100%) 无效 —— em 在嵌套容器里被换算成绝对像素
+   （实测算出 min(513px,100%)），仍然锁死。
+   现在用纯百分比上限：100% 即填满当前容器，窄容器自动收窄、宽容器自动铺满，
+   行长交由容器尺寸决定，不再有任何写死的 em。 */
+.dd-fields dd{color:var(--ink);line-height:1.65;max-width:100%}
+.dd-lore p{max-width:100%}
 .dd-lore{border:1px solid rgba(120,96,56,.4);border-radius:4px;background:rgba(251,247,235,.4);padding:11px 14px;margin-bottom:12px}
-.dd-lore p{font-size:13.5px;line-height:1.9;text-align:justify;color:var(--ink-soft);margin:6px 0 0}
+.dd-lore p{font-size:13.5px;line-height:1.9;text-align:justify;color:var(--ink-soft);margin:0;text-indent:2em}
+.dd-lore p+p{margin-top:.62em}   /* 段距：空行交给这里，不再靠 <br><br> 撑 */
+/* WIKI 原文里的小标题（【简介】【动作特征】…）。必须零缩进 ——
+   中文段落首行缩进两格是给正文看的，标题跟着缩两格就与正文左缘错开了。 */
+.dd-lore h4{font-family:var(--font-serif);font-size:13.5px;font-weight:700;letter-spacing:.14em;color:var(--gilt-dim);
+  margin:14px 0 6px;padding-left:0;text-indent:0;line-height:1.6}
+.dd-lore h4:first-child{margin-top:2px}
 .dw-cardlabel{font-family:var(--font-sans);font-size:11px;letter-spacing:.22em;color:var(--gilt-dim);margin:4px 0 2px}
 /* ══════════ 立契 NPC · 自定义角色模块 ══════════ */
 .npcforge{margin:10px 0 4px}
@@ -679,6 +819,42 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 .dex-lock{margin:14px 4%;padding:26px 18px;border:1px solid rgba(120,96,56,.42);border-radius:4px;background:rgba(251,247,235,.4);text-align:center}
 .dex-lock .dl-seal{width:52px;height:52px;margin:0 auto 10px}
 .dex-lock .dl-text{font-size:13px;color:var(--ink-soft);letter-spacing:.1em;margin-bottom:14px}
+/* 图鉴锁补充样式：锁徽 / 说明行 / 输错抖动（卡内 dw-lock / dw-ask / dwShake 的魔典化） */
+.dex-lock .dl-note{margin-top:11px;font-family:var(--font-latin);font-size:9px;letter-spacing:.16em;color:var(--ink-faint);line-height:1.7}
+.dl-badge{flex:none;display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:2px 9px;font-family:var(--font-latin);font-size:9.5px;letter-spacing:.18em;border:1px solid rgba(120,96,56,.5);border-radius:9px;color:var(--ink-faint);background:rgba(120,96,56,.08);cursor:pointer;user-select:none;transition:color .3s,border-color .3s,background .3s}
+.dl-badge:hover{color:var(--cinnabar);border-color:rgba(150,55,46,.55)}
+.dl-badge.on{color:var(--gilt);border-color:rgba(169,138,70,.7);background:rgba(169,138,70,.16);text-shadow:0 0 8px rgba(240,192,96,.5)}
+.dl-badge:focus-visible{outline:1px solid var(--cinnabar);outline-offset:2px}
+.dex-lock.shake{animation:dexShake .42s ease}
+@keyframes dexShake{0%,100%{transform:translateX(0)}18%{transform:translateX(-7px)}38%{transform:translateX(6px)}58%{transform:translateX(-4px)}78%{transform:translateX(3px)}}
+/* 锁徽排在标题栏最右：靠 order 压过 .sec-title::after 的撑线 */
+.sec-title .dl-badge{order:2}
+.sec-title::after{order:1}
+/* 封印态名册格（移植卡内 dw-grid / dw-slot，改绘为羊皮纸签） */
+.dw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;margin:4px 0 14px}
+.dw-slot{border:1px solid rgba(120,96,56,.28);border-radius:3px;padding:7px 6px;background:rgba(251,247,235,.34);text-align:center;opacity:.62;transition:opacity .3s,border-color .3s,background .3s}
+.dw-slot.met{opacity:1;border-color:rgba(150,55,46,.45);background:rgba(150,55,46,.09);cursor:pointer}
+.dw-slot.met:hover{border-color:var(--cinnabar)}
+.dw-no{display:block;font-family:var(--font-latin);font-size:9px;letter-spacing:.14em;color:var(--ink-faint)}
+.dw-nm{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw-slot:not(.met) .dw-nm{color:var(--ink-faint);letter-spacing:.2em}
+/* ── 世界书实时档案：形态版本块（女主 基础版/堕落版、心界住民档案共用） ── */
+.dd-ver{margin:0 0 14px;padding:0}
+.dd-ver:last-child{margin-bottom:0}
+.dd-ver .dw-cardlabel{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:12px 0 7px}
+.dd-ver:first-child .dw-cardlabel{margin-top:2px}
+.wv-tag{flex:none;padding:1px 8px;border-radius:9px;font-family:var(--font-sans);font-size:9px;font-weight:700;letter-spacing:.16em;
+  border:1px solid rgba(120,96,56,.42);color:var(--ink-faint);background:rgba(120,96,56,.07)}
+.wv-tag.on{border-color:rgba(150,55,46,.6);color:var(--cinnabar);background:rgba(150,55,46,.12)}
+.wv-src{margin-left:auto;font-family:var(--font-latin);font-size:9px;letter-spacing:.14em;color:var(--ink-faint);opacity:.8}
+/* 形态未生效的版本：整体压暗，但文字仍完整可读可复制（只是弱化，不删内容） */
+.dd-ver:not(.on){opacity:.62}
+.dd-ver:not(.on):hover{opacity:1}
+.dd-ver.on{position:relative;padding-left:10px;border-left:2px solid rgba(150,55,46,.35)}
+/* 索引建立中的占位格 */
+.dex-cell.pending{opacity:.34;animation:cellBreath 1.6s ease-in-out infinite}
+@keyframes cellBreath{0%,100%{opacity:.22}50%{opacity:.45}}
+.hs-pending{font-family:var(--font-sans);font-size:10px;letter-spacing:.14em;color:var(--ink-faint);opacity:.8}
 .dex-lock .dl-form{display:flex;gap:9px;justify-content:center}
 .dex-lock input{width:150px;background:rgba(255,253,246,.5);border:1px solid rgba(120,96,56,.5);border-radius:3px;padding:7px 11px;font-family:var(--font-serif);font-size:14px;color:var(--ink);outline:none;text-align:center;letter-spacing:.2em}
 .dex-lock input:focus{border-color:var(--cinnabar)}
@@ -748,32 +924,30 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
   border:1px solid rgba(201,174,109,.8);background:transparent}
 .cv-sub{font-size:12px;color:rgba(216,196,142,.75);letter-spacing:.5em;text-indent:.5em;text-shadow:0 1px 0 rgba(0,0,0,.4)}
 /* 火漆印：纯 CSS 的不规则蜡团 + 压凹字母纹章 */
+/* 火漆印 · 开启命运的唯一入口（原「触碰以开启命运」按钮已撤除，
+   交互样式由 .cv-unseal 整段平移至此，朱印本体即按钮） */
 .cv-seal{position:relative;z-index:1;margin-top:6px;width:62px;height:62px;display:flex;align-items:center;justify-content:center;
+  padding:0;border:none;appearance:none;cursor:pointer;font:inherit;
   border-radius:47% 53% 55% 45%/52% 46% 54% 48%;
   background:radial-gradient(circle at 36% 28%,#B5503F 0%,#96372E 46%,#6D231C 78%,#57170F 100%);
-  box-shadow:0 5px 13px rgba(18,8,3,.55),inset 0 2px 3px rgba(255,190,160,.32),inset 0 -5px 9px rgba(40,8,4,.55)}
+  box-shadow:0 5px 13px rgba(18,8,3,.55),inset 0 2px 3px rgba(255,190,160,.32),inset 0 -5px 9px rgba(40,8,4,.55);
+  transition:transform .3s var(--ease-spring),box-shadow .3s var(--ease-spring),filter .3s;
+  animation:cvBreath 3.8s ease-in-out infinite}
 .cv-seal::before{content:'';position:absolute;inset:9px;border-radius:46% 54% 52% 48%/55% 45% 50% 50%;
   border:1.5px solid rgba(60,12,8,.55);box-shadow:0 1px 0 rgba(255,190,160,.16),inset 0 1px 1px rgba(40,8,4,.4)}
 .cv-seal span{font-family:var(--font-latin);font-size:24px;font-weight:700;color:#E9CBA1;
-  text-shadow:0 1px 1px rgba(50,9,4,.7),0 -1px 1px rgba(255,205,175,.22)}
+  text-shadow:0 1px 1px rgba(50,9,4,.7),0 -1px 1px rgba(255,205,175,.22);pointer-events:none}
+.cv-seal:hover{transform:scale(1.1);filter:brightness(1.12);
+  box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 30px rgba(150,55,46,.4),inset 0 2px 3px rgba(255,190,160,.4),inset 0 -5px 9px rgba(40,8,4,.5)}
+.cv-seal:active{transform:scale(.96)}
+.cv-seal:focus-visible{outline:2px solid rgba(240,222,160,.9);outline-offset:5px}
 /* 版記：右下角一行拉丁小字，像西籍封底的印坊落款 */
 .cv-colophon{position:absolute;bottom:5.4%;right:6.4%;z-index:1;
   font-family:var(--font-latin);font-size:9.5px;font-weight:600;letter-spacing:.4em;text-indent:.4em;text-transform:uppercase;
   color:rgba(46,26,10,.62);text-shadow:0 1px 0 rgba(255,225,170,.07)}
-/* 启卷：鎏金细线胶囊 + 菱钉 */
-.cv-unseal{position:absolute;bottom:8.5%;left:50%;transform:translateX(-50%);z-index:1;
-  display:flex;align-items:center;gap:18px;padding:12px 32px;border:1px solid rgba(201,174,109,.72);border-radius:40px;
-  background:linear-gradient(165deg,rgba(30,18,9,.55),rgba(20,12,6,.45));color:#EBD79F;
-  font-family:var(--font-serif);font-weight:700;font-size:15px;letter-spacing:.4em;text-indent:.4em;white-space:nowrap;
-  box-shadow:0 4px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,240,200,.1);
-  transition:all .3s var(--ease-spring);animation:cvBreath 3.8s ease-in-out infinite}
-.cv-unseal::before,.cv-unseal::after{content:'';flex:none;width:7px;height:7px;transform:rotate(45deg);border:1px solid rgba(222,200,140,.9);transition:all .3s var(--ease-spring)}
-.cv-unseal:hover{background:linear-gradient(165deg,rgba(150,55,46,.5),rgba(109,35,28,.42));color:#FFF0C4;
-  transform:translateX(-50%) translateY(-3px);
-  box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 26px rgba(150,55,46,.22),inset 0 1px 0 rgba(255,240,200,.16)}
-.cv-unseal:hover::before,.cv-unseal:hover::after{background:rgba(240,222,160,.95);box-shadow:0 0 8px rgba(240,222,160,.65)}
-.cv-unseal:active{transform:translateX(-50%) translateY(0)}
-@keyframes cvBreath{0%,100%{box-shadow:0 4px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,240,200,.1)}50%{box-shadow:0 4px 16px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,240,200,.14),0 0 26px rgba(201,174,109,.2)}}
+/* 呼吸动效：朱印微微起伏，暗示「可点」 */
+@keyframes cvBreath{0%,100%{box-shadow:0 5px 13px rgba(18,8,3,.55),inset 0 2px 3px rgba(255,190,160,.32),inset 0 -5px 9px rgba(40,8,4,.55)}
+  50%{box-shadow:0 6px 17px rgba(18,8,3,.6),inset 0 2px 3px rgba(255,190,160,.36),inset 0 -5px 9px rgba(40,8,4,.55),0 0 22px rgba(201,174,109,.24)}}
 
 /* ============ 墨签通知 ============ */
 #ink-slips{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none}
@@ -817,7 +991,6 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
   .cv-line{width:32px}
   .cv-sub{letter-spacing:.38em;text-indent:.38em}
   .cv-seal{width:52px;height:52px}.cv-seal span{font-size:20px}
-  .cv-unseal{font-size:13.5px;padding:11px 22px;letter-spacing:.3em;text-indent:.3em}
   .cv-colophon{font-size:8px}
   .cv-lozenge{width:min(230px,62%)}
 }
@@ -4990,6 +5163,32 @@ window.MODIAN_DEX = {
    ================================================================ */
 'use strict';
 const D = window.MODIAN_DATA || {};
+/* ── 跨帧探测（全局版）──────────────────────────────
+   魔典跑在「界面正则」提升出来的 iframe 里，酒馆助手的全局函数
+   （getChatMessages / eventOn / getLastMessageId …）**只存在于父/顶层窗口**，
+   本上下文里 `typeof eventOn === 'function'` 恒为 false。
+   此处统一提供取帧顺序：本上下文 → parent → top；取到的函数一律 bind 回原帧，
+   否则调用时 this 丢失会抛错。
+   ⚠ 必须定义在 syncFloors / wireFloorEvents 之前（那两处早于 Stat 声明）。 */
+function hostFrames(){
+  const out = [];
+  try{ out.push(window); }catch(e){}
+  try{ if(window.parent && window.parent !== window) out.push(window.parent); }catch(e){}
+  try{ if(window.top && window.top !== window) out.push(window.top); }catch(e){}
+  return out;
+}
+/* 按名字跨帧取一个值（函数会 bind）。取不到返回 null。 */
+function hostPick(name){
+  for(const f of hostFrames()){
+    try{
+      const v = f[name];
+      if(typeof v === 'function') return v.bind(f);
+      if(v != null) return v;
+    }catch(e){}
+  }
+  return null;
+}
+
 /* ── 楼层装配（真机接酒馆；裸跑吃演示数据） ──
    优先级：demo-floors.js 显式演示 > 真酒馆 getChatMessages 拉 AI 楼层 > 单封面零层。
    idx 即真实楼层号（事件回调据它定位；真机数据缺 is_user 字段时按奇偶数兜底） */
@@ -5000,6 +5199,10 @@ function inTavern(){
 function syncFloors(){
   try{
     if(window.MODIAN_FLOORS) return;                 // 演示数据在场 → 永远用演示
+    /* 跨帧取接口：iframe 里裸名恒为 undefined，直接 typeof 判会整条同步静默失效
+       —— 表现是「生成新楼后魔典永远停在旧楼层」。 */
+    const getChatMessages = hostPick('getChatMessages');
+    const getLastMessageId  = hostPick('getLastMessageId');
     if(typeof getChatMessages!=='function' || typeof getLastMessageId!=='function') return;
     const n = getLastMessageId();
     if(typeof n!=='number' || Number.isNaN(n) || n < 0) return;
@@ -5069,16 +5272,24 @@ function refreshStatsUI(){
 (function wireFloorEvents(){
   let t = 0;
   const bump = ()=>{ clearTimeout(t); t = setTimeout(refetchAndFollow, 160); };
-  try{
-    if(typeof eventOn==='function' && window.tavern_events){
-      for(const key of ['MESSAGE_RECEIVED','MESSAGE_UPDATED','CHAT_CHANGED','MESSAGE_SWIPED']){
-        const name = tavern_events[key];
-        if(typeof name==='string') eventOn(name, bump);
+  /* ⚠ 跨帧：iframe 里裸 `eventOn` / `window.tavern_events` 恒不存在，
+     原实现整段被 `typeof eventOn==='function'` 短路 → 四个楼层事件一个都没订阅上，
+     于是生成新楼后既不翻页也不刷变量。现统一走 hostPick 逐帧取，并逐帧绑事件源。 */
+  for(const f of hostFrames()){
+    try{
+      const eOn = f.eventOn;
+      if(typeof eOn !== 'function') continue;
+      const te = f.tavern_events;
+      if(te){
+        for(const key of ['MESSAGE_RECEIVED','MESSAGE_UPDATED','CHAT_CHANGED','MESSAGE_SWIPED']){
+          const name = te[key];
+          if(typeof name === 'string') eOn.call(f, name, bump);
+        }
       }
-    }
-    if(typeof eventOn==='function' && window.iframe_events && typeof iframe_events.GENERATION_ENDED==='string')
-      eventOn(iframe_events.GENERATION_ENDED, ()=> setTimeout(bump, 200));
-  }catch(e){}
+      const ie = f.iframe_events;
+      if(ie && typeof ie.GENERATION_ENDED === 'string') eOn.call(f, ie.GENERATION_ENDED, ()=> setTimeout(bump, 200));
+    }catch(e){}
+  }
   // 真机里若无演示数据：拉一次作为起点（裸跑 MODIAN_FLOORS 恒在场，此步恒跳过 demo 态）
   if(!window.MODIAN_FLOORS && inTavern()) syncFloors();
 })();
@@ -5097,7 +5308,9 @@ function refreshStatsUI(){
    ═══════════════════════════════════════════════════════════════ */
 const NpcForge = (()=>{
   const PREFIX = '';                   // 条目名 = NPC 姓名本身（不加项目前缀，AI 侧更自然）
-  const KEY = 'modian_npc_forge_v1';   // 表单草稿（不入世界书，刷新不丢）
+  /* 用户定：NPC 生成表单「用过即抛」——不跨会话保留。
+     载入时先清旧键，再从空白起步；save() 降级为会话内空操作。 */
+  const KEY = 'modian_npc_forge_v1';   // 遗留键：每次启动即清退
 
   /* 生成规则的四个维度选项（玩家勾选，AI 依此展开个体） */
   const OPTS = {
@@ -5118,17 +5331,11 @@ const NpcForge = (()=>{
     };
   }
   let S = fresh();
-  try{ const raw = localStorage.getItem(KEY); if(raw){ const o=JSON.parse(raw); S = Object.assign(fresh(), o, { ui:fresh().ui }); if(S.gender==='女') S.gender='人类女性'; if(S.gender==='男') S.gender='人类男性'; } }catch(e){}
-  const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify({...S, ui:fresh().ui})); }catch(e){} };
+  try{ localStorage.removeItem(KEY); }catch(e){}   // 一次性表单：上次内容一律不留
+  const save = ()=>{};   // 会话内不落盘（表单状态仅存内存）
 
   /* —— 跨帧探测酒馆助手世界书 API（iframe 里本上下文没有） —— */
-  function frames(){
-    const out = [];
-    try{ out.push(window); }catch(e){}
-    try{ if(window.parent && window.parent!==window) out.push(window.parent); }catch(e){}
-    try{ if(window.top && window.top!==window) out.push(window.top); }catch(e){}
-    return out;
-  }
+  function frames(){ return hostFrames(); }
   function api(name){
     for(const f of frames()){
       try{ if(typeof f[name] === 'function') return f[name].bind(f); }catch(e){}
@@ -5235,11 +5442,14 @@ const NpcForge = (()=>{
   async function aiFill(dim){
     const dimDef = DIMS.find(x=>x.k===dim);
     if(!dimDef) return { ok:false, msg:'未知的补全维度。' };
-    /* 优先 generateRaw：自带 prompt 序列，绕开预设的思维链/流程提示词与聊天历史——
-       立契补全是独立小任务，走 generate 会被主预设卷进去（正文易为空）。
-       权威签名：JS-Slash-Runner @types/function/generate.d.ts */
-    const gen = api('generateRaw') || api('generate');
-    if(!gen) return { ok:false, msg:'未接入酒馆助手生成接口——AI 补全要在酒馆里、且酒馆助手已启用时才可用（浏览器直开没有模型可调）。' };
+    /* ⚠ 只走 generateRaw，绝不退回 generate。
+       generate = 正文生成路径：会把主预设、思维链、聊天历史全卷进来，
+       实测会把一段剧情正文灌进「外貌」栏（比不调用更糟）。
+       generateRaw = 自带 ordered_prompts 的隔离调用，才是补全该用的那条。
+       权威签名：JS-Slash-Runner @types/function/generate.d.ts
+       （同仓已验证写法：幻璃镜 src/utils/subApi.ts、租借男友 src/utils/phone/subAi.ts）*/
+    const gen = api('generateRaw');
+    if(!gen) return { ok:false, msg:'未取得 generateRaw（静默生成接口）。已刻意不退回 generate——那是正文生成路径，会把剧情正文灌进本栏。请确认酒馆助手已启用且版本较新。' };
     if(!S.name.trim() && !S.race.trim()) return { ok:false, msg:'至少先定名或选个种族，AI 才有落笔的根据。' };
     S.ui.busy[dim] = true; save(); if(insertOpen) openInsert(insertOpen);
     try{
@@ -5256,6 +5466,8 @@ const NpcForge = (()=>{
           { role:'system', content:'你是《魔物娘图鉴世界》角色卡的 NPC 设定助手。直接输出被要求的设定文本，不要任何标题、引号、列表、思维链或解释。' },
           'user_input',
         ],
+        // 补全是独立小任务，绝不能带聊天历史——否则主对话的人设/剧情会污染这一栏
+        max_chat_history: 0,
         should_stream:false, should_silence:true,
       });
       /* 容错：默认返回字符串，若返回详情对象则取 content */
@@ -5300,9 +5512,16 @@ const NpcForge = (()=>{
         return [...(wb||[]), { name, content, ...entryTemplate(v.keys) }];
       });
       if(clash) return { ok:false, msg:`世界书里已存在同名条目「${clash}」，未覆盖。改名或先除去旧条。` };
+      const kept = S.created;
       S.created.unshift({ name:S.name.trim(), keys:v.keys });
       save();
-      return { ok:true, msg:`已立契：${S.name.trim()}（绿灯 · 角色定义后 · 双向禁递归）` };
+      /* 用户定：NPC 生成「用过即抛」—— 立契成功后表单内容立即清空，
+         不留姓名/种族/四维/触发词，下次进来是空白一张。
+         created 立契名录是本次会话内的回执，保留（不落盘）。 */
+      const done = S.name.trim();
+      S = fresh();
+      S.created = kept;
+      return { ok:true, msg:`已立契：${done}（绿灯 · 角色定义后 · 双向禁递归）· 表单已清空` };
     }catch(e){
       console.warn('[魔典] 立契写入失败', e);
       return { ok:false, msg:'写入世界书失败：' + ((e && e.message) || e) };
@@ -5572,13 +5791,7 @@ const Stat = (()=>{
      此前 Stat 只查 window.*，真机上大概率永远取不到 → 静默落到 defaults，
      用户看到的就是「变量永远不更新」。此处照 NpcForge.frames() 的同款纪律
      逐帧探测：本上下文 → parent → top，并对 function 做 bind（否则 this 丢失）。 */
-  function frames(){
-    const out = [];
-    try{ out.push(window); }catch(e){}
-    try{ if(window.parent && window.parent !== window) out.push(window.parent); }catch(e){}
-    try{ if(window.top && window.top !== window) out.push(window.top); }catch(e){}
-    return out;
-  }
+  function frames(){ return hostFrames(); }
   function pick(name){
     for(const f of frames()){
       try{
@@ -5591,11 +5804,25 @@ const Stat = (()=>{
   }
   const MvuOf = ()=> pick('Mvu');
   const getVariablesOf = ()=> pick('getVariables');
+  const getAllVarsOf = ()=> pick('getAllVariables');   /* 254 卡首选通道 */
   const waitGlobalOf = ()=> pick('waitGlobalInitialized');
+  /* ⚠ 就绪探测的**负结果**必须缓存。
+     sync() 现在调得很勤（每次开插页、每次变量事件、每 4s 轮询都会打进来），
+     而 ensureMvu 在 Mvu 缺席时会把 waitGlobalInitialized 竞速**等满** timeoutMs。
+     不缓存的话，浏览器裸跑 / 未装 MVU 的环境里每开一次插页都要白等 2.5 秒，
+     插页会肉眼可见地卡一下 —— 那是我这次改动引入的回归，不能留。
+     正结果永久缓存（Mvu 一旦装载就不会再消失）；负结果按 TTL 短暂缓存，
+     保证「脚本晚于魔典加载」这种常见时序仍能在 TTL 后被重新探到。 */
+  let mvuReady = false, mvuMissAt = 0;
+  const MVU_MISS_TTL = 8000;
   async function ensureMvu(timeoutMs){
+    const probe = ()=>{ const m = MvuOf(); return !!(m && typeof m.getMvuData === 'function'); };
+    if(mvuReady) return true;
+    const m0 = MvuOf();
+    if(m0 && typeof m0.getMvuData === 'function'){ mvuReady = true; return true; }
+    // 负结果刚发生过：不再空等，直接用当前探测结果作答
+    if(Date.now() - mvuMissAt < MVU_MISS_TTL) return false;
     try{
-      const m0 = MvuOf();
-      if(m0 && typeof m0.getMvuData === 'function') return true;
       const wait = waitGlobalOf();
       if(typeof wait === 'function'){
         await Promise.race([
@@ -5604,31 +5831,74 @@ const Stat = (()=>{
         ]);
       }
     }catch(e){}
-    const m = MvuOf();
-    return !!(m && typeof m.getMvuData === 'function');
+    const ok = probe();
+    if(ok) mvuReady = true; else mvuMissAt = Date.now();
+    return ok;
   }
   async function sync(){
-    // 第一级：MVU 最新楼层（幻璃镜同款：总览/行囊永远跟着最新一落走）；再退聊天级
+    // 读取顺序对齐 254 卡《MGE状态栏》的 getStat() 四级探测（该卡已在真机验证）：
+    //   ① Mvu.getMvuData({type:'message', message_id:'latest'})（MVU 最新楼层）
+    //   ② getAllVariables()（酒馆助手变量 API，最快最稳）
+    //   ③ 跨帧 TavernHelper / Mvu
+    //   ④ chatMetadata.variables.stat_data（MVU 落点之一）
+    //   ⑤ schemaDefaults（明示兜底）
+    // ⚠ 顺序铁律：**楼层级必须排在聊天级之前**。
+    //   病灶（用户报「总览不跟最新楼层」）：原实现把 getAllVariables() 放在第一位并
+    //   `return` 掉了。而 getAllVariables() 拿的是**聊天级** stat_data —— 那是变量「曾经」
+    //   落过盘的快照，不随每一楼实时推进。只要它返回了非空对象（几乎总是），
+    //   第二级那条真正的 latest 楼层读取就永远执行不到，总览/行囊/图鉴于是集体停在旧值。
+    //   MVU 的权威语义（galgame-core/mvu/mvuCore.ts 的 readStatData）也是「楼层级优先，
+    //   读不到才回退聊天级」——这里与它对齐。
+    //   另：getAllVariables() / getVariables() 返回的是 Promise，须 await，否则 adopt
+    //   拿到的是 Promise 对象（Object.keys 恒为空）→ 白判一次 false。
+    const adopt = (sm, src)=>{ if(sm && typeof sm==='object' && !Array.isArray(sm) && Object.keys(sm).length){ stat = sm; source = src; return true; } return false; };
+    // 第一级：MVU 最新楼层（幻璃镜同款：总览/行囊永远跟着最新一落走）
     try{
       if(await ensureMvu(2500)){
         const mvu = MvuOf();
         const dm = mvu.getMvuData({type:'message', message_id:'latest'});
-        const sm = (dm && dm.stat_data) ? dm.stat_data : dm;
-        if(sm && typeof sm==='object' && Object.keys(sm).length){ stat = sm; source = 'mvu-latest'; return; }
+        if(adopt(dm && dm.stat_data ? dm.stat_data : dm, 'mvu-latest')) return;
         const d = mvu.getMvuData({type:'chat'});
-        const sd = (d && d.stat_data) ? d.stat_data : d;
-        if(sd && typeof sd==='object'){ stat = sd; source = 'mvu'; return; }
+        if(adopt(d && d.stat_data ? d.stat_data : d, 'mvu')) return;
       }
     }catch(e){ statWarnOnce(); /* 落级 */ }
-    // 第二级：聊天变量
+    // 第二级：聊天变量 API
+    try{
+      const av = getAllVarsOf();
+      if(typeof av === 'function'){
+        const v = await av();
+        if(adopt(v && v.stat_data ? v.stat_data : v, 'allvars')) return;
+      }
+    }catch(e){}
+    // 第三级：跨帧
+    for(const f of frames()){
+      try{
+        const th = f.TavernHelper;
+        if(th && typeof th.getAllVariables === 'function'){
+          const v = await th.getAllVariables();
+          if(adopt(v && v.stat_data ? v.stat_data : v, 'allvars-frame')) return;
+        }
+      }catch(e){}
+    }
+    // 第四级：聊天变量
     try{
       const gv = getVariablesOf();
       if(typeof gv === 'function'){
-        const v = gv({type:'chat'});
-        if(v && v.stat_data && typeof v.stat_data==='object'){ stat = v.stat_data; source = 'chat'; return; }
+        const v = await gv({type:'chat'});
+        if(adopt(v && v.stat_data ? v.stat_data : v, 'chat')) return;
       }
     }catch(e){}
-    // 第三级：初始档案（明示）
+    // 第五级：SillyTavern chatMetadata（MVU 的另一处落点）
+    try{
+      for(const f of frames()){
+        const ctx = f.SillyTavern && f.SillyTavern.getContext && f.SillyTavern.getContext();
+        const meta = ctx && (ctx.chatMetadata || ctx.chat_metadata);
+        if(meta && meta.variables){
+          if(adopt(meta.variables.stat_data ? meta.variables.stat_data : meta.variables, 'chatmeta')) return;
+        }
+      }
+    }catch(e){}
+    // 末级：初始档案（明示）
     stat = FRAME(); source = 'defaults';
   }
   function get(path, fb){
@@ -5697,10 +5967,17 @@ function wireOneEvent(evtName, cb){
   let lastSig = '';
   setInterval(()=>{
     if(document.hidden) return;
-    const s = Stat.source();
+    const s = Stat.source;   // getter 属性，不是函数——此前误写成 Stat.source()，每 4s 抛一次 TypeError，轮询兜底从未真正生效
     if(s === 'defaults') return;                 // 本来就没数据源，轮询无意义
+    /* ⚠ 签名覆盖面（用户报「遇到新角色，图鉴没解锁」的另一半原因）：
+       原来只盯 `主角` + `资产` 两项。于是「只增加了图鉴.已遭遇种族 / 羁绊 / 世界」的那些楼，
+       签名一动不动 → 轮询判定「无变化」→ 永不刷新 → 用户明明遇见了，图鉴就是不变。
+       现改为覆盖所有会驱动渲染的分组。 */
     let sig = '';
-    try{ sig = JSON.stringify(Stat.get('主角', null)) + '|' + JSON.stringify(Stat.get('资产', null)); }catch(e){}
+    try{
+      sig = ['主角','资产','阵营声望','世界','图鉴','羁绊','战斗','心界住民','任务','事件记录','地点','行囊','技能','物品']
+        .map(k=>JSON.stringify(Stat.get(k, null))).join('|');
+    }catch(e){}
     if(sig && sig !== lastSig){ lastSig = sig; refreshStatsUI(); }
   }, 4000);
 })();
@@ -5709,6 +5986,8 @@ function wireOneEvent(evtName, cb){
 const I = (p, extra='') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ${extra}>${p}</svg>`;
 const ICON = {
   dex: I('<path d="M12 6.5C10 4.8 7 4.3 4 5v13c3-.7 6-.2 8 1.5 2-1.7 5-2.2 8-1.5V5c-3-.7-6-.2-8 1.5Z"/><path d="M12 6.5v13"/><ellipse cx="15.6" cy="10.5" rx="2.4" ry="2.9"/><circle cx="15.6" cy="10.5" r=".9" fill="currentColor" stroke="none"/>'),
+  anima: I('<path d="M12 20.5c-3.6-2-6-4.9-6-7.6A3.4 3.4 0 0 1 12 11a3.4 3.4 0 0 1 6 1.9c0 2.7-2.4 5.6-6 7.6Z"/><path d="M12 3v2.4M12 6.2 10.7 5M12 6.2 13.3 5M4.4 10.2l2.1 1M4.4 10.2 5 8M19.6 10.2l-2.1 1M19.6 10.2 19 8"/>'),
+  hero: I('<circle cx="12" cy="8" r="3.4"/><path d="M5 20.5c.6-4 3.4-6.2 7-6.2s6.4 2.2 7 6.2"/><path d="M9.2 5.2 12 3l2.8 2.2"/>'),
   fama: I('<path d="M12 4v16M8 20h8M12 6 5 8m7-2 7 2"/><path d="M5 8l-2.2 5a2.6 2.6 0 0 0 4.4 0L5 8Zm14 0-2.2 5a2.6 2.6 0 0 0 4.4 0L19 8Z"/>'),
   artes: I('<path d="m5 5 11.5 11.5M5 5v3m0-3h3M19 5 7.5 16.5M19 5v3m0-3h-3"/><path d="m15.8 15.8 2.6 2.6M8.2 15.8l-2.6 2.6"/><path d="M12 9.5l1.1-1.1a1.6 1.6 0 0 0-2.2 0L12 9.5Z"/>'),
   vincula: I('<path d="M4 15c4-1 7-4 8-9 2 1 3 3 3 6 3-1 4-3 5-6 1 5-1 10-6 12-3 1.4-7 0-10-3Z"/><path d="M9 18.5 7.5 21M12 19l-1 2.5M15 18l.5 2.5"/>'),
@@ -5746,17 +6025,109 @@ function stripThinking(t){
 /* 楼层净炉：思维链/预设壳/弹幕/容器，顺序对齐幻璃镜-租借男友铁律 */
 const SUOT_RE = /<SUOT\b[^>]*>([\s\S]*?)<\/SUOT>/i;
 const SUOT_INDEX_RE = /^\s*[0-9０-９]+\s*[.、)）:：]\s*/;
+/* ── 预设留言提取（移植自租借男友 utils/stripThinking.ts + scriptParser.ts）──
+   顺序铁律：猫神留言必须在「附加块/details 整块滤净」之前收，
+   否则 <summary>小猫之神的留言</summary> 会被附加块正则误食、留言体以裸文本漏进正文。 */
+/* 猫神留言（Reborn 小猫之神）：<details><summary>标题</summary>留言体</details> */
+const CAT_NOTE_BLOCK_RE = /<details\b[^>]*>\s*<summary\b[^>]*>([^<]{0,80})<\/summary\s*>([\s\S]*?)<\/details\s*>/gi;
+/* 流式期未闭合的猫神留言：留言标题之后直到结尾都算留言体 */
+const CAT_NOTE_TAIL_RE = /<details\b[^>]*>\s*<summary\b[^>]*>([^<]{0,80})<\/summary\s*>([\s\S]*)$/i;
+/* 小此留言块（Izumi 泉此方）：<tucao>吐槽/创作思路/小此对话、<konatan_chat>情感陪伴 */
+const KONATA_NOTE_BLOCK_RE = /<(tucao|konatan_chat)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi;
+/* 流式期未闭合的小此留言 */
+const KONATA_NOTE_TAIL_OPEN_RE = /<(tucao|konatan_chat)\b[^>]*>([\s\S]*)$/i;
+/* 猫神留言标题判定：须含「留言/猫」才认，预设的 <summary> 摘要与内心话 details 不收 */
+function isCatNoteTitle(title){ return /留言|猫/.test(title); }
+/* 纯标签行（不产生可见正文行）：afterLine 锚定时要跳过 */
+function isConsumedTagLine(line){
+  const t = String(line||'').trim();
+  if(!t) return true;
+  return /^\[scene:/.test(t) || /^\[nsfw:/.test(t) || /^<achievement>/.test(t) || /^>/.test(t)
+      || /^<\/?[A-Za-z_][^>]*>$/.test(t)
+      || /^<\/?(?:content|正文|options|summary|details|danmu|UpdateVariable|Analysis|game|Interleaving|SUOT|tucao|konatan_chat|advice|think|thinking|simple_thinking|think_nya~|draft|Chain_of_Thought|start)\b/i.test(t);
+}
+/* 从 from 起找留言块后第一行可见文本（供按行锚定） */
+function firstVisibleLineAfter(text, from){
+  for(const line of String(text).slice(from).split(/\n/)){
+    const t = line.trim();
+    if(!t) continue;
+    if(isConsumedTagLine(t)) continue;
+    return t.slice(0,200);
+  }
+  return undefined;
+}
+/* ══════════════════════════════════════════════════════════
+   功能标签白名单抢救（防各净炉分支误杀）
+   ──────────────────────────────────────────────────────────
+   病灶：卡内规则要求五个功能标签「一律置于 </正文> 之后」，
+   而 ⑤<details/danmu/game> 与 ⑥<Interleaving> 等滤净分支各自
+   整块删除文本 —— Dramatron 把 <Interleaving> 开在 <正文> 内部、
+   闭在 </正文> 之前时，⑥ 的 `t = container[1]` 会把容器外的
+   <魔物生成>/<获得物品>… 全部丢弃，卡片数归零、statusSeen 变false。
+
+   修法（原则：功能标签只有这五个有「通行权」）：
+     进净炉第一步先把五者整块提出来暂存，并把原位清空；
+     全部滤净分支跑完后原样拼回文末。
+   于是不管哪个分支怎么删，都碰不到它们；而容器外的其它文本
+   （残渣、玩家提示等）仍照旧被丢弃 —— 不是「全留」，是「只留这五个」。
+   渲染位置：parseFloor 用 fcWalk 在 t 上取块，cardHtml 排在 choices 之前（正文不受影响）。
+   闭合缺失（流式截断）时按文末兜底收尾，避免整卡消失。 */
+const FUNC_TAGS = '魔物生成|获得物品|获取任务|技能生成|较量面板';
+function rescueFuncTags(src){
+  const held = [];
+  let t = String(src||'').replace(new RegExp(String.raw`<\s*(${FUNC_TAGS})\s*>([\s\S]*?)(?:<\/\s*\1\s*>|(?![\s\S]*<\/\s*\1\s*>)[\s\S]*$)`, 'gi'), (m, name, body)=>{
+    held.push({ name, body });
+    return '';
+  });
+  return { t, held };
+}
 function cleanseFloor(raw){
   let t = String(raw||'');
-  const out = { text:'', notes: [], suot: '' };
+  const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [] };
   if(!t) return out;
+  // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
+  let held = [];
+  try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
   // ① 泉此方思维链前缀：闭标签前全截
   t = t.replace(/[\s\S]*?<\/konatan_planning~>/i, '');
   // ② <SUOT> 选项块先提（滤净链将删之）
   const sm = SUOT_RE.exec(t);
   if(sm) out.suot = sm[1];
-  // ③ 留言小笺提取（泉此方 tucao / konatan_chat）
-  t = t.replace(/<(tucao|konatan_chat)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, (m, g, c)=>{ out.notes.push({tag:g, text:c.trim()}); return ''; });
+  // ③ 猫神留言（Reborn 小猫之神）—— 必须先于 ⑥ 的 <details> 整块滤净收，否则必丢
+  {
+    const ranges = [];
+    for(const m of t.matchAll(CAT_NOTE_BLOCK_RE)){
+      if(!isCatNoteTitle(m[1])) continue;                 // 预设的 <summary> 摘要/内心话 details 不收
+      out.catNotes.push(m[2].trim());
+      ranges.push([m.index||0, (m.index||0)+m[0].length]);
+    }
+    for(let i=ranges.length-1;i>=0;i--) t = t.slice(0,ranges[i][0]) + t.slice(ranges[i][1]);
+    const tail = CAT_NOTE_TAIL_RE.exec(t);
+    if(tail && isCatNoteTitle(tail[1])){
+      const body = tail[2].trim();
+      if(body){ out.catNotes.push(body); t = t.slice(0, tail.index||0); }
+    }
+  }
+  // ④ 小此留言（Izumi 泉此方）—— 同样先收；记下块后第一行可见文本供按行锚定
+  {
+    const ranges = [];
+    for(const m of t.matchAll(KONATA_NOTE_BLOCK_RE)){
+      out.konataNotes.push({
+        type: m[1].toLowerCase(),
+        content: m[2].trim(),
+        afterLine: firstVisibleLineAfter(t, (m.index||0)+m[0].length),
+      });
+      ranges.push([m.index||0, (m.index||0)+m[0].length]);
+    }
+    for(let i=ranges.length-1;i>=0;i--) t = t.slice(0,ranges[i][0]) + t.slice(ranges[i][1]);
+    const tail = KONATA_NOTE_TAIL_OPEN_RE.exec(t);
+    if(tail){
+      const body = tail[2].trim();
+      if(body){ out.konataNotes.push({type: tail[1].toLowerCase(), content: body}); t = t.slice(0, tail.index||0); }
+    }
+    /* 兼容旧字段：notes 汇总小此留言（历史消费方按 tag 展示） */
+    for(const n of out.konataNotes) out.notes.push({tag:n.type, text:n.content});
+  }
   // ④ 思维链对/未闭合流式尾/变体
   t = t.replace(/<(think|thinking|chain_of_thought|draft|simple_thinking|cot|think_nya~)[^>]*>[\s\S]*?<\/\1\s*>/gi,'')
        .replace(/<think(?:ing)?\s*\/>/gi,'')
@@ -5775,6 +6146,12 @@ function cleanseFloor(raw){
   const openOnly = closed ? null : /<Interleaving>([\s\S]*)$/i.exec(t);
   const container = (closed || openOnly);
   if(container) t = container[1].replace(/<\/?Interleaving>\n?/gi,'').replace(/<\/?content\b[^>]*>/gi,'');
+  // ⓿ 归位：五个功能标签按原出现顺序拼回文末（正文行为完全不变）
+  if(held.length){
+    const heldTxt = held.map(x=>`<${x.name}>\n${x.body.trim()}\n</${x.name}>`).join('\n');
+    t = t.replace(/\s+$/,'');
+    t = (t ? t + '\n\n' : '') + heldTxt;
+  }
   out.text = t;
   return out;
 }
@@ -5801,11 +6178,137 @@ function parseFields(raw){
   });
   return {fields, extras};
 }
+/* afterLine（留言块后第一行可见文本）→ flow 下标匹配：
+   取首条包含该行的正文段；对不回时回退到上一条锚点之后，保证笺仍会出现。 */
+function anchorKonataNotes(notes, flow){
+  const list = (notes||[]).map(n => ({...n}));
+  if(!list.length) return list;
+  const prose = (flow||[]).filter(x => x.type === 'prose');
+  let searchFrom = 0;
+  for(let i=0;i<list.length-1;i++){          // 末条是 tail，不锚定
+    const n = list[i];
+    if(n.type !== 'tucao') continue;
+    let found = null;
+    if(n.afterLine){
+      for(let k=searchFrom;k<prose.length;k++){
+        if(prose[k].text.includes(n.afterLine)){ found = k; break; }
+      }
+    }
+    if(found === null){                       // 回退：锚到上一条之后
+      found = Math.min(searchFrom, Math.max(0, prose.length-1));
+    }
+    n.anchorPara = found;
+    searchFrom = found + 1;
+  }
+  list[list.length-1].anchorPara = null;       // 末尾留言常显在页末
+  return list;
+}
+/* 小此（泉此方）头像池 —— Izumi 预设留言笺专用（移植自租借男友 data/konataImages.ts）*/
+const KONATA_IMAGES = [
+  'https://i.postimg.cc/yNMBfS3t/20220202230312-c94a9.jpg',
+  'https://i.postimg.cc/yNgsXTW7/OIP.webp',
+  'https://i.postimg.cc/yNgsXTW7/OIP-(1).webp',
+  'https://i.postimg.cc/ZR6mXKr7/20210325233256-b2a47.jpg',
+  'https://i.postimg.cc/DfCpn3Bp/111.webp',
+  'https://i.postimg.cc/J4G6hY25/20220202230228-d4764.jpg',
+  'https://i.postimg.cc/ZKC7qsMF/20220202230229-2d45c.jpg',
+  'https://i.postimg.cc/15fCz7jK/20220202230231-c0ee4.jpg',
+  'https://i.postimg.cc/FFPCNXDW/222.webp',
+];
+/* FNV-1a 变体散列：楼层号稳定映射进图池下标（同楼层恒定同图，避免重渲闪变）*/
+function seedHash(seed){
+  let h = 2166136261;
+  const s = String(seed);
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function konataImageFor(seed){
+  const pool = KONATA_IMAGES;
+  if(seed == null || !Number.isInteger(seed) || seed < 0) return pool[Math.floor(Math.random()*pool.length)];
+  return pool[seedHash(seed) % pool.length];
+}
+/* 小猫之神头像（无图池：预设只给文字，用朱印猫爪刻印）。
+   刻意内联 svg 而不调 I()：本函数在 I 之前的位置声明，保持自包含。 */
+const ICON_paw = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="15.4" rx="4.6" ry="3.9"/><ellipse cx="6.3" cy="9.4" rx="2.1" ry="2.6"/><ellipse cx="10.1" cy="6.6" rx="2.1" ry="2.7"/><ellipse cx="14.5" cy="6.9" rx="2.1" ry="2.7"/><ellipse cx="17.9" cy="10.1" rx="2" ry="2.5"/></svg>';
+/* ══════════════════════════════════════════════════════════
+   图鉴锁 —— 移植卡内 MGE状态栏 v3.0.0「收集墙」封印机制，改绘为魔典羊皮纸风
+   卡内原语义（逐条照搬，不改语义）：
+   · 密码 LOCK_PASS = '爱丽'
+   · 只作「会话级临时预览」：状态挂宿主 window，不落 localStorage，
+     iframe 重建 / 切页 / 开关插页都不丢，浏览器关闭即失效
+   · 只揭「未收录」项；已遭遇 / 已结缘的收集进度不受上锁影响
+   · 再点锁 = 重新上锁（只收回预览）；输错 → 抖动 + 清空重输
+   ══════════════════════════════════════════════════════════ */
+const DEX_PASS = '爱丽';                 // 卡内 LOCK_PASS
+const DEX_PREVIEW_KEY = '__modian_dex_preview';
+/* 预览态挂宿主 window（与卡内 uiWin() 同策）：iframe 重建不丢 */
+function dexHost(){ try{ if(window.parent && window.parent!==window) return window.parent; }catch(e){} return window; }
+function dexPreviewOn(){ try{ dexHost()[DEX_PREVIEW_KEY] = true; }catch(e){} }
+function dexPreviewOff(){ try{ dexHost()[DEX_PREVIEW_KEY] = false; }catch(e){} }
+function dexUnlocked(){ try{ return dexHost()[DEX_PREVIEW_KEY] === true; }catch(e){ return false; } }
+/* 锁徽：挂名册标题栏 */
+function dexLockBadge(){
+  const on = dexUnlocked();
+  return `<span class="dl-badge${on?' on':''}" data-dex-lock="1" role="button" tabindex="0"
+    title="${on?'预览中 · 点击重新上锁（只收回未收录项）':'密码临时预览未收录图鉴'}">${on?'印 已启':'封 未启'}</span>`;
+}
+/* 封印面板 */
+function dexLockPanel(){
+  return `
+  <div class="dex-lock" id="dex-lock-panel">
+    <div class="dl-seal">${ICON.seal}</div>
+    <div class="dl-text">未收录图鉴已封印 · 验印可临时预览</div>
+    <div class="dl-form"><input id="dex-pass" type="password" placeholder="密语" autocomplete="off" maxlength="16"><button id="dex-verify">验印</button></div>
+    <div class="dl-note">本会话内有效 · 重新上锁只收回未收录项，已收录进度不受影响</div>
+  </div>`;
+}
+/* 验印：正确→开会话预览；错误→抖动清空 */
+function dexTryUnlock(){
+  const inp = insertEl.querySelector('#dex-pass');
+  const panel = insertEl.querySelector('#dex-lock-panel');
+  if(!inp) return;
+  if(inp.value.trim() === DEX_PASS){
+    dexPreviewOn();
+    notify('印鉴吻合——封印暂解，未收录名册本次会话内可见','gild');
+    openInsert('dex');
+  }else{
+    if(panel){ panel.classList.remove('shake'); void panel.offsetWidth; panel.classList.add('shake'); }
+    inp.value='';
+    try{ inp.focus(); }catch(e){}
+    notify('印鉴不合，封印未应。','warn');
+  }
+}
+/* 点锁徽：已开→重新上锁；未开→滚动到封印面板并聚焦 */
+function dexToggleLock(){
+  if(dexUnlocked()){
+    dexPreviewOff();
+    notify('封印已复——未收录项收回，已收录进度不受影响','gild');
+    openInsert('dex');
+    return;
+  }
+  const panel = insertEl.querySelector('#dex-lock-panel');
+  if(panel) panel.scrollIntoView({block:'center'});
+  const inp = insertEl.querySelector('#dex-pass');
+  if(inp){ try{ inp.focus(); }catch(e){} }
+}
+
+/* ══════════════════════════════════════════════════════════
+   一次性输入 · 不留痕
+   用户定：NPC 生成表单与信笺输入框都是「用过即抛」，一律不跨会话保留。
+   ══════════════════════════════════════════════════════════ */
+function wipeTransient(){
+  // NPC 生成表单草稿
+  try{ localStorage.removeItem('modian_npc_forge_v1'); }catch(e){}
+  // 信笺草稿
+  try{ localStorage.removeItem('modian_letter_draft'); }catch(e){}
+}
+
 function parseFloor(raw){
-  const r = { cover:false, header:'', prose:[], minds:[], news:[], duels:[], cards:[], options:[], statusSeen:false, updates:0, notes:[] };
+  const r = { cover:false, header:'', prose:[], minds:[], news:[], duels:[], cards:[], options:[], statusSeen:false, updates:0, notes:[], catNote:null, konataNotes:[] };
   const cl = cleanseFloor(raw||'');
   let t = preNormalize(cl.text);
-  r.notes = cl.notes;
+  /* 预设留言：猫神（Reborn）。catNote 合并多段；小此留言（Izumi）待 flow 建好后锚定 */
+  r.catNote = cl.catNotes.length ? cl.catNotes.join('\n\n') : null;
   /* <start> 开局楼层：闭合与未闭合（流式截断）两形态都认；start 当包裹壳时把内层正文标签剥净留字 */
   const starts = extractBlocks(t,'start');
   if(!starts.length){
@@ -5846,6 +6349,13 @@ function parseFloor(raw){
     last = walk.lastIndex;
   }
   pushProse(body.slice(last));
+  /* 小此留言（Izumi）分楼：按出现顺序的最后一个留言块 = 末尾留言（常显，对齐猫爪笺）；
+     其余 tucao = 穿插吐槽，锚到它后面那一段正文，书页上就落在该段旁边。
+     锚定失败回退到「上一条之后」，保证笺仍会出现。 */
+  r.konataNotes = anchorKonataNotes(cl.konataNotes, r.flow);
+  r.konataTail = r.konataNotes.length ? r.konataNotes[r.konataNotes.length-1] : null;
+  r.midTucao = r.konataNotes.slice(0, -1).filter(n => n.type === 'tucao');
+  r.notes = cl.notes;
   // 正文后的功能标签（按源码出现顺序）
   r.cards = [];
   const tagMeta = {'魔物生成':['monstrum','魔物娘档案','MONSTRVM'],'获得物品':['res','获得物品','RES'],'获取任务':['mandatum','委托录','MANDATVM'],'技能生成':['artes','技能习得','ARS'],'较量面板':['certamen','较量记录','CERTAMEN']};
@@ -5882,6 +6392,8 @@ function parseFloor(raw){
   const cblk = t.match(/<choice>([\s\S]*?)<\/choice>/);
   if(cblk && cblk[1].includes('\n')) cblk[1].split(/\r?\n/).filter(s=>s.trim()).forEach(s=>pushOpt(s));
   for(const m of t.matchAll(/<choice>([^<]+?)<\/choice>/g)) pushOpt(m[1]);
+  /* statusSeen 保留但已停用：状态栏标签不再由 AI 输出（前端自绘，数据源为 stat_data），
+     页脚「状态簿已归档」改由 r.updates 驱动。仅作旧楼层兼容解析，不得再依赖它。 */
   if(/<\s*状态栏\s*>[\s\S]*?(<\/\s*状态栏\s*>|$)/i.test(t) || /<\s*状态面板\s*\/?>/i.test(t)) r.statusSeen = true;
   r.updates = (t.match(/<\s*(UpdateVariable|update)\s*>/gi)||[]).length;
   return r;
@@ -5889,6 +6401,55 @@ function parseFloor(raw){
 
 /* ---------- 小工具 ---------- */
 const esc = (s)=>String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* esc 的多行版：仅用于正文展示位（图鉴条目、WIKI 原文、世界书条目）。
+   esc() 只做 HTML 转义、不处理 \n，WIKI/卡内资料里的换行会全部塌成一行。
+   ⚠ 不可直接改 esc()：它还被大量用在 value="…" / placeholder="…" 等属性上下文，
+     在那里注入 <br> 会破坏属性值。故另立此函数，按需调用。
+   —— escLines 的教训：它把每个 \n 都换成 <br>，于是原文的段落空行（\n\n）
+     变成 <br><br>，在 line-height:1.9 下撑出夸张的段间距（用户截图实况）。
+     段落必须用真正的 <p> 承载，空行交给 CSS margin 控制，不再拿 <br> 当段落。 */
+const escLines = (s)=>esc(s).replace(/\r\n?/g,'\n').replace(/\n/g,'<br>');
+/* 段落版：空行分段→ 每段一个 <p>；段内单换行仍保留（<br>）。
+   中文正文排版正解，段距由 .dd-lore p + .dd-lore p + p 的 margin 决定。
+
+   ⚠ WIKI 原文里的小标题（【简介】【动作特征】…）不能当正文段渲染：
+   .dd-lore p 带 text-indent:2em，而 text-indent 只作用于「每个块的第一行」。
+   若【标题】与其下正文之间没有空行，它们会被并进同一个 <p>：
+       <p>【简介】<br>她们是…</p>
+   结果是【标题】缩进两格、<br> 之后的正文齐左、下一个 <p> 又缩进两格 ——
+   一段之内出现三种左缘，层次全乱（用户截图实况）。
+
+   修法：先把「独占一行的【小标题】」从段落流里摘出来（前后各补一个空行），
+   使其成独立的 <h4>（.dd-lore h4 零缩进），其下每段正文则都是规规矩矩的
+   2em 首行缩进 —— 左右两缘各自对齐，层次就齐了。
+   段内出现的【…】不是独占行，仍留在正文里不动。 */
+const escParas = (s)=>{
+  /* 标题归一：【小标题】与 Markdown 标题（#～######）同级同款，都渲染为 <h4>。
+     卡内女主档案「基础版」用【…】、「堕落版」用 ## ，两套体系混排会导致左右不齐，
+     所以先把两种写法都收进同一个标题判定。
+     `#` 后必须有空白才是标题，否则 #hashtag 这类行内话题会被误吞。 */
+  const H4_SRC = /^[ \t　]*(?:【([^【】\n]{1,24})】|#{1,6}[ \t　]+([^\n#]{1,40}))[ \t　]*$/;
+  const h4Text = (l)=>{ const m = l.match(H4_SRC); return m ? String(m[1]!==undefined?m[1]:m[2]).trim() : l.trim(); };
+  const isHead = (l)=> H4_SRC.test(l);
+  // 阶段一：摘出独占行的标题，在其前后补空行，使其独立成块
+  //（此处必须原样保留 【】/## 标记，阶段二要靠它判定，再在输出时才剥标记）
+  const staged = String(s??'').replace(/\r\n?/g,'\n').split('\n').reduce((acc, line)=>{
+    if(isHead(line)){
+      if(acc.length && acc[acc.length-1] !== '') acc.push('');
+      acc.push(line.trim());
+      acc.push('');
+    }else{
+      acc.push(line);
+    }
+    return acc;
+  }, []).join('\n');
+  // 阶段二：按空行切段，逐段映射为 h4 / p
+  return staged.split(/\n{2,}/).map(b=>b.trim()).filter(Boolean)
+    .map(b=>{
+      if(isHead(b)) return '<h4>'+esc(h4Text(b))+'</h4>';
+      return '<p>'+esc(b).replace(/\n/g,'<br>')+'</p>';
+    }).join('');
+};
 const g = (obj, path, fb)=>{ try{ return path.split('.').reduce((o,k)=>o?.[k], obj) ?? fb; }catch{ return fb; } };
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -5896,16 +6457,80 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pageBase = document.getElementById('page-base');
 const tome = document.getElementById('tome');
 function proseHtml(text){
+  /* ⚠ 顺序不可调换：`**粗体**` 必须先吃掉，否则 `*a* 和 **b**` 会被单星号规则
+     从第一个 `*` 一直配到 `**` 的第二个 `*`，产出 `<em>a* 和 *</em>` 这种碎屑。 */
   let t = esc(text)
     .replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>')              // 对应卡内 #7/#10
+    /* 单星号强调 → 青蓝，**星号不显示**。
+       三条约束：① 不跨行（段落内换行不是强调）；② 不跨 `*`（`***`/`**` 残渣不配对）；
+       ③ 内容非空。剩下的孤立 `*` 原样保留——宁可露一个星号，也不要错配吞掉半段正文。 */
+    .replace(/\*([^*\n]+?)\*/g, (m,inner)=> inner.trim() ? `<span class="em">${inner}</span>` : m)
     .replace(/^#{1,6}[ \t]+(.+)$/, '<strong>$1</strong>')               // 对应卡内 #11 标题行
     .replace(/「([^「」]{1,120})」/g, '<span class="dlg">「$1」</span>')            // 发言红，旁白黑
     .replace(/“([^“”]{1,140})”/g, '<span class="dlg">“$1”</span>');               // 弯引号对白同款红色
   return `<p>${t}</p>`;
 }
-function flowHtml(flow){
+/* ── 预设留言笺渲染 ──
+   猫神留言（Reborn 小猫之神）：朱印猫爪笺，头像位用朱印猫爪刻印（预设只产文字，无图）
+   小此留言（Izumi 泉此方）：青金石笺 + 按楼层种子取的小此头像 */
+function noteSlip(o){
+  const isCat = o.kind === 'cat';
+  const head =
+    `<div class="ns-head">`+
+      (isCat
+        ? `<span class="ns-avatar paw">${ICON_paw}</span>`
+        : `<img class="ns-avatar" src="${esc(o.img||'')}" alt="小此" referrerpolicy="no-referrer" loading="eager">`)+
+      `<span class="ns-title"><span class="ns-cn">${esc(o.title)}</span><span class="ns-latin">${esc(o.latin)}</span></span>`+
+      `<span class="ns-seal">${isCat?'喵':'此'}</span>`+
+    `</div>`;
+  const segs = (o.segs && o.segs.length)
+    ? o.segs.map(s=>`<div class="ns-seg">${s.tag?`<span class="ns-seg-tag">${esc(s.tag)}</span>`:''}<span class="ns-body">${esc(s.text)}</span></div>`).join('')
+    : `<div class="ns-body">${esc(o.text)}</div>`;
+  return `<aside class="note-slip ${isCat?'cat':'konata'}">${head}${segs}</aside>`;
+}
+/* 猫神留言笺：Reborn 的 <details><summary>…留言…</summary> */
+function catNoteHtml(catNote){
+  if(!catNote) return '';
+  return noteSlip({kind:'cat', title:'小猫之神的留言', latin:'FELIS · NOTA', text:catNote});
+}
+/* 小此留言笺：tucao=吐槽/创作思路/小此对话，konatan_chat=情感陪伴 */
+function konataNoteHtml(note, img, tagText){
+  if(!note) return '';
+  return noteSlip({
+    kind:'konata',
+    title: note.type === 'konatan_chat' ? '小此的陪伴' : '小此的留言',
+    latin: note.type === 'konatan_chat' ? 'KONATA · COMPANION' : 'KONATA · NOTA',
+    img,
+    segs: [{tag: tagText, text: note.content}],
+  });
+}
+function flowHtml(flow, midTucao, konataImg){
+  /* 穿插吐槽按anchorPara 插到对应正文段之后；同一锚点多条合并进一张笺 */
+  const byAnchor = new Map();
+  for(const n of (midTucao||[])){
+    if(n.anchorPara == null) continue;
+    if(!byAnchor.has(n.anchorPara)) byAnchor.set(n.anchorPara, []);
+    byAnchor.get(n.anchorPara).push(n);
+  }
+  let proseSeen = -1;
   return flow.map(node=>{
-    if(node.type==='prose') return proseHtml(node.text);
+    let html;
+    if(node.type==='prose'){
+      html = proseHtml(node.text);
+      proseSeen++;
+      const group = byAnchor.get(proseSeen);
+      if(group && group.length){
+        /* 首条为「构思」、其余为「穿插」，对齐租借男友的分段口径 */
+        html += noteSlip({
+          kind:'konata',
+          title:'小此的吐槽',
+          latin:'KONATA · TUCAO',
+          img: konataImg,
+          segs: group.map((n,i)=>({ tag: i===0 ? '构思' : '穿插', text:n.content })),
+        });
+      }
+      return html;
+    }
     if(node.type==='mind') return `<aside class="mind-slip"><span class="ms-sigil" style="color:var(--cinnabar)">${ICON.quill}</span>${esc(node.text)}</aside>`;
     if(node.type==='news') return `<aside class="news-clip"><div class="nc-head">${ICON.news}<span>大陆见闻 · 旅志剪页</span></div><div class="nc-body">${esc(node.text)}</div></aside>`;
     return `<aside class="duel-banner"><div class="db-head">${ICON.sword}<span>战况 · 血墨战报</span></div><div class="db-body">${esc(node.text)}</div></aside>`;
@@ -5918,11 +6543,13 @@ function certamenHtml(j, stamp){
   const powerMax = Math.max(self.战力||0, foe.战力||0, 220);
   const side = (s, who)=>{
     const bits = [s.族, s.阶].filter(Boolean).join(' · ');
+    /* 体力=朱砂血条 / 法力=青蓝条（原用苔绿当体力，不合血条直觉）。
+       ⚠ 注释必须写在模板字符串【之外】——放进去会被当正文 HTML 印出来。 */
     return `<div class="cm-side">
       <div class="cm-name">${esc(s.名||who)}${bits?`<span>${esc(bits)}</span>`:''}</div>
       ${s.战力!=null?`<div class="cm-power">战力 <b>${s.战力}</b></div>`:''}
-      ${s.体力?meter('体力', s.体力[0], s.体力[1], ['#5B6B4C','#7C8B68']):''}
-      ${s.法力?meter('法力', s.法力[0], s.法力[1], ['#43617A','#2F4A5E']):''}
+      ${s.体力?meter('体力', s.体力[0], s.体力[1], ['#6D231C','#B04A3E']):''}
+      ${s.法力?meter('法力', s.法力[0], s.法力[1], ['#2F4A5E','#43617A']):''}
       ${s.装备?`<div class="cm-gear">${esc(s.装备)}</div>`:''}
     </div>`;
   };
@@ -5977,7 +6604,14 @@ function renderFloor(f, floorIdx){
   const cards = r.cards.map((c,i)=>cardHtml(c, i===r.cards.length-1)).join('');
   const choices = r.options.length ? `<div class="choices">${r.options.map((o,i)=>
     `<button class="choice-slip" data-choice="${esc(o.text)}"><span class="cs-text">${esc(o.text)}</span><span class="cs-tag">${esc(o.label)}</span></button>`).join('')}</div>` : '';
-  const scribe = [r.updates?'命运已誊录':'', r.statusSeen?'状态簿已归档':''].filter(Boolean).join(' · ');
+  const scribe = r.updates ? '命运已誊录 · 状态簿已归档' : '';
+  /* 预设留言（只读标签，不生成）：
+     猫神留言（Reborn）+ 小此末尾留言（Izumi）常显在页末；
+     小此穿插吐槽已由 flowHtml 插到各自锚定的正文段旁。 */
+  const konataImg = konataImageFor(f.idx);
+  const catSlip = catNoteHtml(r.catNote);
+  const tailSlip = konataNoteHtml(r.konataTail, konataImg,
+      r.konataTail && r.konataTail.type === 'konatan_chat' ? '情感陪伴' : '创作思路');
   // 页码口径（用户拍板）：序数 = AI 楼层正序（开场白=第 1 页），总数 = 全部 AI 楼层
   const total = FLOORS.length;
   const ord = idx + 1;
@@ -5986,8 +6620,8 @@ function renderFloor(f, floorIdx){
     <header class="folio-head">${worldHeader(f.idx)}</header>
     <div class="scroll">
       ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}
-      <div class="prose">${flowHtml(r.flow||[])}</div>
-      ${(r.notes||[]).map(n=>`<aside class="preset-note"><span class="pn-label">${esc(n.tag.toUpperCase())}</span>${esc(n.text)}</aside>`).join('')}
+      <div class="prose">${flowHtml(r.flow||[], r.midTucao, konataImg)}</div>
+      ${catSlip}${tailSlip}
       ${cards}${choices}
     </div>
     <footer class="folio-foot">
@@ -6399,6 +7033,7 @@ function showFloor(idx, dir){
   if(epBox) epBox.classList.remove('open');
   const oldHtml = pageBase.innerHTML;
   pageBase.innerHTML = html;
+  paintMeters(pageBase);   // 正文里的量条（较量面板的体力/法力）必须补宽度
   bindChoices();
   pageBase.querySelector('[data-latest]')?.addEventListener('click', ()=>showFloor(FLOORS.length-1, 1));
   pageBase.querySelectorAll('[data-fnav]').forEach(b=>b.addEventListener('click', ()=>{
@@ -6513,7 +7148,7 @@ function openLetter(){
   updLetterCount();
 }
 function closeLetter(){ letterEl.classList.remove('open'); quillTabEl()?.classList.remove('active'); }
-function persistDraft(){ try{ localStorage.setItem(DRAFT_KEY, letBody.value); }catch(e){} }
+function persistDraft(){ /* 用户定：信笺「用过即抛」——不落盘、不跨会话恢复 */ }
 function enterDraft(text){
   letBody.value = text;
   openLetter();
@@ -6528,14 +7163,16 @@ if(window.MutationObserver){
   new MutationObserver(()=>{ if(letterEl.classList.contains('open')) positionLetter(); })
     .observe(document.body, { attributes:true, attributeFilter:['class'] });
 }
-try{ localStorage.removeItem('modian_quill_pos'); }catch(e){} // 旧悬浮球位置记忆的遗留键，顺手清退
+/* 旧悬浮球位置记忆的遗留键，顺手清退（一次性：信笺与 NPC 表单皆不留痕） */
 document.getElementById('let-close').addEventListener('click', closeLetter);
 document.getElementById('let-clear').addEventListener('click', ()=>{
   letBody.value=''; persistDraft(); updLetterCount(); letBody.focus();
 });
+/* 用户定：信笺用过即抛 —— 启动即清掉遗留草稿，且不再回填 */
+wipeTransient();
 try{
-  const saved = localStorage.getItem(DRAFT_KEY);
-  if(saved){ letBody.value = saved; updLetterCount(); }
+  localStorage.removeItem(DRAFT_KEY);
+  localStorage.removeItem('modian_quill_pos');
 }catch(e){}
 
 /* ---------- 待章（仪典定稿已誊入信笺；静候寄出后的第一页墨迹） ---------- */
@@ -6618,10 +7255,9 @@ function showCover(){
         <h1 class="cv-title">魔物娘图鉴</h1>
         <div class="cv-rule"><span></span></div>
         <div class="cv-sub">烛光抄本 · 全一册</div>
-        <div class="cv-seal"><span>M</span></div>
+        <button class="cv-seal" id="unseal" type="button" title="开启命运" aria-label="开启命运"><span>M</span></button>
       </div>
       <div class="cv-colophon">Vol. I — MMXXVI</div>
-      <button class="cv-unseal" id="unseal"><span>触碰以开启命运</span></button>
     </div>`;
   coverEl.classList.remove('opened');
   document.getElementById('unseal').addEventListener('click', ()=>{
@@ -6675,13 +7311,7 @@ let insertOpen = null;
 const ScrollOps = (()=>{
   let from = '', to = '', target = null, busy = false;
 
-  function frames(){
-    const out = [];
-    try{ out.push(window); }catch(e){}
-    try{ if(window.parent && window.parent !== window) out.push(window.parent); }catch(e){}
-    try{ if(window.top && window.top !== window) out.push(window.top); }catch(e){}
-    return out;
-  }
+  function frames(){ return hostFrames(); }
   function api(name){
     for(const f of frames()){
       try{ if(typeof f[name] === 'function') return f[name].bind(f); }catch(e){}
@@ -6792,7 +7422,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1004m';
+const UI_VER = '1007a';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -6913,8 +7543,27 @@ tabsEl.parentNode.querySelectorAll('.thumb-tab[data-mod]').forEach(b=>b.addEvent
   closeToc(); closeLetter();                     // 互斥：开一个先收其它
   openInsert(k);
 }));
-function openInsert(k){
+/* opt.top === true  → 强制回到顶部（换视图：开详情 / 回名册）
+   否则同模块重渲默认保留滚动位置。
+   ⚠ 滚动回顶的根因修复：本函数整体重建 insertEl.innerHTML，.insert-body 每次都是
+     新元素，scrollTop 天然归零。此前图鉴（点魔物娘/点女主/换排法/搜索）与立契
+     （点大类/点科属/点种族/点AI补全）全部强制回顶，用户在长列表里一点就丢失位置。
+     同仓 refreshDexList() 早有「存 scrollTop → 重渲 → 还原」的正确写法，此处提升为
+     全局默认策略，避免每个调用点各写一遍、且漏掉。 */
+function openInsert(k, opt){
   const m = MODULES.find(x=>x.key===k);
+  if(!m) return;
+  // 同模块重渲 → 记住滚动位置；换模块 → 归零
+  const prevBody = insertEl.querySelector('.insert-body');
+  const keepScroll = !(opt && opt.top) && insertOpen === k;
+  const keepTop = keepScroll && prevBody ? prevBody.scrollTop : 0;
+  /* 立契插页的种族树 .nrt-tree 是**独立滚动容器**（max-height:340px + overflow-y:auto），
+     不受 .insert-body 的位置还原管辖。本函数整体重建 innerHTML 后它是全新元素，
+     scrollTop 天然归零 —— 表现就是「在树里翻到下面点一下种族，整棵树跳回顶部」。
+     这里与 .insert-body 同款处理：重建前记下，布局稳定后还原（含下一帧补一次，
+     防内容异步增高把赋值钳回 0）。 */
+  const prevTree = insertEl.querySelector('.nrt-tree');
+  const keepTree = keepScroll && prevTree ? prevTree.scrollTop : 0;
   insertOpen = k;
   insertEl.parentNode.querySelectorAll('.thumb-tab[data-mod]').forEach(b=>b.classList.toggle('active', b.dataset.mod===k));
   insertEl.classList.toggle('from-left', m.side==='L');
@@ -6936,10 +7585,35 @@ function openInsert(k){
   const ifs = document.getElementById('insert-fs');
   if(ifs) ifs.addEventListener('click', toggleFullscreen);
   bindInsert(m.key);
-  requestAnimationFrame(()=>insertEl.querySelectorAll('.m-fill').forEach(f=>{ f.style.width = f.dataset.w+'%'; }));
+  requestAnimationFrame(()=>paintMeters(insertEl));
+  // 还原滚动：必须先强制一次布局读取，否则新 .insert-body 尚未完成布局，
+  // scrollHeight 还是旧值，赋 scrollTop 会被浏览器钳回 0（实测 before:1607 → after:0）。
+  // 双保险：同步钳位一次（读到真实 scrollHeight），再在下一帧补一次（应对内容异步增高）。
+  if(keepScroll && keepTop > 0){
+    const nb0 = insertEl.querySelector('.insert-body');
+    if(nb0){ void nb0.scrollHeight; nb0.scrollTop = keepTop; }
+    requestAnimationFrame(()=>{
+      const nb = insertEl.querySelector('.insert-body');
+      if(nb) nb.scrollTop = keepTop;
+    });
+  }
+  if(keepScroll && keepTree > 0){
+    const nt0 = insertEl.querySelector('.nrt-tree');
+    if(nt0){ void nt0.scrollHeight; nt0.scrollTop = keepTree; }
+    requestAnimationFrame(()=>{
+      const nt = insertEl.querySelector('.nrt-tree');
+      if(nt) nt.scrollTop = keepTree;
+    });
+  }
 }
 function closeInsert(){
   insertOpen = null;
+  /* 清掉图鉴的视图态：此前 __heroineDetail 从不重置，点开任一女主后关掉插页，
+     下次打开图鉴会直接落在那个详情页（renderDex 第 3021 行早退），
+     237 条种族名册整个不渲染——用户看到的正是「图鉴点不开」。 */
+  window.__heroineDetail = null;
+  window.__dexDetail = null;
+  window.__dexTab = null;      /* 内分栏也复位：重开图鉴回到默认的魔物娘名册 */
   insertEl.classList.remove('open','from-left');
   insertEl.parentNode.querySelectorAll('.thumb-tab[data-mod]').forEach(b=>b.classList.remove('active'));
 }
@@ -6948,37 +7622,72 @@ function bindInsert(key){
   const m = MODULES.find(x=>x.key===key);
   if(m && typeof m.bind === 'function'){ m.bind(insertEl); }
   if(key!=='dex') return;
+  /* 内分栏切换：住民 / 女主 / 魔物娘。换栏 = 换视图 → 回顶。
+     同时清掉另一栏的详情态，免得切回来时莫名落在某个详情页上。 */
+  insertEl.querySelectorAll('[data-dextab]').forEach(b=>b.addEventListener('click', ()=>{
+    const k = b.dataset.dextab;
+    if(window.__dexTab === k && !window.__dexDetail && window.__heroineDetail == null) return;
+    window.__dexTab = k;
+    window.__dexDetail = null;
+    window.__heroineDetail = null;
+    openInsert('dex', {top:true});
+  }));
+  // 女主墙（女主栏内）：点击开详情 / 返回
+  insertEl.querySelectorAll('[data-heroine]').forEach(b=>b.addEventListener('click', ()=>{
+    /* 每次点开现取世界书（索引是幂等单例，这里只置失效标记，改动即所见） */
+    window.__wbStale = true;
+    loadWbIndex(true);
+    window.__heroineDetail = +b.dataset.heroine;
+    // 换视图 → 顶部由 openInsert 统一处理。
+    // 此前这里额外写了一句 nb.scrollTop = 0，与「保留位置」策略直接冲突，已移除。
+    openInsert('dex', {top:true});
+  }));
+  const hbk = insertEl.querySelector('[data-hback]');
+  if(hbk) hbk.addEventListener('click', ()=>{ window.__heroineDetail = null; openInsert('dex', {top:true}); });
+  /* 图鉴锁：验印 + 锁徽切换（语义见 dexTryUnlock / dexToggleLock 处注释） */
   const btn = insertEl.querySelector('#dex-verify');
   const inp = insertEl.querySelector('#dex-pass');
-  const tryUnlock = ()=>{
-    const pass = (window.MODIAN_DEX||{}).pass||'';
-    if(inp.value.trim() === pass){
-      window.__dexUnlocked = true;
-      notify('印鉴吻合——封印暂解，种族总览本次会话内可见','gild');
-      openInsert('dex');
-    }else{
-      notify('印鉴不合，封印未应。','warn');
-    }
-  };
-  if(btn) btn.addEventListener('click', tryUnlock);
-  if(inp) inp.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+  if(btn) btn.addEventListener('click', dexTryUnlock);
+  if(inp) inp.addEventListener('keydown', e=>{ if(e.key==='Enter') dexTryUnlock(); });
+  const badge = insertEl.querySelector('[data-dex-lock]');
+  if(badge){
+    badge.addEventListener('click', dexToggleLock);
+    badge.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); dexToggleLock(); } });
+  }
   // 名册交互：搜索 / 排法 / 详情 / 返回
   const qi = insertEl.querySelector('#dex-q');
   if(qi) qi.addEventListener('input', ()=>{ window.__dexQ = qi.value; refreshDexList(); });
+  // 换排法：同一份名册重排，保留滚动位置（不传 {top}）
   insertEl.querySelectorAll('.dw-tab[data-mode]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexMode = b.dataset.mode; openInsert('dex'); }));
-  insertEl.querySelectorAll('[data-race]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexDetail = b.dataset.race; openInsert('dex'); }));
+  // 点魔物娘 = 换视图（名册 → 详情），从顶部看详情
+  insertEl.querySelectorAll('[data-race]').forEach(b=>b.addEventListener('click', ()=>{ window.__dexDetail = b.dataset.race; openInsert('dex', {top:true}); }));
+  // 返回名册 = 换视图，回到名册顶部
   const bk = insertEl.querySelector('[data-dback]');
-  if(bk) bk.addEventListener('click', ()=>{ window.__dexDetail = null; openInsert('dex'); });
-  // 女主档案：点击开详情 / 返回（自 e1d6013 移植）
-  insertEl.querySelectorAll('[data-heroine]').forEach(b=>b.addEventListener('click', ()=>{
-    const h = (D.heroines||[])[+b.dataset.heroine];
-    if(h){ const c = window.__wikiCache || (window.__wikiCache={}); delete c['wb:'+h.name]; }  // 每次点开现取世界书，改动即所见
-    window.__heroineDetail = +b.dataset.heroine;
-    openInsert('dex');
-    const nb = insertEl.querySelector('.insert-body'); if(nb) nb.scrollTop = 0;
+  if(bk) bk.addEventListener('click', ()=>{ window.__dexDetail = null; openInsert('dex', {top:true}); });
+  /* 种类折叠：直接切 DOM 的 on 类，不走 openInsert 重渲。
+     走重渲会把整页 28 类重新拼一遍，既慢又会闪；折叠是纯视图开关，
+     用 class 切换还能保住滚动位置与搜索框焦点。 */
+  insertEl.querySelectorAll('[data-fold]').forEach(b=>b.addEventListener('click', ()=>{
+    const k = b.dataset.fold;
+    const F = window.__dexFold || (window.__dexFold = {});
+    if(F[k]) delete F[k]; else F[k] = true;
+    b.classList.toggle('on', !!F[k]);
+    b.setAttribute('aria-expanded', String(!!F[k]));
+    const box = b.nextElementSibling;
+    if(box) box.classList.toggle('on', !!F[k]);
   }));
-  const hbk = insertEl.querySelector('[data-hback]');
-  if(hbk) hbk.addEventListener('click', ()=>{ window.__heroineDetail = null; openInsert('dex'); });
+  insertEl.querySelectorAll('[data-foldall]').forEach(b=>b.addEventListener('click', ()=>{
+    const on = b.dataset.foldall === '1';
+    const keys = [...insertEl.querySelectorAll('[data-fold]')].map(x=>x.dataset.fold);
+    const F = window.__dexFold || (window.__dexFold = {});
+    keys.forEach(k=>{ if(on) F[k] = true; else delete F[k]; });
+    insertEl.querySelectorAll('[data-fold]').forEach(h=>{
+      h.classList.toggle('on', on);
+      h.setAttribute('aria-expanded', String(on));
+      const box = h.nextElementSibling;
+      if(box) box.classList.toggle('on', on);
+    });
+  }));
 }
 function refreshDexList(){
   const i = insertEl.querySelector('#dex-q');
@@ -6993,11 +7702,103 @@ function refreshDexList(){
 }
 function meter(label, val, max, color=['#A98A46','#C9AE6D']){
   const pct = max>0 ? Math.round(Math.max(0,Math.min(val,max))/max*100) : 0;
-  return `<div class="meter"><span class="m-label">${esc(label)}</span><div class="m-track"><div class="m-fill" data-w="${pct}" style="--mv:${color[0]};--mv2:${color[1]}"></div></div><span class="m-val">${val}</span></div>`;
+  /* 宽度直接写进 style（不等 paintMeters 回填）：CSS 的 .m-fill 默认 width:0，
+     只靠 data-w +事后遍历补宽，一旦某条渲染路径忘了调 paintMeters，条就是空的。
+     data-w 保留，供 paintMeters 做重绘与动画。 */
+  return `<div class="meter"><span class="m-label">${esc(label)}</span><div class="m-track"><div class="m-fill" data-w="${pct}" style="width:${pct}%;--mv:${color[0]};--mv2:${color[1]}"></div></div><span class="m-val">${val}</span></div>`;
 }
 function meterCentered(label, val, range=100, color=['#43617A','#2F4A5E']){
   const pct = Math.round((val+range)/(2*range)*100);
-  return `<div class="meter"><span class="m-label">${esc(label)}</span><div class="m-track"><div class="m-fill" data-w="${pct}" style="--mv:${color[0]};--mv2:${color[1]}"></div></div><span class="m-val">${val>0?'+'+val:val}</span></div>`;
+  return `<div class="meter"><span class="m-label">${esc(label)}</span><div class="m-track"><div class="m-fill" data-w="${pct}" style="width:${pct}%;--mv:${color[0]};--mv2:${color[1]}"></div></div><span class="m-val">${val>0?'+'+val:val}</span></div>`;
+}
+/* —— 十一阶阶梯（照卡内正则 #15 renderTop 口径）——
+   优先从「阶层」文字抓「第N阶」，抓不到再按 等级 ceil(lv/20) 兜底。 */
+const CN_NUM = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11};
+const TIER_RE = /第(十一|[一二三四五六七八九十]|10|[1-9])阶/;
+function tierOf(p){
+  const ts = String(p?.阶层 ?? '');
+  const m = ts.match(TIER_RE);
+  const lv = Number(p?.等级);
+  const t = m ? (CN_NUM[m[1]] || parseInt(m[1],10))
+              : (Number.isFinite(lv) ? Math.max(1, Math.min(11, Math.ceil(lv/20))) : null);
+  return { t, name: ts.includes('·') ? ts.split('·')[1] : '' };
+}
+function tierLadder(p){
+  const ti = tierOf(p);
+  if(!ti.t) return '';
+  let h = '<div class="tiers">';
+  for(let i=1;i<=11;i++) h += `<i class="${i<=ti.t?'on':''}"></i>`;
+  h += '</div>';
+  if(ti.name) h += `<div class="tiername">${esc(ti.name)}</div>`;
+  return h;
+}
+
+/* —— 八维雷达（新版：资质四轴并入）——
+   上限口径照卡内 radarHTML()：战力/敏捷/防御 = T表[阶] × 阶内倍率 × 1.8；
+   幸运与资质四轴固定 0~20。T表取自〈等级属性与状态栏体系〉。 */
+const TBL_ATK = [100,400,1600,6400,25000,100000,500000,2500000,5000000,12500000,60000000];
+const TBL_SUB = [60,220,800,2900,10500,38000,190000,950000,1900000,4750000,23000000];
+function tierMult(lv){
+  if(!Number.isFinite(lv)) return 1;
+  const st = (lv-1)%20;
+  return st<5?1.0 : st<10?1.2 : st<15?1.5 : 1.8;
+}
+function radar8(p){
+  const lv = Number(p?.等级);
+  const ti = Number.isFinite(lv) ? Math.max(1, Math.min(11, Math.ceil(lv/20))) : null;
+  const mult = tierMult(lv);
+  const q = p?.资质 || {};
+  const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const axes = [
+    {lbl:'战力', v:num(p?.战斗力基础), plus:num(p?.战斗力加成) ?? 0, cap: ti!==null ? TBL_ATK[ti-1]*mult*1.8 : null},
+    {lbl:'敏捷', v:num(p?.敏捷基础),   plus:num(p?.敏捷加成)   ?? 0, cap: ti!==null ? TBL_SUB[ti-1]*mult*1.8 : null},
+    {lbl:'防御', v:num(p?.防御基础),   plus:num(p?.防御加成)   ?? 0, cap: ti!==null ? TBL_SUB[ti-1]*mult*1.8 : null},
+    {lbl:'幸运', v:num(p?.幸运),       plus:0, cap:20},
+    {lbl:'灵感', v:num(q.灵感), plus:0, cap:20},
+    {lbl:'魅力', v:num(q.魅力), plus:0, cap:20},
+    {lbl:'体质', v:num(q.体质), plus:0, cap:20},
+    {lbl:'信仰', v:num(q.信仰), plus:0, cap:20},
+  ];
+  if(!axes.some(a=>a.v!==null)) return '';
+  const cx=104, cy=98, R=64, K=8;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*(Math.PI*2/K);return [cx+Math.cos(a)*r, cy+Math.sin(a)*r];};
+  const fx=p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+  const ring=f=>{let s='';for(let i=0;i<K;i++)s+=fx(pt(i,R*f))+' ';return s.trim();};
+  let poly='', labels='', spokes='';
+  axes.forEach((ax,i)=>{
+    const e0 = pt(i,R);
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${e0[0].toFixed(1)}" y2="${e0[1].toFixed(1)}" stroke="rgba(47,74,94,.18)" stroke-width="0.8"/>`;
+    const total = ax.v===null ? null : ax.v + (ax.plus||0);
+    const maxV = (ax.cap!==null && ax.cap!==undefined) ? ax.cap : Math.max(total||1,1)*1.25;
+    const ratio = total===null ? 0.035 : Math.max(0.035, Math.min(1, total/maxV));
+    poly += fx(pt(i, R*ratio)) + ' ';
+    const a2 = -Math.PI/2 + i*(Math.PI*2/K), cosA = Math.cos(a2);
+    const lx = cx + cosA*(R+19), ly = cy + Math.sin(a2)*(R+11);
+    const anchor = Math.abs(cosA)<0.35 ? 'middle' : (cosA>0?'start':'end');
+    labels += `<text class="rlab" x="${lx.toFixed(1)}" y="${(ly-3).toFixed(1)}" text-anchor="${anchor}">${ax.lbl}</text>`
+      + `<text class="rval" x="${lx.toFixed(1)}" y="${(ly+10).toFixed(1)}" text-anchor="${anchor}">${total===null?'—':total}`
+      + (ax.plus?`<tspan class="rplus"> +${ax.plus}</tspan>`:'') + '</text>';
+  });
+  return `<div class="radarwrap"><svg viewBox="0 0 208 196" width="208" height="196">${spokes}`
+    + `<polygon points="${ring(1)}" fill="none" stroke="rgba(47,74,94,.4)" stroke-width="1"/>`
+    + `<polygon points="${ring(0.66)}" fill="none" stroke="rgba(47,74,94,.26)" stroke-width="0.8"/>`
+    + `<polygon points="${ring(0.33)}" fill="none" stroke="rgba(47,74,94,.18)" stroke-width="0.8" stroke-dasharray="3 3"/>`
+    + `<polygon points="${poly}" fill="rgba(150,55,46,.18)" stroke="#96372E" stroke-width="1.4" stroke-linejoin="round"/>`
+    + `${labels}</svg></div>`;
+}
+
+/* 量条着色：把 .m-fill[data-w] 的宽度真正落到 style 上。
+   ⚠ 病灶：此前只有 openInsert() 里补过一次，插页的条会亮；
+      但正文楼层里的量条（较量面板的体力/法力就靠 meter() 画在正文里）
+      从没人补宽度 → CSS 的 width:0 生效，看上去就是「一条灰槽、没有血条」。
+      故抽成公共函数，凡是渲染完正文/插页/插页重绘都调一次。 */
+function paintMeters(root){
+  try{
+    (root||document).querySelectorAll('.m-fill[data-w]').forEach(f=>{
+      const w = f.dataset.w;
+      if(w!=null && w!=='' && f.style.width !== w+'%') f.style.width = w+'%';
+    });
+  }catch(e){}
 }
 function plaque(title, latin, desc, badge=''){
   return `<div class="plaque"><h4>${esc(title)}<span class="k-latin">${esc(latin)}</span>${badge?`<span class="init-badge">${esc(badge)}</span>`:''}</h4>${desc?`<div class="p-desc">${desc}</div>`:''}</div>`;
@@ -7054,7 +7855,7 @@ function wikiBlock(r){
   }
   if(c[name] === null) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><div class="empty-note">正在连接中文wiki，翻取原文……</div></div>`;
   if(c[name] === false) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 未能接驳 — 以卡内条目为准</div></div>`;
-  return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><p>${esc(c[name])}</p></div>`;
+  return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div>${escParas(c[name])}</div>`;
 }
 function cameo(ch, sub){
   return `<div class="cameo"><span class="cameo-ch">${esc(ch)}</span><span class="cameo-sub">${esc(sub||'')}</span></div>`;
@@ -7067,135 +7868,468 @@ function dexApi(name){
   for(const f of fr){ try{ if(typeof f[name]==='function') return f[name].bind(f); }catch(e){} }
   return null;
 }
-async function fetchHeroineWb(name){
-  /* 读角色卡绑定世界书（primary + additional），按条目名/关键词匹配女主 —— 每次打开详情现取，条目被 AI 改了显示就跟着变 */
+/* ══════════════════════════════════════════════════════════
+   世界书实时读取层 —— 女主图鉴 / 心界住民共用
+   机制照搬卡内「[ejs]女主档案控制器 v2」：
+   · 档案条目名为「{名}-基础版 / {名}-堕落版」，keys 已被卡内刻意清空并永久关灯，
+     只允许控制器用 getwi 拉取 → 前端也只能按**条目名精确匹配**，不能靠关键词。
+   · 形态判定优先级（原文照搬）：
+       ① 羁绊.{名}.当前形态：「魔物形态·异」→ 基础版 / 「魔物形态…」→ 堕落版 /
+          「人类形态·基础形态」→ 基础版
+       ② 雷斯卡特耶沦陷 全局默认：已沦陷 → 堕落版，否则基础版
+   · 名册不写死：启动时扫一遍条目名，卡内增删女主，下次打开自动跟着变。
+   ══════════════════════════════════════════════════════════ */
+const WB_HERO_RE   = /^(.+?)-基础版$/;
+const WB_FALLEN_RE = /^(.+?)-堕落版$/;
+const WB_ANIMA_RE  = /^心界住民[：:]/;
+let   __wbIndex     = null;      // {heroes:[{name,base,fallen}], anima:{名:条目}, all:条目[]}
+let   __wbIndexing  = false;
+
+/* 条目名归一：不同接口版本可能给 name 或 comment */
+const wbName = (e)=> String((e && (e.name != null ? e.name : e.comment)) || '').trim();
+
+/* 拉取角色卡绑定世界书（primary + additional）的全部条目
+   force=true 时强制重取（每次点开女主卡都走这条路，做到「改动即所见」） */
+async function loadWbIndex(force){
+  if(force){ __wbIndex = null; __wbIndexing = false; }
+  if(__wbIndex || __wbIndexing) return __wbIndex;
+  __wbIndexing = true;
   try{
     const namesFn = dexApi('getCharWorldbookNames');
-    const getFn = dexApi('getWorldbook');
+    const getFn   = dexApi('getWorldbook');
     if(!namesFn || !getFn) return null;
     const cb = await namesFn('current');
     const books = [];
     if(cb && cb.primary) books.push(cb.primary);
     if(cb && Array.isArray(cb.additional)) books.push(...cb.additional);
+    const all = [];
     for(const wbn of books){
-      let entries = null;
-      try{ entries = await getFn(wbn); }catch(e){ continue; }
-      const hit = (entries||[]).find(e=>{
-        if(!e) return false;
-        if(e.name && (e.name === name || e.name.includes(name))) return true;
-        const ks = (e.strategy && e.strategy.keys) || [];
-        return ks.some(k=> typeof k==='string' && k.length>=2 && (k === name || name.includes(k)));
-      });
-      if(hit && hit.content) return hit.content;
+      try{
+        const entries = await getFn(wbn);
+        for(const e of (entries||[])){
+          if(!e) continue;
+          const nm = wbName(e);
+          if(nm) all.push({ name:nm, content:e.content||'', raw:e });
+        }
+      }catch(e){ /* 单本读不到就跳过，不影响其它 */ }
     }
-    return false;
-  }catch(e){ return null; }
+    // 女主：条目名「{名}-基础版 / -堕落版」成对认领
+    const map = new Map();
+    const touch = (name)=>{ if(!map.has(name)) map.set(name, {name, base:null, fallen:null}); return map.get(name); };
+    for(const e of all){
+      let m = WB_FALLEN_RE.exec(e.name); if(m){ touch(m[1]).fallen = e; continue; }
+      m = WB_HERO_RE.exec(e.name);       if(m){ touch(m[1]).base    = e; }
+    }
+    // 心界住民：「心界住民：{种族}·{名}」→ 取 · 之后的本名
+    const anima = {};
+    for(const e of all){
+      if(!WB_ANIMA_RE.test(e.name)) continue;
+      const short = e.name.replace(/^心界住民[：:]/,'').split('·').pop().trim();
+      if(short) anima[short] = e;
+    }
+    __wbIndex = { heroes:[...map.values()], anima, all };
+  }catch(e){ __wbIndex = null; }
+  __wbIndexing = false;
+  /* 索引就绪 → 图鉴正开着就刷一次（与 wikiBlock 同款异步回填） */
+  try{
+    if(insertOpen==='dex') openInsert('dex', {keepScroll:true});
+  }catch(e){}
+  return __wbIndex;
+}
+
+/* 当前形态该读哪一版 —— 严格按卡内控制器的优先级
+   优先级：羁绊.当前形态个体指定 > 世界.雷斯卡特耶沦陷全局默认 > 所在地例外。
+   ⚠ 病灶（女主全员钉死堕落版）：schema 里 `羁绊.*.当前形态` 的 prefault 就是
+     `'魔物形态'`（_extract/schema.txt:295），zod 会在 AI 没写这个字段时**照样填上它**。
+     于是 bond.当前形态 恒非空 → `indexOf('魔物形态')===0` 恒真 → 全局变量那一层
+     永远走不到，任何时线（含「未沦陷」）都判成堕落版。
+     修法：把「恰等于 schema 预填默认值」识别为**未表态**，让位给全局变量去判。
+     真正的个体指定值带前后缀（'魔物形态·异'/'人类形态·已侵蚀'…），不会等于裸默认值。 */
+const FORM_DEFAULT = '魔物形态';
+
+/* ══════════════════════════════════════════════════════════
+   女主身份归一 —— 同一个人只能有一条羁绊
+   ──────────────────────────────────────────────────────────
+   病灶（用户实拍截图）：「莉莉姆·堤露埃拉」在界面上被拆成两条 ——
+     · 女主图鉴 / 卡内档案 → 名字取自世界书条目「{名}-基础版」去后缀 =「莉莉姆」
+     · 羁绊录/变量 羁绊  → 键是 AI 自写的 =「堤露埃拉」
+   两处原本都是**裸键精确查**（bonds[name]），于是图鉴那张永远查不到羁绊，
+   显示成「档案·未立契 / 好感度 0/100」的空壳，而带真实数据（Lv.130 / 好感 85 /
+   羁绊「母亲」）的那条只出现在羁绊录里 —— 一个人被摊成两个人。
+   其余女主同病：威尔玛丽娜·诺斯库里姆↔威尔玛丽娜、天之宫今宵↔今宵……
+
+   修法：名册名 → 羁绊键的宽松查（方案 A 保守档）。
+     ① 原样相等
+     ② 归一后相等（去 ·・･ 与空白、全角转半角、去括号注释）
+     ③ 全名（带「·」）的首段与末段，各自注册为别名
+   ③ 只认「恰好等于首段或末段」，**不放开任意前缀/后缀** ——
+   否则日后若再来一位「莉莉姆二世」，首段就会撞上「莉莉姆」，
+   把两个人合并成同一条羁绊。宁可少认一个别名，不可错并两个人。
+
+   只用于「按名册名反查羁绊」这一个方向；羁绊录仍原样遍历
+   Object.keys(羁绊)，那是变量的真实全貌，不该被归一改写。
+   ══════════════════════════════════════════════════════════ */
+const HERO_NORM = (s)=> String(s??'')
+  .replace(/[（(][^）)]*[）)]/g, '')
+  .replace(/[·・･\s]/g, '')
+  .replace(/[Ａ-Ｚａ-ｚ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+  .trim();
+/* 静态全名桥接表（关键）：名册名来自世界书条目「{名}-基础版」去后缀 = 短名
+   （「莉莉姆·堤露埃拉」被截成「莉莉姆」），而羁绊键是 AI 自写的另一截（「堤露埃拉」）。
+   两者互不为对方的「·」段，光看名册自身取别名永远对不上。
+   故取卡内静态全名 D.heroines 做桥，两条规则：
+     · 带·全名：首段与末段互为别名（「莉莉姆·堤露埃拉」↔ 莉莉姆 / 堤露埃拉）
+     · 无点全名：若名册短名恰为其**前缀或后缀**也认（「天之宫今宵」↔ 今宵）
+   后缀式前缀匹配仍要求长度≥2，避免「宵」这种单字命中。
+   两条都只认「恰好等于前缀/后缀」，**不放开任意包含**——否则日后若来一位
+   「莉莉姆二世」，首段就会撞上「莉莉姆」，把两个人合并成同一条羁绊。
+   宁可少认一个别名，不可错并两个人。 */
+let __heroBridge = null;
+function heroAliasIndex(){
+  if(__heroBridge) return __heroBridge;
+  const m = new Map();
+  const add = (k, v)=>{ const a=m.get(k)||new Set(); v.forEach(x=>a.add(x)); m.set(k,a); };
+  const list = (typeof D !== 'undefined' && D && D.heroines) || [];   // 无卡内数据时降级为空桥
+  for(const h of list){
+    const full = String(h.name||'').trim();
+    if(!full) continue;
+    const parts = full.split(/[·・･]/).map(s=>s.trim()).filter(Boolean);
+    if(parts.length >= 2){                          // 带·全名：首段/末段互为别名
+      const head = HERO_NORM(parts[0]), tail = HERO_NORM(parts[parts.length-1]);
+      if(head.length < 2 || tail.length < 2) continue;
+      add(head, [parts[0], parts[parts.length-1]]);
+      add(tail, [parts[0], parts[parts.length-1]]);
+    }else if(HERO_NORM(full).length >= 4){          // 无点全名：天之宫今宵 ↔ 今宵
+      const nf = HERO_NORM(full);
+      for(let L=2; L*2 <= nf.length; L++){          // 取不短于一半的前缀/后缀，长度≥2
+        add(nf.slice(0, L), [full]);
+        add(nf.slice(-L), [full]);
+      }
+    }
+  }
+  __heroBridge = m;
+  return m;
+}
+function bondAliases(name){
+  const out = [String(name||'')];
+  const parts = String(name||'').split(/[·・･]/).map(s=>s.trim()).filter(Boolean);
+  if(parts.length > 1){                       // 名册自身就是全名 → 首段/末段都算别名
+    out.push(parts[0]);
+    out.push(parts[parts.length-1]);
+  }else{
+    const extra = heroAliasIndex().get(HERO_NORM(name));   // 名册是短名 → 借静态全名桥接
+    if(extra) extra.forEach(x=>out.push(x));
+  }
+  return out.filter(s=>HERO_NORM(s).length >= 2);   // 长度门槛，防单字误命中
+}
+/* 按名册名取该女主的羁绊对象；找不到返回 null。 */
+function heroineBondOf(name, bonds){
+  let B = bonds;
+  if(!B){ try{ B = Stat.get('羁绊', {}) || {}; }catch(e){ B = {}; } }   // 桥接/无参调用时兜底
+  if(!B || typeof B !== 'object') return null;
+  const direct = B[name];
+  if(direct) return direct;
+  const want = bondAliases(name).map(HERO_NORM);
+  if(!want.length) return null;
+  for(const k of Object.keys(B)){
+    if(bondAliases(k).some(a => want.includes(HERO_NORM(a)))) return B[k];
+  }
+  return null;
+}
+function heroineFormOf(name){
+  const bond = heroineBondOf(name) || {};
+  const f = String(bond.当前形态||'').trim();
+  // 恰好等于 schema 预填值 = AI 没表态，不是个体指定 → 落到全局判定
+  if(f && f !== FORM_DEFAULT){
+    if(f.indexOf('魔物形态·异') === 0) return 'base';
+    if(f.indexOf('魔物形态') === 0)     return 'fallen';
+    if(f.indexOf('人类') === 0 || f.indexOf('基础') === 0) return 'base';
+  }
+  const fallen = String(Stat.get('世界.雷斯卡特耶沦陷', '') || '').trim().indexOf('已沦陷') === 0;
+  return fallen ? 'fallen' : 'base';
+}
+/* 名册：优先用世界书实时扫出来的（16 位），退回卡内静态 D.heroines（13 位） */
+function heroines(){
+  const live = (__wbIndex && __wbIndex.heroes) || null;
+  if(live && live.length) return live;
+  return (D.heroines||[]).map(h=>({name:h.name, intro:h.intro, series:'', level:'', base:null, fallen:null}));
+}
+/* 心界住民条目：先按本名精确取，再退化为「包含该名字」的条目 */
+function animaWbEntry(name){
+  if(!name || name === '未选定') return null;
+  const ix = __wbIndex;
+  if(ix && ix.anima && ix.anima[name]) return ix.anima[name];
+  if(ix && ix.all) return ix.all.find(e=>e.name && e.name.includes(name) && WB_ANIMA_RE.test(e.name)) || null;
+  return null;
+}
+/* 「世界书 · 实时条目」壳 —— 与女主块同一套视觉与刷新节奏 */
+function wbShell(inner, id){
+  return `<div class="dd-lore"${id?` id="${id}"`:''}><div class="dw-cardlabel">世界书 · 实时条目（随设定更新）</div>${inner}</div>`;
+}
+/* 拉取失败/未就绪时的占位：给出可辨识的原因，不假装有内容 */
+function wbPending(id){
+  return wbShell('<div class="empty-note">正在翻检世界书条目……</div>', id);
+}
+function wbMiss(name, why){
+  return wbShell(`<div class="empty-note">${esc(why||`未在绑定世界书中找到「${name}」条目 — 以卡内简介为准。`)}</div>`);
+}
+/* 女主档案块 —— 只显示**当前形态对应的那一版**，不再基础/堕落并列。
+   规则（用户定）：按 heroineFormOf 选版；选中版若不存在，回落到实际存在的那版，
+   并把它标成「当前生效」。
+   ⚠ 回落是必需的：世界书里莉莉姆**只有「莉莉姆-基础版」**，没有堕落版，
+     而形态判定看的是 世界.雷斯卡特耶沦陷（已沦陷→堕落版）。若不回落，
+     莉莉姆详情页就会出现唯一一张卡却标着「未生效」——生效的那版根本不存在。
+   内容一字不改地交给 escParas（只做排版分段，不动一个字）。 */
+/* 堕落版正文开头两行是给 AI 看的加载机制说明（谁在什么条件下加载本档案），
+   对玩家是噪音 —— 前端只展示【堕落后现况】起的正文。这两行随世界书原文保留，
+   仅在本渲染入口剥离，不改卡内条目。 */
+function stripFallenPreamble(text){
+  return String(text ?? '').replace(/\r\n?/g,'\n')
+    .split('\n')
+    .filter(l=>!/^\s*\[女主档案[·・]堕落版\]/.test(l))
+    .filter(l=>!/^\s*(例外铁律|例外规则)[：:]/.test(l))
+    .join('\n');
 }
 function heroineWbBlock(h){
-  const key = 'wb:'+h.name;
-  const c = window.__wikiCache || (window.__wikiCache = {});
-  const shell = inner => `<div class="dd-lore" id="dex-wb"><div class="dw-cardlabel">世界书 · 实时条目（随设定更新）</div>${inner}</div>`;
-  if(c[key] === undefined || c[key] === null){
-    if(c[key] === undefined){
-      c[key] = null;
-      (async()=>{
-        const txt = await fetchHeroineWb(h.name);
-        c[key] = (txt === null) ? false : txt;
-        try{
-          if(insertOpen==='dex' && window.__heroineDetail != null && (D.heroines||[])[window.__heroineDetail] && D.heroines[window.__heroineDetail].name === h.name){
-            const el = insertEl.querySelector('#dex-wb');
-            if(el) el.outerHTML = heroineWbBlock(h);
-          }
-        }catch(e){}
-      })();
-    }
-    return shell('<div class="empty-note">正在翻检世界书条目……</div>');
+  const form = heroineFormOf(h.name);
+  const pick = (k)=> k === 'fallen' ? h.fallen : h.base;
+  let cur = pick(form);
+  let label = form === 'fallen' ? '堕落版' : '基础版';
+  if(!cur){                                    // 形态指定的那版缺失 → 回落
+    cur = form === 'fallen' ? h.base : h.fallen;
+    label = cur ? (form === 'fallen' ? '基础版（无堕落版条目）' : '堕落版（无基础版条目）') : '';
   }
-  if(!c[key]) return shell('<div class="empty-note">未在绑定世界书中找到该条目 — 以卡内简介为准。</div>');
-  return shell(`<p>${esc(c[key])}</p>`);
+  if(!cur) return wbMiss(h.name);
+  const body = (label.indexOf('堕落版') === 0) ? stripFallenPreamble(cur.content) : cur.content;
+  return wbShell(
+    `<div class="dd-ver on">
+      <div class="dw-cardlabel">${esc(label)}<span class="wv-tag on">当前生效</span><span class="wv-src">${esc(cur.name)}</span></div>
+      ${escParas(body)}
+    </div>`, 'dex-wb');
 }
 function renderHeroineDetail(i){
-  const hs = D.heroines||[];
+  const hs = heroines();
   const h = hs[i];
   if(!h){ window.__heroineDetail = null; return renderDex(); }
-  const b = (Stat.get('羁绊', {}) || {})[h.name];
+  /* ⚠ 归一查表：原为裸键 (羁绊)[h.name]，「莉莉姆」永远miss，
+     导致详情页头部恒显「未结缘」——与已修好的图鉴墙/羁绊录自相矛盾。 */
+  const b = heroineBondOf(h.name);
+  const form = heroineFormOf(h.name);
+  const introTxt = h.intro || '';
   return `
   <div class="dex-detail">
-    <button class="dd-back" data-hback>${ICON.chevL}<span>返回图鉴</span></button>
+    <button class="dd-back" data-hback>${ICON.chevL}<span>返回女主图鉴</span></button>
     <div class="dd-hero">${cameo(h.name.slice(0,1),'女主档案')}
       <div class="dd-id"><div class="dd-no">女主档案 · ${b?esc(b.关系||'结缘'):'未结缘'}</div>
         <div class="dd-nm">${esc(h.name)}</div></div></div>
-    ${h.intro?`<div class="dd-lore"><div class="dw-cardlabel">名册 · 卡内简介</div><p>${esc(h.intro)}</p></div>`:''}
+    ${introTxt?`<div class="dd-lore"><div class="dw-cardlabel">名册 · 卡内简介</div>${escParas(introTxt)}</div>`:''}
     ${b?`<div class="dd-lore"><div class="dw-cardlabel">羁绊 · 当前</div><p>关系 · ${esc(b.关系||'初识')}　心防 · ${esc(b.心防||'第一道·未解')}　好感度 · ${b.好感度??0}/100　开发度 · ${b.开发度??0}/100</p></div>`:''}
     ${heroineWbBlock(h)}
   </div>`;
 }
+/* —— 图鉴 · 内分三大类 ——
+   图鉴本是一个标签，里面却塞着三种性质完全不同的东西：脑内的住民（单数，档案）、
+   卡内 16 位女主（人物图鉴）、237 种族名册（资料库）。原先四段平铺一页，
+   读者要滚几千像素才能找到想看的那类。
+   现改为：点开「图鉴」→ 顶部内分栏切换三类，各自独立成页。
+   分栏状态存 window.__dexTab；住民/女主/魔物娘互不干扰。 */
+const DEX_TABS = [
+  {k:'anima',   label:'心界住民', icon:'anima', render: renderDexAnima},
+  {k:'heroine', label:'女主',     icon:'hero',  render: renderDexHeroines},
+  {k:'monster', label:'魔物娘',   icon:'dex',   render: renderDexRaces},
+];
 function renderDex(){
-  if(window.__heroineDetail != null) return renderHeroineDetail(window.__heroineDetail);
-  const hs = (D.heroines||[]);
-  const xj = Stat.get('心界住民', g(D,'schemaDefaults.心界住民', null));
-  const bondsAll = Stat.get('羁绊', {}) || {};
-  const stages = ['听闻','目击','接触','调查','深度了解','结缘'];
+  const cur = DEX_TABS.some(t=>t.k===window.__dexTab) ? window.__dexTab : 'monster';
+  const t = DEX_TABS.find(x=>x.k===cur);
+  const bar = `<div class="dx-subtabs" role="tablist">${DEX_TABS.map(x=>
+    `<button class="dx-subtab${x.k===cur?' on':''}" role="tab" aria-selected="${x.k===cur}" data-dextab="${x.k}">
+      <span class="dxs-ic">${ICON[x.icon]}</span><span class="dxs-lb">${x.label}</span></button>`).join('')}</div>`;
+  return bar + `<div class="dx-subpane">${t.render()}</div>`;
+}
+function renderDexAnima(){
+  if(!__wbIndex && !__wbIndexing) loadWbIndex();
+  const xj = Stat.get('心界住民', g(D,'schemaDefaults.心界住民', null)) || null;
+  const named = xj && xj.名字 && xj.名字 !== '未选定';
+  const mem = (xj && xj.已唤醒记忆) || [];
   return `
-  <div class="sec-title">收录 · 图鉴收集墙</div>
-  ${hs.length ? `<div class="dex-wall">${hs.map((h,i)=>{
-    const b = bondsAll[h.name];
-    return `
+  <div class="sec-title">心界 · 住民</div>
+  ${named ? `
+  <div class="plaque"><h4>${esc(xj.名字)}<span class="k-latin">Anima Mundi</span><span class="init-badge">${esc(xj.实体化进度||'未实体化')}</span></h4>
+    <div class="p-desc">${esc(xj.当前状态||'—— 颅内那盏灯尚未开口。')}</div></div>
+  ${meter('好感度', xj.好感度??0, 100, ['#96372E','#B04A3E'])}
+  ${meter('碎晶', xj.碎晶数??0, 12, ['#43617A','#2F4A5E'])}
+  ${xj.当前碎晶线索 && xj.当前碎晶线索!=='无' ? `<div class="sec-title">当前碎晶线索</div>
+  <div class="plaque"><h4>追索中<span class="k-latin">Clavis</span></h4><div class="p-desc">${esc(xj.当前碎晶线索)}</div></div>` : ''}
+  ${animaWbBlock(xj.名字)}
+  <div class="sec-title">已唤醒记忆 · ${mem.length} 条</div>
+  ${mem.length ? mem.map(m=>`<div class="plaque"><h4>${esc(m)}<span class="k-latin">Memoria</span></h4></div>`).join('') : emptyNote('记忆仍封在雾里——推进实体化进度方可唤醒。')}`
+  : emptyNote('尚未选定住民——颅内那盏灯仍是无名的。可在仪典中指定，或交给命运。')}
+  ${named ? renderAnimaStage(xj) : ''}`;
+}
+/* 心界住民档案 —— 与女主同一套「世界书 · 实时条目」设计。
+   条目名形如「心界住民：幽灵·塞蕾丝」，内容一字不改地交给 escParas。 */
+function animaWbBlock(name){
+  if(!name || name === '未选定') return '';
+  if(!__wbIndex) return wbPending('anima-wb');
+  const e = animaWbEntry(name);
+  if(!e) return wbMiss(name, `未在绑定世界书中找到「心界住民：…·${name}」条目 — 以状态簿实况为准。`);
+  return wbShell(
+    `<div class="dd-ver on"><div class="dw-cardlabel">住民档案<span class="wv-tag on">当前</span><span class="wv-src">${esc(e.name)}</span></div>${escParas(e.content)}</div>`,
+    'anima-wb');
+}
+/* 实体化阶段 —— 严格按世界书〈心界住民系统〉的「双重进化条件」实时推算，
+   不在前端硬编码任何阶段名：
+     阶段一（默认）｜阶段二=好感≥30 且碎晶≥2｜阶段三=好感≥60 且碎晶≥5｜阶段四=好感≥90 且碎晶≥9
+   两条铁律决定了这里该怎么写：
+   ① 阶段名因住民而异（菲娜=戒备·公务期…结契·完全实体；蒂蒂阈值为80），是 AI 按专属条目
+      写入 `实体化进度` 的自由文本 → 只能原样读出来显示，前端不得编名字。
+   ② 好感与碎晶缺一不可 → 达标项打勾，未达标项显示差多少，让读者知道还差什么。 */
+const ANIMA_STAGES = [
+  {n:1, fav:0,  shard:0,  hint:'默认'},
+  {n:2, fav:30, shard:2,  hint:'好感30＋碎晶2'},
+  {n:3, fav:60, shard:5,  hint:'好感60＋碎晶5'},
+  {n:4, fav:90, shard:9,  hint:'好感90＋碎晶9'},
+];
+function renderAnimaStage(xj){
+  const fav = Number(xj.好感度)||0, sh = Number(xj.碎晶数)||0;
+  let cur = 1;
+  for(const s of ANIMA_STAGES) if(fav>=s.fav && sh>=s.shard) cur = s.n;
+  const row = ANIMA_STAGES.map(s=>{
+    const done = cur >= s.n;
+    /* 门槛未过但只差一线时，把差额直接写出来（比一句“未达成”有用得多） */
+    const gap = (!done && s.n<=4) ? `　差 ${Math.max(0,s.fav-fav)} 好感 · ${Math.max(0,s.shard-sh)} 碎晶` : '';
+    return `<div class="as-row${done?' done':''}${cur===s.n?' cur':''}">
+      <span class="as-no">${s.n}</span>
+      <span class="as-hint">${esc(s.hint)}${gap}</span>
+      <span class="as-mark">${done?'✓':''}</span></div>`;
+  }).join('');
+  return `
+  <div class="sec-title">实体化 · 阶段 ${cur}/4</div>
+  <div class="as-track">${row}</div>
+  <div class="as-note">阶段名以 <b>实体化进度</b> 变量为准（各住民专属条目不同）——当前：<b>${esc(xj.实体化进度||'未实体化')}</b></div>`;
+}
+function renderDexHeroines(){
+  if(window.__heroineDetail != null) return renderHeroineDetail(window.__heroineDetail);
+  /* 触发一次世界书索引（幂等）；就绪后自动重刷本页 */
+  if(!__wbIndex && !__wbIndexing) loadWbIndex();
+  const hs = heroines();
+  const bondsAll = Stat.get('羁绊', {}) || {};
+  /* 索引还没回来时给一格占位，不拿 13 位静态名册假装是全量 */
+  const pending = !__wbIndex && !hs.some(h=>h.base||h.fallen);
+  const head = `<div class="sec-title">收录 · 女主图鉴${pending?'　<span class="hs-pending">世界书索引建立中…</span>':` ${hs.length} 位`}</div>`;
+  return head +
+  (pending
+    ? `<div class="dex-wall">${Array.from({length:8},()=>'<div class="dex-cell pending"></div>').join('')}</div>`
+    /* 卡片只留「立绘 + 名字」：简介与形态/好感都属详情页的事，墙上是索引不是内容。
+       原先这里还挂 .dc-intro 简介行与 .dc-bond「堕落·母亲·好感100」状态行，
+       既挤又与下方详情重复（用户定：简介点进去看）。结缘态仍由 .bonded 底色体现。 */
+    : hs.length ? `<div class="dex-wall">${hs.map((h,i)=>{
+        const b = heroineBondOf(h.name, bondsAll);
+        return `
     <div class="dex-cell${b?' bonded':''}" data-heroine="${i}" role="button" title="点开查看档案">${cameo(h.name.slice(0,1),'女主档案')}
-      <div class="dc-name">${esc(h.name)}</div>
-      ${h.intro?`<div class="dc-intro">${esc(h.intro)}</div>`:''}
-      <div class="dc-bond">${b?`结缘 · ${esc(b.关系||'未记')} · 好感 ${b.好感度??0}`:'未结缘'}</div></div>`; }).join('')}</div>` : emptyNote('图鉴数据提取缺失——见 _extract-report.md')}
-  <div class="sec-title">图鉴认知六阶</div>
-  <div class="dex-legend">${stages.map((s,i)=>`${i?'<span class="dl-arrow">→</span>':''}<span class="dl-step">${s}</span>`).join('')}</div>
-  ${xj ? `<div class="sec-title">心界 · 住民</div>
-  <div class="plaque"><h4>${esc(xj.名字||'未选定')}<span class="k-latin">Anima Mundi</span></h4>
-    <div class="p-desc">实体化进度 · ${esc(xj.实体化进度||'未实体化')}<br>碎晶 · ${xj.碎晶数??0} / 12${xj.当前碎晶线索?`　·　线索：${esc(xj.当前碎晶线索)}`:''}<br>好感度 · ${xj.好感度??0}</div></div>`:''}
-  ${renderDexRaces()}`;
+      <div class="dc-name">${esc(h.name)}</div></div>`; }).join('')}</div>`
+      : emptyNote('未在绑定世界书中扫到「{名}-基础版 / -堕落版」档案条目。'));
+}
+/* 「已遭遇」判定器 —— MVU 自由文本 ↔ 名册短名的宽松匹配。
+   AI 写入 `图鉴.已遭遇种族` 的形态千差万别：'莉莉姆' / '莉莉姆·堤露埃拉' /
+   '史莱姆（蓝）' / '魅魔一族'……名册侧只有短名。三级判定由严到宽：
+     ① 原样相等
+     ② 归一后相等（去「·」、空格、全/半角括号及其内容）
+     ③ **仅当 MVU 条目带「·」（全名形态）** 时，才允许互为前缀
+   ③ 的门槛是踩过坑才加的：若对所有条目都放开前缀，
+     '史莱姆（蓝）' 会把「史莱姆女王」也一并点亮 —— 玩家明确只遇见了蓝色史莱姆，
+     却解锁了女王。图鉴的紧张感就靠这种精确度撑着，不能慷慨。
+     全名（莉莉姆·堤露埃拉）才是真正需要前缀兜底的场景。 */
+function makeMetMatcher(list){
+  const norm = (s)=> String(s??'')
+    .replace(/[（(][^）)]*[）)]/g, '')   // 去掉括号注释
+    .replace(/[·・･\s]/g, '')           // 去掉间隔点与空白
+    .replace(/[Ａ-Ｚａ-ｚ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .trim();
+  const pool = (Array.isArray(list) ? list : [])
+    .map(x => (typeof x === 'string' ? x : (x && (x.名称 || x.名 || x.name)) || ''))
+    .map(s => {
+      const raw = String(s).trim();
+      return { raw, n:norm(raw), isFull:/[·・･]/.test(raw) };
+    })
+    .filter(x => x.n.length >= 2);
+  return (name)=>{
+    const n = norm(name);
+    if(!n || n.length < 2) return false;
+    for(const it of pool){
+      if(it.raw === name || it.n === n) return true;
+      if(!it.isFull) continue;                       // 非全名条目不走前缀兜底
+      const [lo,hi] = it.n.length <= n.length ? [it.n, n] : [n, it.n];
+      if(hi.length >= 3 && lo === hi.slice(0, lo.length)) return true;
+    }
+    return false;
+  };
 }
 function renderDexRaces(){
   const DX = window.MODIAN_DEX||{};
-  const unlocked = true; /* 名册默认开放 · 密语封印已废 */
+  const unlocked = dexUnlocked();          /* 会话级预览（卡内同策）：未开则只显已收录 */
   const cats = DX.cats||[];
   const total = cats.reduce((s,c)=>s+c.races.length,0);
+  /* ⚠ 病灶（用户报「遇到新角色，图鉴没解锁」）：原实现是 `new Set(metList)` + 精确
+     `metSet.has(r.name)`。但 MVU 的 `图鉴.已遭遇种族` 是**自由文本数组**，AI 实际写入的
+     条目常带修饰：全名带「·」（莉莉姆·堤露埃拉）、异写、带括号别名、带前后缀说明。
+     名册侧 r.name 却只有短名（莉莉姆）——精确匹配必然 miss，图鉴于是永不亮。
+     修法：名册短名建索引，命中判定放宽为「相等 / 互为前缀 / 去·去空格后相等」，
+     仍要求长度≥2 防止单字误命中。图鉴条目是权威名单表，宁可多亮一格也不吞掉真遭遇。 */
   const metList = Stat.get('图鉴.已遭遇种族', []) || [];
-  const metSet = new Set(metList);
-  const head = `<div class="sec-title">种族总览 · ${esc(DX.stats||(cats.length+' 大类'))}</div>
+  const isMet = makeMetMatcher(metList);
+  /* 进度计数按名册逐条判定，与格子点亮用的是同一个 isMet —— 否则会出现
+     「已收录 7」但只亮了 5 格」的自相矛盾（此前计数用 metSet.size 是另一个口径）。 */
+  const metCount = cats.flatMap(c=>c.races).filter(r=>isMet(r.name)).length;
+  const head = `<div class="sec-title">种族总览 · ${esc(DX.stats||(cats.length+' 大类'))}${dexLockBadge()}</div>
   <div class="plaque"><h4>收录进度<span class="k-latin">Collectio</span></h4>
-    <div class="p-desc">已收录 <b>${metSet.size}</b> / ${total} 种族</div></div>`;
-  if(!unlocked){
-    return head + `
-    <div class="dex-lock">
-      <div class="dl-seal">${ICON.seal}</div>
-      <div class="dl-text">未收录图鉴已封印 · 念对密语可临时预览</div>
-      <div class="dl-form"><input id="dex-pass" type="text" placeholder="密语" autocomplete="off"><button id="dex-verify">验印</button></div>
-    </div>`;
-  }
+    <div class="p-desc">已收录 <b>${metCount}</b> / ${total} 种族</div></div>`;
+  /* 锁语义对齐（2026-10-04 裁决）：已收录种族永远完整可见、可点开详情；搜索与
+     大类/科属/编号三排法常驻不再锁。密码只管「未收录项的会话级预览」——未验印时
+     未收录一律显示 ??? 且不可点开。原实现把整个名册模式连三分类一起锁进密码后，
+     与面板文案「重新上锁只收回未收录项，已收录进度不受影响」自相矛盾，故修正。 */
+  const lockPanelHtml = unlocked ? '' : dexLockPanel();
   // 详情模式
   if(window.__dexDetail){
     const all = cats.flatMap(c=>c.races);
     const r = all.find(x=>x.no===window.__dexDetail) || all.flatMap(c=>c.races.map(x=>({...x,cat:c.name}))).find(x=>x.no===window.__dexDetail);
     const catName = (cats.find(c=>c.races.some(x=>x.no===window.__dexDetail))||{}).name||'';
-    if(r){
+    if(r && (unlocked || isMet(r.name))){
       const rows = [['科属',r.family2||r.family],['类型',r.type||catName],['栖息地',r.habitat2||r.habitat],['性格',r.character],['食谱',r.food],['特征',r.feat],['别名',r.alias]].filter(([,v])=>v);
       return `<div class="dex-detail">
       <button class="dd-back" data-dback>${ICON.chevL}<span>返回名册</span></button>
       <div class="dd-hero">${cameo(r.name.slice(0,1),'NO.'+r.no)}
         <div class="dd-id"><div class="dd-no">NO.${r.no} · ${esc(catName)}</div>
-          <div class="dd-nm">${esc(r.name)}</div>
-          ${r.en?`<div class="dd-en">${esc(r.en)}</div>`:''}</div></div>
-      <dl class="dd-fields">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-      ${r.intro?`<div class="dd-lore"><div class="dw-cardlabel">图鉴条目 · 卡内</div><p>${esc(r.intro)}</p></div>`:''}
+          <div class="dd-nm">${esc(r.name)}</div></div></div>
+      <dl class="dd-fields">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${escLines(v)}</dd>`).join('')}</dl>
+      ${r.intro?`<div class="dd-lore"><div class="dw-cardlabel">图鉴条目 · 卡内</div>${escParas(r.intro)}</div>`:''}
       ${wikiBlock(r)}
-      ${r.en?`<div class="dd-lore"><div class="dw-cardlabel">英文 WIKI · MGE Wiki</div><p><a class="dex-enlink" href="https://mgewiki.moe/index.php/${encodeURIComponent(r.en.replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(r.en)} · 前往英文 wiki ↗</a></p></div>`:''}
       <div class="dw-cardlabel">你的图鉴 · 交往关系</div>
       ${emptyNote('与此族尚无羁绊。')}
     </div>`;}
   }
-  // 名册模式（搜索 + 三种排法）
+  // 名册模式（搜索 + 三种排法 · 大类/科属按种类折叠）
   const mode = window.__dexMode||'type';
   const q = (window.__dexQ||'').trim();
-  const raceCell = (r,cat)=>`<button class="dex-slot${metSet.has(r.name)?' met':''}" data-race="${r.no}">${cameo(r.name.slice(0,1),'NO.'+r.no)}<span class="ds-nm">${esc(r.name)}</span>${r.en?`<span class="ds-en">${esc(r.en)}</span>`:''}${metSet.has(r.name)?'<span class="ds-met">已遭遇</span>':''}</button>`;
-  const match = (r,cat)=>{ if(!q) return true; const s=(r.name+' '+r.en+' '+r.no+' '+(r.family||'')+' '+(r.habitat||'')+' '+cat).toLowerCase(); return s.includes(q.toLowerCase()); };
+  const raceCell = (r,cat)=>{
+    const met = isMet(r.name);
+    if(!unlocked && !met) return `<div class="dex-slot locked" title="未收录 · 验印后可临时预览">${cameo('?','NO.'+r.no)}<span class="ds-nm"><i class="ds-no">${esc(r.no)}</i>???</span></div>`;
+    return `<button class="dex-slot${met?' met':''}" data-race="${r.no}">${cameo(r.name.slice(0,1),'NO.'+r.no)}<span class="ds-nm"><i class="ds-no">${esc(r.no)}</i>${esc(r.name)}</span>${met?'<span class="ds-met">已遭遇</span>':''}</button>`;
+  };
+  const match = (r,cat)=>{ if(!q) return true; const s=(r.name+' '+r.no+' '+(r.family||'')+' '+(r.habitat||'')+' '+cat).toLowerCase(); return s.includes(q.toLowerCase()); };
+  /* 折叠状态存 window.__dexFold（{类别名:true}），重渲/搜索后依旧保持开合。
+     搜索态一律强开——否则命中项藏在闭合块里，用户会以为「搜不到」。 */
+  const FOLD = window.__dexFold || (window.__dexFold = {});
+  const foldOpen = (k)=> !!q || !!FOLD[k];
+  /* 一个类别 = 标题栏（常驻）+ 卡片网格（按需展开） */
+  const catBlock = (key, title, meta, list)=>{
+    const on = foldOpen(key);
+    return `<div class="dex-cat">
+      <button class="dw-cat-h${on?' on':''}" data-fold="${esc(key)}" aria-expanded="${on}">
+        <span class="dc-caret">${ICON.chevR}</span>${esc(title)}<span class="dc-n">${esc(meta)}</span></button>
+      <div class="dw-cat-b${on?' on':''}"><div class="dex-grid">${list.map(r=>raceCell(r,title)).join('')}</div></div>
+    </div>`;
+  };
   let body = '';
   const tap = `<div class="dw-searchbar"><input id="dex-q" type="search" autocomplete="off" placeholder="搜索名称 / 编号 / 类型 / 科属 / 栖息地" value="${esc(q)}"><span class="dw-tabs">${[['type','大类'],['family','科属'],['number','编号']].map(([v,n])=>`<button class="dw-tab${mode===v?' on':''}" data-mode="${v}">${n}</button>`).join('')}</span></div>`;
   if(mode==='number'){
@@ -7208,18 +8342,30 @@ function renderDexRaces(){
     body = Object.entries(fams).map(([f,rs])=>{
       const list = rs.filter(r=>match(r,f));
       if(!list.length && q) return '';
-      return `<div class="dw-region">${esc(f)}<span>${rs.length} 种族</span></div><div class="dex-grid">${list.map(r=>raceCell(r,'')).join('')}</div>`;
+      return catBlock('f:'+f, f, `${rs.length} 种族`, list);
     }).join('') || emptyNote('没有匹配的记录。');
   }else{
     body = cats.map(c=>{
       const list = c.races.filter(r=>match(r,c.name));
       if(!list.length && q) return '';
-      return `<div class="dw-region">${esc(c.name)}<span>${c.races.length} 种族${c.alts?` · 异写 ${esc(c.alts)}`:''}</span></div><div class="dex-grid">${list.map(r=>raceCell(r,c.name)).join('')}</div>`;
+      return catBlock('t:'+c.name, c.name, `${c.races.length} 种族${c.alts?` · 异写 ${c.alts}`:''}`, list);
     }).join('') || emptyNote('没有匹配的记录。');
   }
-  return head + tap + `<div class="dex-list">${body}</div>`;
+  /* 折叠工具条：编号模式是一整张平铺表（按 NO 排序，本身即序列，无需折叠），
+     故只在有分组的两档显示。 */
+  const foldbar = (mode==='number') ? '' : `<div class="dw-foldbar">
+    <span class="dfb-note">${q?'检索中 · 命中的分组已自动展开':`共 ${cats.length} 大类 / ${total} 种族 · 点种类标题展开`}</span>
+    <button class="dw-foldbtn" data-foldall="1">全部展开</button>
+    <button class="dw-foldbtn" data-foldall="0">全部收起</button></div>`;
+  return head + lockPanelHtml + tap + foldbar + `<div class="dex-list">${body}</div>`;
 }
-/* —— 零 · 总览（旧 home 签：一屏总账） —— */
+/* —— 零 · 总览（旧 home 签：一屏总账） ——
+   查漏补缺（照卡内正则 #15 概览页口径补齐，取代另起炉灶的重复面板）：
+     ① 十一阶阶梯 ♦♦♦ + 阶名（原先完全没有）
+     ② 战斗封条置顶（战斗.状态≠空闲 时出现，嵌体力/法力血条）
+     ③ 生命·法力 / 魔化度 / 历练值 从「一行纯文本」升级为量条
+     ④ 八维雷达图（8 轴，资质并入）——与生命·法力左右并排
+   原有内容（天地小账 / 天平速览 / 囊中与帐下 / 卷帙统计）保持不变，不重复造。 */
 function renderHome(){
   const w  = Stat.get('世界', g(D,'world', {}));
   const p  = Stat.get('主角', g(D,'schemaDefaults.主角', {}));
@@ -7230,12 +8376,46 @@ function renderHome(){
   const bonds = Object.keys(Stat.get('羁绊', {}) || {});
   const quests = Object.keys(Stat.get('任务', {}) || {});
   const chain = Object.keys(Stat.get('事件记录.进行中', {}) || {});
+  const bt = Stat.get('战斗', null) || {};
+
+  /* ① 战斗封条：非空闲才出现，血条直接嵌在里面 */
+  const fighting = bt.状态 && bt.状态 !== '空闲';
+  const battleFlag = fighting ? `<div class="battle-flag">
+      <div class="bf-t">⚔ 较量中</div>
+      <div class="bf-n">${esc(bt.当前对手 || '—')}<span class="ms-cap"> · ${esc(bt.对手阶层 || '—')}</span></div>
+      ${bt.裁定 ? `<div class="bf-r">裁定 · ${esc(bt.裁定)}</div>` : ''}
+      <div style="margin-top:6px">
+        ${meter('体力', p.当前体力 ?? 0, p.体力上限 ?? 200, ['#96372E','#B04A3E'])}
+        ${meter('法力', p.当前法力 ?? 0, p.法力上限 ?? 120, ['#2F4A5E','#43617A'])}
+      </div></div>` : '';
+
+  /* ② 生命·法力（左栏）：由原先的一行文本升级为量条 */
+  const vitals = [
+    meter('体力', p.当前体力 ?? 0, p.体力上限 ?? 200, ['#5B6B4C','#7C8B68']),
+    meter('法力', p.当前法力 ?? 0, p.法力上限 ?? 120, ['#43617A','#2F4A5E']),
+    meter('魔化度', p.魔化度 ?? 0, 100, (p.魔化度 ?? 0) >= 80 ? ['#6D231C','#B04A3E'] : ['#8A7040','#C9AE6D']),
+    meter('历练值', p.历练值 ?? 0, 100, ['#8A7040','#C9AE6D']),
+  ].join('');
+
   return `
   <div class="sec-title">天地小账</div>
   <div class="plaque"><h4>${esc(w.时间||'尚未记时')}<span class="k-latin">${esc(w.地点||'未知之地')}</span></h4>
     <div class="p-desc">${esc(w.季节||'—')} · ${esc(w.时段||'—')} · 天气${esc(w.天气||'—')} · 月相${esc(w.月相||'—')} · 魔力浓度 ${esc(w.魔力浓度||'普通')}${w.雷斯卡特耶沦陷?`<br>雷斯卡特耶 · ${esc(w.雷斯卡特耶沦陷)}`:''}${w.世界动态?`<br>${esc(w.世界动态)}`:''}</div></div>
-  ${plaque((p.姓名||'无名旅人') + (p.身份?` · ${p.身份}`:''), `Lv.${p.等级??1} · ${p.阶层||'第一阶·平民阶'}`,
-    `体力 ${p.当前体力??200}/${p.体力上限??200} · 法力 ${p.当前法力??120}/${p.法力上限??120}${p.信仰对象 && p.信仰对象!=='无'?`<br>信仰 · ${esc(p.信仰对象)}`:''}<br>名声 ${esc(p.名声||'默默无闻')} · 魔化 ${p.魔化度??0}（${esc(p.魔化段位||'纯人类')}）`)}
+  ${tierLadder(p)}
+  <div class="sec-title">${esc((p.姓名||'无名旅人') + (p.身份?` · ${p.身份}`:''))} · Lv.${p.等级??1} ${esc(p.阶层||'')}</div>
+  ${battleFlag}
+  <div class="ov-2col">
+    <div>
+      <div class="sec-title" style="margin-top:10px">生命 · 法力</div>
+      ${vitals}
+      ${p.魔化段位 ? `<div class="chip-row"><span class="chip">${esc(p.魔化段位)}</span></div>` : ''}
+      ${p.信仰对象 && p.信仰对象!=='无' ? kvLike('信仰', p.信仰对象) : ''}
+    </div>
+    <div>
+      <div class="sec-title" style="margin-top:10px">八维</div>
+      ${radar8(p)}
+    </div>
+  </div>
   <div class="sec-title sv-cinnabar">天平速览</div>
   ${meter('佳婿风评', f.佳婿风评??0, 100, ['#96372E','#B04A3E'])}
   ${meterCentered('魔界友好度', f.魔界友好度??0)}
@@ -7254,6 +8434,8 @@ function renderHome(){
     <span class="dl-step">进行中委托 ${quests.length}</span><span class="dl-arrow">·</span>
     <span class="dl-step">进行中事件链 ${chain.length}</span></div>`;
 }
+/* 总览用的小键值行（原型的 kv 语义） */
+function kvLike(k,v){ return `<div class="p-desc" style="margin-top:4px">${esc(k)} · ${esc(v)}</div>`; }
 
 /* —— 柒 · 事件档案（旧 files 签：近期卷宗） —— */
 function renderFiles(){
@@ -7328,7 +8510,10 @@ function renderArtes(){
   <div class="sec-title">资质四象</div>
   ${meter('灵感', g(p,'资质.灵感',10), 20)}${meter('魅力', g(p,'资质.魅力',10), 20, ['#96372E','#B04A3E'])}${meter('体质', g(p,'资质.体质',10), 20, ['#5B6B4C','#7C8B68'])}${meter('信仰', g(p,'资质.信仰',0), 20, ['#43617A','#2F4A5E'])}
   <div class="sec-title">装备槽</div>
-  ${chips(['武器 · 空','防具 · 空','饰品 · 空'])}
+  ${(()=>{ const eq=p.装备槽||{}; const names=[['武器',eq.武器],['防具',eq.防具],['饰品',eq.饰品]];
+    /* 值交给 chips() 统一 esc，这里只做“空值归一”，勿重复转义 */
+    const list=names.map(([k,v])=>`${k} · ${(!v||v==='空')?'空':String(v)}`);
+    return chips(list); })()}
   <div class="sec-title">习得技能</div>
   ${skKeys.length ? skKeys.map(k=>{ const s=sk[k]||{}; return `
     <div class="plaque"><h4>${esc(k)}<span class="k-latin">${esc([s.类别,s.等级].filter(Boolean).join(' · ')||'技能')}</span></h4>
@@ -7338,21 +8523,9 @@ function renderArtes(){
 
 /* —— 肆 · 魔物娘档案（羁绊） —— */
 function renderVincula(){
-  const hs = D.heroines||[];
   const bonds = Stat.get('羁绊', {}) || {};
   const bondKeys = Object.keys(bonds);
-  const bondOf = (name)=> bonds[name] || null;
   return `
-  <div class="sec-title">角色档案 · 卡内载录 ${hs.length} 位</div>
-  ${hs.length ? hs.map(h=>{
-    const b = bondOf(h.name);
-    return `
-    <div class="plaque"><h4>${esc(h.name)}<span class="k-latin">${b?esc(b.种族||'羁绊'):'档案 · 未立契'}</span><span class="init-badge">${b?esc(b.关系||'结缘'):'初识'}</span></h4>
-      <div class="p-desc">${h.intro?esc(h.intro):'——'}</div>
-      <div class="p-desc" style="margin-top:6px;color:var(--gilt-dim);font-size:12px">${b
-        ? `关系 · ${esc(b.关系||'初识')}　心防 · ${esc(b.心防||'第一道·未解')}　好感度 · ${b.好感度??0}/100　开发度 · ${b.开发度??0}/100`
-        : '关系 · 初识　心防 · 第一道·未解　好感度 · 0/100　开发度 · 0/100'}</div>
-    </div>`; }).join('') : emptyNote('角色档案提取缺失——见 _extract-report.md')}
   <div class="sec-title">羁绊录</div>
   ${bondKeys.length ? bondKeys.map(k=>{
     const b = bonds[k]||{};
@@ -7470,7 +8643,8 @@ showCover();
   if(!isNaN(f) && FLOORS[f]){ coverEl.classList.add('opened'); coverEl.style.display='none'; showFloor(f, 1); }
   const ins = q.get('insert');
   if(q.get('dexopen')==='1') window.__dexUnlocked = true;
-  if(q.get('ddetail')){ window.__dexUnlocked = true; window.__dexDetail = q.get('ddetail'); }
+  if(q.get('ddetail')){ window.__dexUnlocked = true; window.__dexTab='monster'; window.__dexDetail = q.get('ddetail'); }
+  if(q.get('dtab')){ window.__dexUnlocked = true; window.__dexTab = q.get('dtab'); }
   if(ins && MODULES.some(m=>m.key===ins)) openInsert(ins);
   if(q.get('dscroll')) setTimeout(()=>insertEl.querySelector('.dw-searchbar, .dd-back, .dex-lock')?.scrollIntoView({block:'start'}), 120);
   if(q.get('ritual')){ coverEl.classList.add('opened'); coverEl.style.display='none';
@@ -7525,6 +8699,8 @@ function diag(){
   };
 }
 window.__MODIAN = { showFloor, openInsert, parseFloor, notify, diag,
+  /* 验收/排障出口：Stat 与各渲染函数暴露出来，真机控制台可直接核对变量来源与形态判定 */
+  Stat, proseHtml, flowHtml, renderDexRaces, heroineFormOf, refreshStatsUI, MODULES,
   // 应急出口：万一点封面后是空页，直接从这里跳到末页/封面
   jump:(i)=>showFloor(i==null?FLOORS.length-1:i,1),
   debugShowFloor:(i)=>{ const c=document.getElementById('cover'); if(c){c.classList.add('opened');c.style.display='none';} showFloor(i,1); },
@@ -9866,8 +11042,6 @@ window.__ritual = {
 .race-item:hover{border-color:var(--gilt);box-shadow:0 5px 12px rgba(96,66,28,.2),inset 0 1px 0 rgba(255,255,255,.7)}
 .race-item.sel{background:rgba(150,55,46,.12);border-color:var(--cinnabar);color:var(--cinnabar);font-weight:600}
 .race-fam{grid-column:1/-1;font-size:10.5px;letter-spacing:.14em;color:var(--gilt-dim);border-bottom:1px solid rgba(120,96,56,.22);padding:3px 2px 2px;margin-top:2px}
-.dex-enlink{color:var(--lapis);text-decoration:none;border-bottom:1px dashed rgba(67,97,122,.5)}
-.dex-enlink:hover{color:var(--gilt)}
 /* 羁绊名册 */
 .bnd-item{margin-bottom:10px;border:1px solid rgba(120,88,40,.4);border-radius:4px;background:linear-gradient(172deg,rgba(246,242,231,.72),rgba(239,234,221,.48));transition:border-color .22s,box-shadow .22s}
 .bnd-item.active{border-color:var(--cinnabar);box-shadow:0 0 0 1px var(--cinnabar),0 8px 18px rgba(150,55,46,.14)}
@@ -9923,7 +11097,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-04T02:40:43.083Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-04T15:59:03.364Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
