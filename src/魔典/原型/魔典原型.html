@@ -108,8 +108,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .ff-nav:disabled{opacity:0;pointer-events:none}
 
 /* 正文卷轴区（滚动可用，滑轮隐身） */
-.scroll{position:relative;z-index:2;flex:1;min-height:0;overflow-y:auto;padding:22px 34px 26px;scrollbar-width:none}
-.scroll::-webkit-scrollbar{width:0;height:0;display:none}
+.scroll{position:relative;z-index:2;flex:1;min-height:0;overflow-y:auto;padding:22px 34px 26px;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent}
+
 
 /* 章节牌 */
 .chapter-tag{display:flex;align-items:center;gap:14px;margin:6px 0 18px;color:var(--lapis)}
@@ -224,7 +224,7 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
   max-height:calc(100% - 20px);
   transition:opacity .34s var(--ease-out),transform .4s var(--ease-out),visibility 0s .4s}
 .letter.open{opacity:1;visibility:visible;transform:none;transition:opacity .3s var(--ease-out),transform .42s var(--ease-out)}
-.letter-paper{position:relative;border-radius:8px;padding:15px 22px 14px;max-height:100%;overflow-y:auto;scrollbar-width:none;
+.letter-paper{position:relative;border-radius:8px;padding:15px 22px 14px;max-height:100%;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent;
   background:
     repeating-linear-gradient(180deg,transparent 0 30px,rgba(120,96,56,.14) 30px 31px),
     linear-gradient(rgba(244,238,223,.9),rgba(240,232,210,.92)),
@@ -238,9 +238,9 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
 .let-to{display:block;font-size:13px;color:var(--ink-faint);letter-spacing:.08em;margin-bottom:8px}
 .let-to b{font-weight:700;color:var(--ink)}
 #modian-letter-body{display:block;width:100%;min-height:122px;background:transparent;border:none;outline:none;resize:none;overflow-y:auto;
-  scrollbar-width:none;
+  scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent;
   font-family:var(--font-serif);font-size:16px;line-height:31px;color:var(--ink);caret-color:var(--cinnabar)}
-#modian-letter-body::-webkit-scrollbar{width:0;height:0;display:none}
+
 #modian-letter-body::placeholder{color:#A89980;font-style:normal;font-size:14px;line-height:31px}
 .let-foot{display:flex;align-items:center;gap:10px;padding-top:9px;border-top:1px dashed rgba(120,96,56,.32)}
 .let-count{font-family:var(--font-sans);font-size:10.5px;letter-spacing:.14em;color:var(--ink-faint)}
@@ -263,8 +263,8 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
 @keyframes letInk{0%{transform:translateX(-70%);opacity:.2}50%{opacity:.9}100%{transform:translateX(70%);opacity:.2}}
 @media (max-width:760px){
   .letter{width:min(94vw,560px)}
-  .letter-paper{border-radius:12px;padding:12px 16px 12px;max-height:62dvh;overflow-y:auto;scrollbar-width:none}
-  .letter-paper::-webkit-scrollbar{width:0;height:0;display:none}
+  .letter-paper{border-radius:12px;padding:12px 16px 12px;max-height:62dvh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent}
+  
 }
 
 /* ============ 卷轴 · 层目（目录） ============
@@ -294,8 +294,8 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
   transition:opacity .4s var(--ease-out),visibility 0s .4s}
 .toc-veil.on{opacity:1;visibility:visible;transition:opacity .4s var(--ease-out)}
 @media (hover:none){ .toc-close:active{background:var(--cinnabar);color:#F6E8E2} }
-.toc-list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:6px;padding:9px 12px 14px}
-.toc-list::-webkit-scrollbar{width:0;height:0;display:none}
+.toc-list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent;display:flex;flex-direction:column;gap:6px;padding:9px 12px 14px}
+
 .toc-item{display:flex;align-items:baseline;gap:10px;padding:9px 10px;border-radius:4px;
   border:1px solid rgba(120,88,40,.28);background:rgba(251,247,235,.4);text-align:left;color:var(--ink);
   transition:transform .24s var(--ease-out),border-color .24s,background .24s}
@@ -437,9 +437,9 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
    签位多或视口矮时整列溢出到 iframe 之外被裁掉——用户看到的就是「锁死、滚不动」。
    桌面纵向滚动；移动端在下方媒体查询里改回横向 overflow-x，两套互不干扰。 */
 .thumb-tabs{position:absolute;right:-34px;top:64px;bottom:14px;z-index:7;display:flex;flex-direction:column;gap:9px;
-  max-height:calc(100% - 78px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none;padding:2px 0}
+  max-height:calc(100% - 78px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent;padding:2px 0}
 .thumb-tabs-left{position:absolute;left:-34px;top:64px;bottom:14px;right:auto}
-.thumb-tabs::-webkit-scrollbar,.thumb-tabs-left::-webkit-scrollbar{width:0;height:0;display:none}
+
 /* 溢出时才给上下缘加渐隐提示，滚到头/尾自动去掉（滚动监听只在这两个元素上） */
 .thumb-tabs.rail-more::before,.thumb-tabs.rail-more::after,
 .thumb-tabs-left.rail-more::before,.thumb-tabs-left.rail-more::after{content:'';position:sticky;display:block;height:16px;margin:-2px 0;pointer-events:none;z-index:2}
@@ -495,11 +495,11 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
 .ep-rule::after{bottom:3px;background:rgba(72,52,22,.42)}
 .ep-rule span{position:absolute;top:50%;left:50%;width:6px;height:6px;transform:translate(-50%,-50%) rotate(45deg);border:1px solid rgba(72,52,22,.6)}
 /* 开场白：居中行长 + 两端对齐（不做首字放大，常规字号起笔） */
-.ep-text{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;
+.ep-text{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent;
   width:min(100%,560px);margin:6px auto 2px;padding:2px 6px;
   color:#33281D;font-family:var(--font-serif);font-size:15.5px;line-height:2.15;
   letter-spacing:.04em;text-align:justify;white-space:pre-wrap}
-.ep-text::-webkit-scrollbar{width:0;height:0;display:none}
+
 .ep-nav{flex:none;display:flex;align-items:center;gap:56px;margin-top:12px;padding-top:14px;
   border-top:1px solid rgba(72,52,22,.35)}
 .ep-nav button{display:flex;align-items:center;gap:8px;padding:7px 4px;border-radius:0;
@@ -547,8 +547,8 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 .insert-head .ih-close{width:30px;height:30px;border-radius:50%;border:1px solid rgba(120,88,40,.5);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:all .25s}
 .insert-head .ih-close:hover{background:var(--cinnabar);color:#F6F2E7;border-color:var(--cinnabar);transform:rotate(90deg)}
 /* 局内全屏：插页打开时也能收放，避免面板内容被视口裁掉 */
-.insert-body{flex:1;min-height:0;overflow-y:auto;padding:16px 20px 22px;scrollbar-width:none}
-.insert-body::-webkit-scrollbar{width:0;height:0;display:none}
+.insert-body{flex:1;min-height:0;overflow-y:auto;padding:16px 20px 22px;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent}
+
 
 /* 插页通用料件 */
 .sec-title{display:flex;align-items:center;gap:10px;margin:18px 0 9px;color:var(--lapis);font-size:13.5px;font-weight:700;letter-spacing:.2em}
@@ -969,9 +969,9 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
   .folio-head,.folio-foot{padding-left:12px;padding-right:12px;font-size:10.5px}
   /* 移动端书签栏改为底部横排：必须重置桌面端新增的 max-height / bottom / overflow-y，
      否则横向底栏会被纵向 max-height 裁掉一行（正是「锁死」的移动端版本）。 */
-  .thumb-tabs,.thumb-tabs-left{right:auto;left:0;top:auto;bottom:0;position:absolute;flex-direction:row;width:50%;gap:0;border-radius:0;background:linear-gradient(160deg,#241a12,#1a130d);border-top:1px solid rgba(201,174,109,.28);padding:6px 4px calc(6px + env(safe-area-inset-bottom));max-height:none;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;position:absolute}
+  .thumb-tabs,.thumb-tabs-left{right:auto;left:0;top:auto;bottom:0;position:absolute;flex-direction:row;width:50%;gap:0;border-radius:0;background:linear-gradient(160deg,#241a12,#1a130d);border-top:1px solid rgba(201,174,109,.28);padding:6px 4px calc(6px + env(safe-area-inset-bottom));max-height:none;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent;position:absolute}
   .thumb-tabs-left{left:auto;right:0;border-left:none}
-  .thumb-tabs::-webkit-scrollbar,.thumb-tabs-left::-webkit-scrollbar{display:none}
+  
   .thumb-tabs .thumb-tab,.thumb-tabs-left .thumb-tab{border-radius:8px}
   .thumb-tab{flex:1;min-width:0;flex-direction:row;justify-content:center;Writing-mode:horizontal-tb;writing-mode:horizontal-tb;width:auto;border:none;border-radius:8px;padding:9px 2px;letter-spacing:.12em;background:transparent;box-shadow:none;color:#CBB98D}
   /* 触屏点按会粘住 :hover，移动端不给任何 hover 反馈，避免按钮突然变色 */
@@ -997,6 +997,17 @@ body.modian-fs-on .ep-frame{width:82%;height:86%}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
 }
+
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(138,112,64,.48),rgba(96,66,28,.42));border-radius:5px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(150,55,46,.55);background-clip:padding-box;border:2px solid transparent}
+::-webkit-scrollbar-corner{background:transparent}
+.dw-range{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:16px 0 8px}
+.dw-list .dw-range:first-child,.insert-body .dw-range:first-child{margin-top:2px}
+.dw-range-t{font-family:var(--font-serif);font-size:14.5px;font-weight:700;letter-spacing:.14em;color:var(--gilt-dim)}
+.dw-range-n{font-family:var(--font-sans);font-size:11px;letter-spacing:.12em;color:var(--ink-faint)}
+button.dw-slot{cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -1290,7 +1301,6 @@ const NpcForge = (()=>{
     }
     if(S.tier) L.push('实力：' + S.tier);
     for(const d of DIMS){ const v = String(S[d.k]||'').trim(); if(v) L.push(d.lab + '：' + v); }
-    if(S.bg) L.push('经历：' + S.bg.trim());
     if(S.note) L.push(S.note.trim());
     return L.join('\n');
   }
@@ -3309,7 +3319,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1007b';
+const UI_VER = '1007c';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -4221,12 +4231,24 @@ function renderDexRaces(){
       <div class="dw-cat-b${on?' on':''}"><div class="dex-grid">${list.map(r=>raceCell(r,title)).join('')}</div></div>
     </div>`;
   };
+  /* 序列墙（老卡收集墙式）：每 10 号一块，块头=号段区间+块内收录进度。
+     点亮语义与 raceCell 一致：已收录常亮可点；验印后未收录也亮名可点；未验印 ??? 不可点。 */
+  const numberWall = (list)=>{
+    const byBlock = {};
+    list.forEach(r=>{ const n = parseInt(r.no,10)||0; const k = Math.floor((n-1)/10); (byBlock[k]=byBlock[k]||[]).push(r); });
+    return Object.keys(byBlock).map(Number).sort((a,b)=>a-b).map(k=>{
+      const rs = byBlock[k].slice().sort((a,b)=>a.no.localeCompare(b.no));
+      const metN = rs.filter(r=>isMet(r.name)).length;
+      const lo = String(k*10+1).padStart(3,'0'), hi = String(k*10+10).padStart(3,'0');
+      return `<div class="dw-range"><span class="dw-range-t">No.${lo} – ${hi}</span><span class="dw-range-n">${metN} / ${rs.length} 收录</span></div><div class="dex-grid">${rs.map(r=>raceCell(r,'')).join('')}</div>`;
+    }).join('');
+  };
   let body = '';
   const tap = `<div class="dw-searchbar"><input id="dex-q" type="search" autocomplete="off" placeholder="搜索名称 / 编号 / 类型 / 科属 / 栖息地" value="${esc(q)}"><span class="dw-tabs">${[['type','大类'],['family','科属'],['number','编号']].map(([v,n])=>`<button class="dw-tab${mode===v?' on':''}" data-mode="${v}">${n}</button>`).join('')}</span></div>`;
   if(mode==='number'){
     const all = cats.flatMap(c=>c.races.map(r=>({...r,cat:c.name}))).sort((a,b)=>a.no.localeCompare(b.no));
     const list = all.filter(r=>match(r,''));
-    body = `<div class="dex-grid">${list.map(r=>raceCell(r,'')).join('')}</div>${list.length?'':emptyNote('没有匹配的记录。')}`;
+    body = `<div class="dw-list">${numberWall(list)}</div>${list.length?'':emptyNote('没有匹配的记录。')}`;
   }else if(mode==='family'){
     const fams = {};
     cats.forEach(c=>c.races.forEach(r=>{ const f=r.family||'未归科属'; (fams[f]=fams[f]||[]).push({...r,cat:c.name}); }));
@@ -4618,8 +4640,8 @@ window.__MODIAN = { showFloor, openInsert, parseFloor, notify, diag,
 .rc-step.on em{border-color:var(--cinnabar);color:var(--cinnabar)}
 .rc-step.done{color:var(--gilt-dim)}.rc-step.done em{border-color:var(--gilt);color:var(--gilt-dim)}
 .rc-sep{width:22px;height:1px;background:rgba(120,88,40,.4)}
-.rit-body{flex:1;min-height:0;overflow-y:auto;padding:16px 30px 20px;scrollbar-width:none}
-.rit-body::-webkit-scrollbar{width:0;height:0;display:none}
+.rit-body{flex:1;min-height:0;overflow-y:auto;padding:16px 30px 20px;scrollbar-width:thin;scrollbar-color:rgba(120,96,56,.42) transparent}
+
 .rit-hint{font-size:12.5px;color:var(--ink-faint);line-height:1.85;margin:2px 0 10px}
 .rit-pool{margin-left:auto;font-size:12px;color:var(--ink-soft);letter-spacing:.06em}
 .rit-pool b{color:var(--cinnabar);font-size:14px}
