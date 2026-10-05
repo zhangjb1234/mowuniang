@@ -7432,7 +7432,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1007c';
+const UI_VER = '1007d';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -7868,7 +7868,7 @@ function wikiBlock(r){
     return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><div class="empty-note">正在连接中文wiki，翻取原文……</div></div>`;
   }
   if(c[name] === null) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div><div class="empty-note">正在连接中文wiki，翻取原文……</div></div>`;
-  if(c[name] === false) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 未能接驳 — 以卡内条目为准</div></div>`;
+  if(c[name] === false) return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 未能接驳</div><div class="empty-note">未能连接中文wiki，请稍后重开本页重试。</div></div>`;
   return `<div class="dd-lore"><div class="dw-cardlabel">WIKI 原文 · 中文魔物娘图鉴</div>${escParas(c[name])}</div>`;
 }
 function cameo(ch, sub){
@@ -8316,7 +8316,6 @@ function renderDexRaces(){
         <div class="dd-id"><div class="dd-no">NO.${r.no} · ${esc(catName)}</div>
           <div class="dd-nm">${esc(r.name)}</div></div></div>
       <dl class="dd-fields">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${escLines(v)}</dd>`).join('')}</dl>
-      ${r.intro?`<div class="dd-lore"><div class="dw-cardlabel">图鉴条目 · 卡内</div>${escParas(r.intro)}</div>`:''}
       ${wikiBlock(r)}
       <div class="dw-cardlabel">你的图鉴 · 交往关系</div>
       ${emptyNote('与此族尚无羁绊。')}
@@ -11123,7 +11122,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-05T08:15:36.690Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-05T08:41:52.336Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
