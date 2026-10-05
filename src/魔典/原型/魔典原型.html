@@ -3319,7 +3319,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1007e';
+const UI_VER = '1007f';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -3875,6 +3875,11 @@ const HERO_NORM = (s)=> String(s??'')
   .replace(/[·・･\s]/g, '')
   .replace(/[Ａ-Ｚａ-ｚ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
   .trim();
+/* 显示名覆盖（仅渲染层，2026-10-05 用户裁决）：女主名册名来自条目「{名}-基础版」去后缀
+   =「莉莉姆」，但展示名用「堤露埃拉」。只改显示，不改任何查表键 ——
+   羁绊匹配（heroineBondOf）与世界书条目匹配仍用原始 h.name。 */
+const HERO_DISPLAY_NAME = { '莉莉姆': '堤露埃拉' };
+const heroDisplayName = (n)=> HERO_DISPLAY_NAME[String(n??'').trim()] || n;
 /* 静态全名桥接表（关键）：名册名来自世界书条目「{名}-基础版」去后缀 = 短名
    （「莉莉姆·堤露埃拉」被截成「莉莉姆」），而羁绊键是 AI 自写的另一截（「堤露埃拉」）。
    两者互不为对方的「·」段，光看名册自身取别名永远对不上。
@@ -4020,9 +4025,9 @@ function renderHeroineDetail(i){
   return `
   <div class="dex-detail">
     <button class="dd-back" data-hback>${ICON.chevL}<span>返回女主图鉴</span></button>
-    <div class="dd-hero">${cameo(h.name.slice(0,1),'女主档案')}
+    <div class="dd-hero">${cameo(heroDisplayName(h.name).slice(0,1),'女主档案')}
       <div class="dd-id"><div class="dd-no">女主档案 · ${b?esc(b.关系||'结缘'):'未结缘'}</div>
-        <div class="dd-nm">${esc(h.name)}</div></div></div>
+        <div class="dd-nm">${esc(heroDisplayName(h.name))}</div></div></div>
     ${introTxt?`<div class="dd-lore"><div class="dw-cardlabel">名册 · 卡内简介</div>${escParas(introTxt)}</div>`:''}
     ${b?`<div class="dd-lore"><div class="dw-cardlabel">羁绊 · 当前</div><p>关系 · ${esc(b.关系||'初识')}　心防 · ${esc(b.心防||'第一道·未解')}　好感度 · ${b.好感度??0}/100　开发度 · ${b.开发度??0}/100</p></div>`:''}
     ${heroineWbBlock(h)}
@@ -4127,8 +4132,8 @@ function renderDexHeroines(){
     : hs.length ? `<div class="dex-wall">${hs.map((h,i)=>{
         const b = heroineBondOf(h.name, bondsAll);
         return `
-    <div class="dex-cell${b?' bonded':''}" data-heroine="${i}" role="button" title="点开查看档案">${cameo(h.name.slice(0,1),'女主档案')}
-      <div class="dc-name">${esc(h.name)}</div></div>`; }).join('')}</div>`
+    <div class="dex-cell${b?' bonded':''}" data-heroine="${i}" role="button" title="点开查看档案">${cameo(heroDisplayName(h.name).slice(0,1),'女主档案')}
+      <div class="dc-name">${esc(heroDisplayName(h.name))}</div></div>`; }).join('')}</div>`
       : emptyNote('未在绑定世界书中扫到「{名}-基础版 / -堕落版」档案条目。'));
 }
 /* 「已遭遇」判定器 —— MVU 自由文本 ↔ 名册短名的宽松匹配。
