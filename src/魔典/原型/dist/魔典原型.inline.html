@@ -6151,11 +6151,14 @@ function cleanseFloor(raw){
        .replace(/<danmu\b[^>]*>[\s\S]*?<\/danmu\s*>/gi,'')
        .replace(/<\/?game\b[^>]*>\n?/gi,'')
        .replace(/<details\b[^>]*>[\s\S]*?<\/details\s*>/gi,'');
-  // ⑥ Interleaving 容器（Dramatron）互斥：有容器只留容器体
-  const closed = /<Interleaving>([\s\S]*)<\/Interleaving>/i.exec(t);
-  const openOnly = closed ? null : /<Interleaving>([\s\S]*)$/i.exec(t);
-  const container = (closed || openOnly);
-  if(container) t = container[1].replace(/<\/?Interleaving>\n?/gi,'').replace(/<\/?content\b[^>]*>/gi,'');
+  // ⑥ Interleaving / content（Gemini Dramatron）＝杂质：整块删除，不再当容器选留
+  // 2026-10 定稿（朋友方案）：正文只认 <正文></正文>，功能标签只认五件套（⓿已抢救）；
+  // Interleaving 无论开在哪、闭在哪、闭合与否，一律整块剔除——
+  // 废止旧「有容器只留容器体」互斥逻辑（Interleaving 开在 <正文> 内部时会错杀容器外正文）。
+  t = t.replace(/<Interleaving>[\s\S]*?<\/Interleaving\s*>/gi, '')
+       .replace(/<Interleaving>[\s\S]*$/i, '')
+       .replace(/<\/?Interleaving>\n?/gi, '')
+       .replace(/<\/?content\b[^>]*>/gi, '');
   // ⓿ 归位：五个功能标签按原出现顺序拼回文末（正文行为完全不变）
   if(held.length){
     const heldTxt = held.map(x=>`<${x.name}>\n${x.body.trim()}\n</${x.name}>`).join('\n');
@@ -6338,13 +6341,10 @@ function parseFloor(raw){
   if(bodies.length){
     body = bodies.join('\n');
   }else{
-    // legacy 内容路：<content> 块合并（首开到末闭内的全部 content 串联）
-    const cb = extractBlocks(t,'content');
-    body = cb.length ? cb.join('\n') : t;
-    if(!cb.length){
-      // 兜底：剥掉功能标签后全文视为正文
-      TAGNAMES.forEach(n=>{ if(n!=='正文') body = body.replace(new RegExp(String.raw`<\s*${n}\s*>[\s\S]*?(?:<\/\s*${n}\s*>|$)`,'gi'),''); });
-    }
+    // 2026-10 定稿（朋友方案）：废止 izumi/小猫/kemini 三预设的 <content> 正文提取路——
+    // 正文唯一来源是 <正文></正文>；无正文块时兜底全文（剥功能标签壳）。
+    body = t;
+    TAGNAMES.forEach(n=>{ if(n!=='正文') body = body.replace(new RegExp(String.raw`<\s*${n}\s*>[\s\S]*?(?:<\/\s*${n}\s*>|$)`,'gi'),''); });
   }
   body = body.replace(/<\s*\/?\s*(正文|content)\s*>/gi,'');
   // 顺序游走：保真还原 正文段落 / 心语 / 大陆见闻 / 战况 的出现次序
@@ -7432,7 +7432,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1007f';
+const UI_VER = '1008a';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -11127,7 +11127,7 @@ window.__ritual = {
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-05T10:40:55.252Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-07T11:33:09.756Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
