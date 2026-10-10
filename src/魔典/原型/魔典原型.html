@@ -1050,6 +1050,245 @@ button.dw-slot{cursor:pointer;font-family:inherit}
 
 
 
+<script>
+/* [合入] 魔典-主题切换.js — 克劳德卡顿优化与美化包 */
+/* 魔典-主题切换 v1
+ * 在魔典 iframe 内运行：给 <html> 打 data-mdx-theme（vellum 羊皮纸 / night 紫曜夜读），
+ * 在书页左下角放一枚切换按钮，选择记在 localStorage（与酒馆同源，所有楼层与「旧楼收纳」卡片共享）。
+ * 手动指定：加载前设 window.MODIAN_THEME_DEFAULT = 'night'（仅在玩家没选过时生效），
+ * 或在控制台 / 其他脚本里调用 window.__modianTheme.set('night')。
+ * 另含较量面板 d20 的滚骰动画（两套主题通用；系统「减少动态效果」时跳过）。
+ */
+(function () {
+  'use strict';
+  if (window.__modianTheme) return;
+  var KEY = 'modian_theme_v1';
+  var THEMES = { vellum: '羊皮纸', night: '紫曜夜读' };
+  var root = document.documentElement;
+
+  function store() {
+    try { if (window.localStorage) return window.localStorage; } catch (e) {}
+    try { return window.parent.localStorage; } catch (e) {}
+    return null;
+  }
+  function saved() {
+    var s = store(), v = null;
+    try { v = s && s.getItem(KEY); } catch (e) {}
+    return THEMES[v] ? v : null;
+  }
+  function initial() {
+    if (THEMES[window.MODIAN_THEME_INITIAL]) return window.MODIAN_THEME_INITIAL;
+    return saved() || (THEMES[window.MODIAN_THEME_DEFAULT] ? window.MODIAN_THEME_DEFAULT : 'vellum');
+  }
+
+  var ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/><path d="M17 3.5v3M15.5 5h3"/></svg>';
+  var ICON_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>';
+
+  function label() {
+    var b = document.getElementById('mdx-theme-toggle');
+    if (!b) return;
+    var cur = root.getAttribute('data-mdx-theme');
+    var next = cur === 'night' ? 'vellum' : 'night';
+    b.innerHTML = (next === 'night' ? ICON_MOON : ICON_BOOK) + '<span>' + THEMES[next] + '</span>';
+    b.setAttribute('title', '切换为 · ' + THEMES[next]);
+    b.setAttribute('aria-label', '切换为' + THEMES[next] + '主题');
+  }
+  function apply(t) {
+    root.setAttribute('data-mdx-theme', THEMES[t] ? t : 'vellum');
+    label();
+  }
+  function set(t, persist) {
+    if (!THEMES[t]) return;
+    apply(t);
+    if (persist !== false) { try { store().setItem(KEY, t); } catch (e) {} }
+    try { window.dispatchEvent(new CustomEvent('modian:theme', { detail: t })); } catch (e) {}
+  }
+  function toggle() { set(root.getAttribute('data-mdx-theme') === 'night' ? 'vellum' : 'night'); }
+  apply(initial());
+
+  var STYLE =
+    '#mdx-theme-toggle{position:fixed;left:12px;bottom:78px;z-index:3002;display:flex;align-items:center;gap:6px;height:38px;padding:0 13px 0 11px;' +
+    'border-radius:19px;border:1px solid rgba(140,112,64,.6);background:linear-gradient(180deg,#F6F0DE,#E4D9BF);color:#4E4032;' +
+    'font:500 12px/1 "Noto Sans SC",sans-serif;letter-spacing:.12em;cursor:pointer;box-shadow:0 4px 12px rgba(41,30,16,.3),inset 0 1px 0 rgba(255,255,255,.8);' +
+    'opacity:.82;transition:opacity .2s,transform .2s,box-shadow .2s,border-color .2s}' +
+    '#mdx-theme-toggle:hover{opacity:1;transform:translateY(-1px);border-color:#96372E}' +
+    '#mdx-theme-toggle svg{width:16px;height:16px;flex:none}' +
+    'html[data-mdx-theme="night"] #mdx-theme-toggle{background:linear-gradient(180deg,rgba(33,18,52,.92),rgba(15,8,23,.95));color:#e8c385;' +
+    'border-color:rgba(233,201,140,.45);box-shadow:0 4px 16px rgba(0,0,0,.5),0 0 12px rgba(180,120,255,.25)}' +
+    'html[data-mdx-theme="night"] #mdx-theme-toggle:hover{border-color:#e8c385;box-shadow:0 0 18px rgba(180,120,255,.45)}' +
+    '@media (max-width:520px){#mdx-theme-toggle span{display:none}#mdx-theme-toggle{width:38px;padding:0;justify-content:center}}';
+
+  function mount() {
+    if (!document.body || document.getElementById('mdx-theme-toggle')) return;
+    var s = document.createElement('style');
+    s.id = 'mdx-theme-style';
+    s.textContent = STYLE;
+    (document.head || root).appendChild(s);
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'mdx-theme-toggle';
+    b.addEventListener('click', function (e) { e.stopPropagation(); toggle(); });
+    document.body.appendChild(b);
+    label();
+  }
+
+  var reduced = false;
+  try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  function rollDice(el) {
+    el.setAttribute('data-mdx-rolled', '1');
+    var text = el.textContent || '';
+    var m = text.match(/(\d+)(?!.*\d)/);
+    if (!m) return;
+    var v = parseInt(m[1], 10);
+    if (v === 20) el.classList.add('mdx-crit');
+    if (v === 1) el.classList.add('mdx-fumble');
+    if (reduced) return;
+    var head = text.slice(0, m.index), tail = text.slice(m.index + m[1].length), n = 0;
+    var iv = setInterval(function () {
+      n++;
+      if (n >= 12 || !el.isConnected) { clearInterval(iv); el.textContent = text; return; }
+      el.textContent = head + (1 + Math.floor(Math.random() * 20)) + tail;
+    }, 55);
+  }
+  var pending = false, watching = false;
+  function scan() {
+    pending = false;
+    var list = document.querySelectorAll('.cj-d20:not([data-mdx-rolled])');
+    for (var i = 0; i < list.length; i++) rollDice(list[i]);
+  }
+  function watch() {
+    if (watching || !document.body || typeof MutationObserver !== 'function') return;
+    watching = true;
+    new MutationObserver(function (muts) {
+      if (pending) return;
+      for (var i = 0; i < muts.length; i++) {
+        if (muts[i].addedNodes.length) {
+          pending = true;
+          setTimeout(scan, 30);
+          return;
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+    scan();
+  }
+
+  function boot() { mount(); watch(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  // $('body').load() 会整体替换 body 内容，按钮被冲掉时补回
+  var tries = 0;
+  (function keep() {
+    mount();
+    if (++tries < 40) setTimeout(keep, 500);
+  })();
+
+  window.addEventListener('storage', function (e) { if (e.key === KEY) apply(saved() || 'vellum'); });
+  window.__modianTheme = { get: function () { return root.getAttribute('data-mdx-theme'); }, set: set, toggle: toggle, mount: boot, themes: THEMES };
+})();
+</script>
+<script>
+/* [合入] 魔典-性能补丁.js — 克劳德卡顿优化与美化包 */
+/* 魔典-性能补丁 v1
+ * 放在魔典内核 <script> 之前执行（dist 里插在 content-data.js 之前，或直接内联进「魔典-界面」正则）。
+ * ① 长周期轮询（≥1s 的 setInterval）只在「当前那一本」里跑：最新 AI 楼层或伪全屏中，且 iframe 可见、标签页在前台。
+ * ② parseFloor 按楼层原文缓存，楼层事件时只解析新增/改动的楼。
+ * ③ iframe 滚出视口或标签页转入后台时暂停 CSS 动画；系统「减少动态效果」时循环动画只播一次。
+ */
+(function () {
+  'use strict';
+  if (window.__modianPerf) return;
+  var perf = window.__modianPerf = { version: 1, parseHits: 0, parseMisses: 0, skippedTicks: 0, parseCacheInstalled: false };
+  var visible = true;
+
+  function frameEl() {
+    try { return window.frameElement; } catch (e) { return null; }
+  }
+
+  function isPrimaryFrame() {
+    if (window.__modianFullscreen === true) return true;
+    var fe = frameEl();
+    var mes = fe && fe.closest ? fe.closest('.mes[mesid]') : null;
+    if (!mes || !mes.parentElement) return true;
+    for (var el = mes.parentElement.lastElementChild; el; el = el.previousElementSibling) {
+      if (!el.classList || !el.classList.contains('mes')) continue;
+      if (el.getAttribute('is_user') === 'true' || el.getAttribute('is_system') === 'true') continue;
+      return el === mes;
+    }
+    return true;
+  }
+  perf.isPrimaryFrame = isPrimaryFrame;
+
+  var nativeSetInterval = window.setInterval;
+  window.setInterval = function (fn, ms) {
+    if (typeof fn !== 'function' || !(Number(ms) >= 1000)) return nativeSetInterval.apply(window, arguments);
+    var extra = Array.prototype.slice.call(arguments, 2);
+    return nativeSetInterval.call(window, function () {
+      if (document.hidden || !visible || !isPrimaryFrame()) { perf.skippedTicks++; return; }
+      return fn.apply(this, extra);
+    }, ms);
+  };
+
+  var STYLE_ID = 'modian-perf-style';
+  function ensureStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+    var s = document.createElement('style');
+    s.id = STYLE_ID;
+    s.textContent =
+      'html.modian-idle *,html.modian-idle *::before,html.modian-idle *::after{animation-play-state:paused!important}' +
+      '@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-iteration-count:1!important}}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+  function syncIdle() {
+    document.documentElement.classList.toggle('modian-idle', document.hidden || !visible);
+  }
+  ensureStyle();
+  document.addEventListener('visibilitychange', syncIdle);
+  if (typeof IntersectionObserver === 'function') {
+    new IntersectionObserver(function (entries) {
+      visible = entries[entries.length - 1].isIntersecting;
+      syncIdle();
+    }).observe(document.documentElement);
+  }
+
+  var clone = typeof structuredClone === 'function'
+    ? function (v) { return structuredClone(v); }
+    : function (v) { return JSON.parse(JSON.stringify(v)); };
+
+  perf.installParseCache = function () {
+    if (perf.parseCacheInstalled) return true;
+    if (typeof window.parseFloor !== 'function') return false;
+    var original = window.parseFloor;
+    var cache = new Map();
+    var MAX = 400;
+    window.parseFloor = function (raw) {
+      var key = typeof raw === 'string' ? raw : String(raw == null ? '' : raw);
+      if (cache.has(key)) {
+        var hit = cache.get(key);
+        cache.delete(key);
+        cache.set(key, hit);
+        perf.parseHits++;
+        return clone(hit);
+      }
+      var result = original.apply(this, arguments);
+      perf.parseMisses++;
+      try {
+        cache.set(key, clone(result));
+        if (cache.size > MAX) cache.delete(cache.keys().next().value);
+      } catch (e) {}
+      return result;
+    };
+    perf.parseCacheInstalled = true;
+    ensureStyle();
+    return true;
+  };
+
+  var tries = 0;
+  (function retry() {
+    if (perf.installParseCache() || ++tries > 40) return;
+    setTimeout(retry, 250);
+  })();
+})();
+</script>
 <script src="content-data.js"></script>
 <script src="world-data.js"></script>
 <script src="demo-floors.js"></script>
@@ -3319,7 +3558,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1008a';
+const UI_VER = '1008b';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -4815,6 +5054,409 @@ window.__MODIAN = { showFloor, openInsert, parseFloor, notify, diag,
 .sc-ch.on{border-color:var(--cinnabar);color:var(--cinnabar);font-weight:700;background:rgba(150,55,46,.12)}
 .sc-ch.on.busy{opacity:.55;pointer-events:none}
 @media (hover:none){.sc-go{min-height:44px;padding:0 20px}.sc-in input{font-size:16px}.sc-ch{min-height:40px;padding:8px 14px}}
+
+/* [合入] 魔典-美化.css — 克劳德卡顿优化与美化包 */
+/* 魔典-美化 v1 — 覆盖层：放在魔典原有 <style> 之后。只改质感与层次，不动结构与配色体系。 */
+
+:root{
+  --mdx-gilt-rule:linear-gradient(90deg,transparent,rgba(169,138,70,.5) 16%,rgba(201,174,109,.95) 50%,rgba(169,138,70,.5) 84%,transparent);
+  --mdx-lift:0 1px 0 rgba(255,252,242,.55) inset,0 2px 4px rgba(96,66,28,.10),0 12px 26px -10px rgba(70,46,18,.34);
+  --mdx-lift-hi:0 1px 0 rgba(255,252,242,.6) inset,0 3px 6px rgba(96,66,28,.14),0 18px 34px -12px rgba(70,46,18,.42);
+}
+::selection{background:rgba(150,55,46,.2);color:inherit}
+
+/* ── 书页：更深的装订沟与四角压暗，纸面更有厚度 ── */
+.page::before{
+  box-shadow:
+    inset 0 0 0 1px rgba(120,96,56,.30),
+    inset 0 0 0 5px rgba(246,240,222,.16),
+    inset 0 0 0 6px rgba(169,138,70,.16),
+    inset 16px 0 26px -6px rgba(84,60,28,.22),
+    inset -30px 0 64px rgba(120,90,44,.18),
+    inset 0 -34px 64px rgba(120,90,44,.15),
+    inset 0 30px 56px rgba(122,92,46,.08);
+}
+.page.leaving,.page.enter-r,.page.enter-l,.page.entering{will-change:transform,opacity;backface-visibility:hidden}
+
+/* ── 天头 / 地脚：单线换成描金双线 ── */
+.folio-head{
+  border-bottom:none;
+  background-image:linear-gradient(90deg,transparent,rgba(120,88,40,.42) 10%,rgba(120,88,40,.42) 90%,transparent),var(--mdx-gilt-rule);
+  background-size:100% 1px,100% 1px;
+  background-position:0 100%,0 calc(100% - 3px);
+  background-repeat:no-repeat;
+}
+.folio-foot{
+  border-top:none;
+  background-image:var(--mdx-gilt-rule);
+  background-size:100% 1px;background-position:0 0;background-repeat:no-repeat;
+  font-variant-numeric:oldstyle-nums;
+}
+
+/* ── 正文排版：行距、字距、断行更讲究（首字下沉按作者先前的决定保持不加） ── */
+.prose p{
+  line-height:2.05;letter-spacing:.022em;margin:0 0 .55em;
+  text-wrap:pretty;font-kerning:normal;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  text-shadow:0 .5px 0 rgba(255,250,236,.4);
+}
+.prose strong{color:var(--cinnabar-deep);font-weight:700}
+.dlg{color:#7A2A22}
+
+/* ── 章题：描金菱花分隔 ── */
+.chapter-tag{margin:8px 0 22px}
+.chapter-tag h2{position:relative;padding-left:20px;text-shadow:0 1px 0 rgba(255,250,236,.5)}
+.chapter-tag h2::before{
+  content:'';position:absolute;left:2px;top:50%;width:8px;height:8px;
+  transform:translateY(-50%) rotate(45deg);
+  background:linear-gradient(135deg,var(--gilt-hi),var(--gilt-dim));
+  box-shadow:0 0 0 2px rgba(246,240,222,.7),0 0 0 3px rgba(169,138,70,.45);
+}
+.chapter-tag .ct-rule{height:1px;background:var(--mdx-gilt-rule);position:relative}
+.chapter-tag .ct-rule::after{
+  content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;
+  transform:translate(-50%,-50%) rotate(45deg);background:var(--gilt);
+}
+.sec-title::before{
+  content:'';flex:none;width:6px;height:6px;transform:rotate(45deg);
+  background:currentColor;opacity:.75;box-shadow:0 0 0 2px rgba(246,240,222,.6);
+}
+
+/* ── 便签 / 见闻 / 战况：分层阴影 + 一道描金细线 ── */
+.mind-slip,.note-slip{box-shadow:var(--mdx-lift)}
+.news-clip{border-color:rgba(47,74,94,.30);box-shadow:var(--mdx-lift)}
+.news-clip .nc-head{
+  background:linear-gradient(180deg,#3A5B74,#2A4458);
+  box-shadow:inset 0 -1px 0 rgba(201,174,109,.55),inset 0 1px 0 rgba(255,255,255,.08);
+  text-shadow:0 1px 1px rgba(0,0,0,.3);
+}
+.duel-banner{box-shadow:var(--mdx-lift)}
+.duel-banner .db-head{
+  box-shadow:inset 0 -1px 0 rgba(201,174,109,.55),inset 0 1px 0 rgba(255,255,255,.08);
+  text-shadow:0 1px 1px rgba(0,0,0,.3);
+}
+
+/* ── 标本插页（功能卡）：内衬描金框 ── */
+.specimen{outline:1px solid rgba(169,138,70,.30);outline-offset:-6px;box-shadow:var(--mdx-lift),inset 0 0 34px rgba(120,96,56,.10)}
+
+/* ── 数值条：圆润轨道 + 光泽填充，颜色仍取各条自带的朱砂 / 青金 / 苔绿 ── */
+.meter .m-track{
+  height:8px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(96,66,28,.22),rgba(96,66,28,.10));
+  box-shadow:inset 0 1px 2px rgba(43,34,26,.30),0 1px 0 rgba(255,250,238,.65);
+}
+.meter .m-fill{
+  border-radius:999px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0) 60%),
+    linear-gradient(90deg,var(--mv,#A98A46),var(--mv2,#C9AE6D));
+  box-shadow:0 0 6px -1px var(--mv2,#C9AE6D);
+}
+.meter .m-val{font-variant-numeric:tabular-nums}
+
+/* ── 选项签：悬停轻抬，朱砂印点更立体 ── */
+.choice-slip{
+  box-shadow:0 1px 0 rgba(255,252,242,.6) inset,0 3px 8px -3px rgba(96,66,28,.28);
+  transition:transform .22s var(--ease-out),box-shadow .22s var(--ease-out),border-color .22s;
+}
+.choice-slip:hover{transform:translateY(-1px);border-color:rgba(150,55,46,.62);box-shadow:var(--mdx-lift-hi)}
+.choice-slip:active{transform:translateY(0)}
+.choice-slip::before{
+  background:radial-gradient(circle at 35% 30%,var(--cinnabar-hi),var(--cinnabar) 55%,var(--cinnabar-deep));
+  box-shadow:0 0 0 2px rgba(246,240,222,.75),0 1px 3px rgba(0,0,0,.35);
+}
+
+/* ── 目录 ── */
+.toc-item{transition:transform .24s var(--ease-out),border-color .24s,background-color .24s,box-shadow .24s}
+.toc-item:hover{box-shadow:0 6px 16px -10px rgba(70,46,18,.45)}
+.toc-item.on{box-shadow:inset 3px 0 0 var(--cinnabar)}
+
+/* ── 翻页把手 ── */
+.leaf-handle{box-shadow:0 1px 0 rgba(255,252,242,.6) inset,0 10px 24px -6px rgba(0,0,0,.45)}
+
+/* ── 焦点与滚动条 ── */
+:focus-visible{outline:2px solid rgba(169,138,70,.85);outline-offset:2px}
+*{scrollbar-width:thin;scrollbar-color:rgba(120,88,40,.45) transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(169,138,70,.55),rgba(120,88,40,.55));border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-track{background:transparent}
+
+/* [合入] 魔典-紫曜夜读.css — 第二套主题，挂 data-mdx-theme="night" */
+/* 魔典-紫曜夜读 v1 — 第二套主题，移植自旧版轻前端「紫曜魔章 / 魅夜魔导书」。
+   全部规则挂在 html[data-mdx-theme="night"] 下：不切换时对羊皮纸主题零影响。放在魔典原样式与美化层之后。 */
+
+html[data-mdx-theme="night"]{
+  --desk-0:#050209;--desk-1:#0e0719;
+  --vellum:#170d23;--vellum-hi:#211234;--vellum-aged:#1d1133;
+  --ink:#f4eee1;--ink-soft:#ddd2e8;--ink-faint:#a99ab8;
+  --cinnabar:#ff5e8a;--cinnabar-deep:#c2184f;--cinnabar-hi:#ff8fae;
+  --gilt:#e8c385;--gilt-hi:#ffe9b8;--gilt-dim:#c9a56a;
+  --lapis:#c9a4ff;--lapis-hi:#dcc6ff;
+  --moss:#7ec8a0;--moss-deep:#62b58c;
+  --leather-0:#2a1040;--leather-1:#1a0a24;
+  --nt-violet:#b478ff;--nt-violet-deep:#7a3fd1;--nt-violet-dim:rgba(180,120,255,.14);
+  --nt-rose:#ff5e8a;--nt-rose-dim:rgba(255,94,138,.14);
+  --nt-gilt-dim:rgba(232,195,133,.16);
+  --nt-hair:rgba(200,160,255,.18);--nt-hair-strong:rgba(200,160,255,.36);
+  --nt-card:linear-gradient(180deg,rgba(33,18,52,.78),rgba(15,8,23,.9));
+  --nt-shadow:0 4px 24px -8px rgba(0,0,0,.6);
+  --nt-float:0 12px 40px -12px rgba(122,63,209,.5);
+  --mdx-gilt-rule:linear-gradient(90deg,transparent,rgba(185,143,78,.55) 16%,rgba(255,233,184,.95) 50%,rgba(185,143,78,.55) 84%,transparent);
+  --mdx-lift:var(--nt-shadow);--mdx-lift-hi:var(--nt-float);
+  color-scheme:dark;
+}
+@keyframes mdxBreath{0%,100%{opacity:.6;filter:drop-shadow(0 0 6px rgba(180,120,255,.45))}50%{opacity:1;filter:drop-shadow(0 0 16px rgba(201,160,255,.7))}}
+@keyframes mdxEvIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes mdxSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes mdxSpinR{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+@keyframes mdxSheen{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes mdxCrit{0%,100%{box-shadow:0 0 5px rgba(232,195,133,.25)}50%{box-shadow:0 0 16px rgba(232,195,133,.55)}}
+html[data-mdx-theme="night"] ::selection{background:rgba(180,120,255,.3);color:#fff}
+
+/* ── 书桌：深紫魔素幕布 ── */
+html[data-mdx-theme="night"] body{
+  background:
+    radial-gradient(ellipse at 22% 0%,rgba(180,120,255,.22),transparent 55%),
+    radial-gradient(ellipse at 82% 100%,rgba(255,95,174,.12),transparent 52%),
+    linear-gradient(180deg,#1d1133 0%,#0e0719 55%,#050209 100%);
+  color:var(--ink);
+}
+
+/* ── 书页 / 目录纸 / 插页 / 信笺 / 扉页 / 仪典：鎏金双框角饰 + 顶部法环 + 四芒星 ── */
+html[data-mdx-theme="night"] :is(.page,.toc-paper,.insert,.letter-paper,.ep-frame,.ritual){
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 44 V14 Q3 3 14 3 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 44 V17 Q9 9 17 9 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 12 L18 16 L14 20 L10 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 44 V14 Q41 3 30 3 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 44 V17 Q35 9 27 9 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 12 L26 16 L30 20 L34 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top right/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 0 V30 Q3 41 14 41 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 0 V27 Q9 35 17 35 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 24 L18 28 L14 32 L10 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 0 V30 Q41 41 30 41 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 0 V27 Q35 35 27 35 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 24 L26 28 L30 32 L34 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom right/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 L14.2 9.8 L23 12 L14.2 14.2 L12 23 L9.8 14.2 L1 12 L9.8 9.8 Z' fill='rgba(240,225,255,.7)'/%3E%3C/svg%3E") 88% 84%/12px 12px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 L14.2 9.8 L23 12 L14.2 14.2 L12 23 L9.8 14.2 L1 12 L9.8 9.8 Z' fill='rgba(240,225,255,.6)'/%3E%3C/svg%3E") 9% 18%/15px 15px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='96' fill='none' stroke='rgba(190,130,255,.38)' stroke-width='1'/%3E%3Ccircle cx='100' cy='100' r='86' fill='none' stroke='rgba(190,130,255,.2)' stroke-width='1'/%3E%3Ccircle cx='100' cy='100' r='70' fill='none' stroke='rgba(190,130,255,.14)' stroke-dasharray='3 7'/%3E%3Cpath d='M100 0 L105 7 L100 14 L95 7 Z M100 186 L105 193 L100 200 L95 193 Z M186 100 L193 95 L200 100 L193 105 Z M14 100 L7 95 L0 100 L7 105 Z' fill='rgba(210,150,255,.5)'/%3E%3C/svg%3E") center -90px/360px 360px no-repeat,
+    radial-gradient(ellipse at 22% 0%,rgba(180,120,255,.2),transparent 55%),
+    radial-gradient(ellipse at 82% 100%,rgba(255,95,174,.11),transparent 52%),
+    linear-gradient(180deg,#1d1133 0%,#0e0719 55%,#070310 100%) !important;
+  border-color:rgba(233,201,140,.42);
+  box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 0 1px rgba(233,201,140,.35),inset 0 0 90px rgba(3,1,8,.55);
+  color:var(--ink);
+}
+html[data-mdx-theme="night"] .page::before{
+  box-shadow:inset 0 0 0 1px rgba(233,201,140,.32),inset 0 0 0 9px rgba(5,2,9,.0),inset 0 0 0 10px rgba(233,201,140,.18),inset 0 0 90px rgba(3,1,8,.5);
+}
+/* 页脚中缝：鎏金蔓线 + 紫水晶章扣（呼吸辉光） */
+html[data-mdx-theme="night"] .page::after{
+  content:'';position:absolute;left:50%;bottom:7px;transform:translateX(-50%);z-index:2;pointer-events:none;
+  width:min(300px,60%);height:16px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 16'%3E%3Cpath d='M4 8 H132 M168 8 H296' stroke='rgba(233,201,140,.85)' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M138 3.5 L142.5 8 L138 12.5 L133.5 8 Z M162 3.5 L166.5 8 L162 12.5 L157.5 8 Z' fill='none' stroke='rgba(233,201,140,.95)' stroke-width='1'/%3E%3Cpath d='M150 1 L159 8 L150 15 L141 8 Z' fill='%23b45cff' stroke='%23e2c2ff' stroke-width='1'/%3E%3Ccircle cx='150' cy='8' r='1.8' fill='%23f7ecff'/%3E%3C/svg%3E") center/contain no-repeat;
+  animation:mdxBreath 6.4s ease-in-out infinite;
+}
+
+/* ── 天头 / 地脚 / 章题 ── */
+html[data-mdx-theme="night"] .folio-head{color:var(--gilt-hi);text-shadow:0 0 10px rgba(233,201,140,.25)}
+html[data-mdx-theme="night"] .folio-head .wh-latin{color:var(--nt-violet)}
+html[data-mdx-theme="night"] .folio-foot{color:var(--ink-faint)}
+html[data-mdx-theme="night"] .chapter-tag{color:var(--gilt)}
+html[data-mdx-theme="night"] .chapter-tag h2{
+  background:linear-gradient(92deg,var(--gilt),#f6e3b8 45%,var(--gilt));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+}
+html[data-mdx-theme="night"] .chapter-tag h2::before{background:linear-gradient(135deg,#c78bff,#7a3fd1);box-shadow:0 0 0 2px rgba(5,2,9,.8),0 0 0 3px rgba(233,201,140,.55),0 0 10px rgba(180,120,255,.6)}
+html[data-mdx-theme="night"] .chapter-tag .ct-latin{color:var(--nt-violet)}
+html[data-mdx-theme="night"] .sec-title{color:var(--gilt)}
+html[data-mdx-theme="night"] .sec-title::after{background:linear-gradient(90deg,var(--nt-hair-strong),transparent)}
+html[data-mdx-theme="night"] .sec-title.sv-cinnabar{color:var(--cinnabar-hi)}
+
+/* ── 正文：高亮近白 + 曜紫强调 + 明辉对白 ── */
+html[data-mdx-theme="night"] .prose p{color:#fdf9f0;text-shadow:0 1px 3px rgba(3,1,8,.95),0 0 2px rgba(3,1,8,.9);letter-spacing:.04em}
+html[data-mdx-theme="night"] .prose .em{color:#e8ccff;border-bottom-color:rgba(201,164,255,.35);text-shadow:0 0 10px rgba(180,120,255,.6)}
+html[data-mdx-theme="night"] .prose strong{color:var(--gilt-hi)}
+html[data-mdx-theme="night"] .dlg{color:#f5ecff;font-weight:600;text-shadow:0 0 9px rgba(201,160,255,.55),0 0 2px rgba(3,1,8,.9)}
+
+/* ── 心语：绯心章引弧 ── */
+html[data-mdx-theme="night"] .mind-slip{
+  position:relative;background:linear-gradient(135deg,rgba(255,95,174,.13),rgba(224,51,92,.05));
+  border-left:3px solid #ff5f8e;border-radius:0 12px 12px 0;color:#faeef4;
+  box-shadow:-4px 0 14px -6px rgba(255,95,174,.45);text-shadow:0 1px 2px rgba(3,1,8,.8);
+}
+html[data-mdx-theme="night"] .mind-slip::before{content:'';position:absolute;left:-3px;top:0;bottom:0;width:3px;border-radius:3px;background:linear-gradient(180deg,rgba(255,111,156,.95),rgba(194,46,119,.55),rgba(255,95,174,.18))}
+html[data-mdx-theme="night"] .mind-slip::after{display:none}
+
+/* ── 大陆见闻：鎏金小标题条 ── */
+html[data-mdx-theme="night"] .news-clip{
+  position:relative;background:linear-gradient(135deg,rgba(233,201,140,.10),rgba(180,120,255,.07));
+  border:1px solid rgba(233,201,140,.4);border-radius:12px;color:#f5eee0;
+}
+html[data-mdx-theme="night"] .news-clip::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;opacity:.55;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(233,201,140,.85) 50%,transparent)}
+html[data-mdx-theme="night"] .news-clip .nc-head{
+  background:linear-gradient(90deg,rgba(233,201,140,.2),rgba(180,120,255,.08) 65%,transparent);
+  border-bottom:1px solid rgba(233,201,140,.28);color:#f0d9a4;text-shadow:0 0 9px rgba(233,201,140,.4);box-shadow:none;
+}
+
+/* ── 战况：曜紫警示条 ── */
+html[data-mdx-theme="night"] .duel-banner{
+  background:linear-gradient(90deg,rgba(180,120,255,.2),rgba(255,95,174,.07) 62%,transparent);
+  border:1px solid rgba(233,201,140,.32);border-left:3px solid var(--nt-violet);border-radius:8px;color:#f7f2e6;
+  box-shadow:-4px 0 14px -6px rgba(180,120,255,.55),inset 0 0 26px rgba(180,120,255,.06);
+}
+html[data-mdx-theme="night"] .duel-banner .db-head{background:linear-gradient(90deg,rgba(122,63,209,.65),rgba(255,94,138,.35));color:#f0d9a4;box-shadow:inset 0 -1px 0 rgba(233,201,140,.4)}
+
+/* ── 通用卡片面：半透夜幕 + 发丝边 ── */
+html[data-mdx-theme="night"] :is(.note-slip,.preset-note,.cm-side,.toc-item,.plaque,.chip,.dex-cell,.dex-legend .dl-step,.cameo,.dex-slot,.dx-subtab,.dd-lore,.nf-chip,.nf-keytag,.nf-keyadd,.nf-preview,.nrt-tree,.nrt-race,.nf-ai,.nf-row,.dex-lock,.dw-slot,.manuscript-strip .ms-cap,.ink-slip,.rit-opt,.rit-sum,.rr-banner,.rchip,.race-cat,.race-items,.race-item,.bnd-item,.sc-card,.sc-cur,.sc-ch,.cj-res.miss){
+  background:var(--nt-card) !important;border-color:var(--nt-hair) !important;color:var(--ink);box-shadow:var(--nt-shadow);
+}
+html[data-mdx-theme="night"] :is(.toc-item,.dex-cell,.rit-opt,.rchip,.race-item,.bnd-item,.sc-card,.dx-subtab):hover{border-color:var(--nt-hair-strong) !important;box-shadow:var(--nt-float)}
+html[data-mdx-theme="night"] :is(.toc-item.on,.rit-opt.sel,.rchip.on,.dx-subtab.on,.race-item.sel){
+  background:linear-gradient(180deg,rgba(122,63,209,.32),rgba(15,8,23,.92)) !important;border-color:var(--gilt) !important;
+  box-shadow:inset 3px 0 0 var(--gilt),var(--nt-float);color:var(--gilt-hi);
+}
+html[data-mdx-theme="night"] .note-slip::before{opacity:.25}
+html[data-mdx-theme="night"] .note-slip.cat{border-left:3px solid var(--nt-rose)}
+html[data-mdx-theme="night"] .note-slip.cat::after{display:none}
+
+/* ── 输入控件 ── */
+html[data-mdx-theme="night"] :is(.dw-searchbar input,.nf-f input,.nf-f textarea,.nf-f select,.nrt-bar input,.nf-dim input,.nf-dim textarea,.dex-lock input,.rit-form input,.rit-form textarea,.rel-row select,.sc-in input,.let-body,textarea,input[type="text"]){
+  background:rgba(7,4,12,.6) !important;border-color:var(--nt-hair) !important;color:var(--ink) !important;
+}
+html[data-mdx-theme="night"] :is(input,textarea,select)::placeholder{color:var(--ink-faint)}
+html[data-mdx-theme="night"] :is(input,textarea,select):focus{outline:none;border-color:var(--nt-violet) !important;box-shadow:0 0 0 3px rgba(180,120,255,.18)}
+
+/* ── 事件卡家族（标本插页）：家族色 + 左侧竖向图标柱 + 滑入微回弹 ── */
+html[data-mdx-theme="night"] .specimen{
+  --sp-accent:var(--nt-rose);--fam-dim:var(--nt-rose-dim);--fam-line:rgba(255,94,138,.42);--fam-glow:rgba(255,94,138,.5);
+  position:relative;overflow:hidden;background:var(--nt-card) !important;border:1px solid var(--nt-hair);border-radius:16px;outline:none;
+  box-shadow:var(--nt-shadow);color:var(--ink);animation:mdxEvIn .42s var(--ease-spring) both;
+}
+html[data-mdx-theme="night"] .specimen.t-monstrum{--sp-accent:#ff5e8a;--fam-dim:rgba(255,94,138,.14);--fam-line:rgba(255,94,138,.42);--fam-glow:rgba(255,94,138,.5)}
+html[data-mdx-theme="night"] .specimen.t-res{--sp-accent:#e8c385;--fam-dim:rgba(232,195,133,.16);--fam-line:rgba(232,195,133,.45);--fam-glow:rgba(232,195,133,.5)}
+html[data-mdx-theme="night"] .specimen.t-mandatum{--sp-accent:#b478ff;--fam-dim:rgba(180,120,255,.14);--fam-line:rgba(180,120,255,.44);--fam-glow:rgba(180,120,255,.55)}
+html[data-mdx-theme="night"] .specimen.t-artes{--sp-accent:#8f7bff;--fam-dim:rgba(143,123,255,.15);--fam-line:rgba(143,123,255,.46);--fam-glow:rgba(143,123,255,.55)}
+html[data-mdx-theme="night"] .specimen.t-certamen{--sp-accent:#ff8fae;--fam-dim:rgba(255,94,138,.14);--fam-line:rgba(255,143,174,.45);--fam-glow:rgba(255,94,138,.5)}
+html[data-mdx-theme="night"] .specimen::before{inset:0 0 auto 0;height:1px;border:none;border-radius:0;opacity:.6;background:linear-gradient(90deg,transparent,var(--sp-accent) 30%,var(--gilt) 70%,transparent)}
+html[data-mdx-theme="night"] .specimen::after{content:'';position:absolute;top:-70px;right:-60px;width:220px;height:220px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,var(--fam-dim),rgba(122,63,209,.08) 55%,transparent 72%)}
+html[data-mdx-theme="night"] .specimen .sp-head{padding-bottom:10px;border-bottom:1px solid var(--nt-hair)}
+html[data-mdx-theme="night"] .specimen .sp-emblem{
+  width:44px;height:44px;padding:9px;border:1px solid var(--fam-line);border-radius:12px;color:var(--sp-accent);
+  background:linear-gradient(180deg,var(--fam-dim),rgba(23,13,35,0) 70%);box-shadow:inset 0 0 18px var(--fam-dim);
+  filter:drop-shadow(0 0 7px var(--fam-glow));
+}
+html[data-mdx-theme="night"] .specimen .sp-title{
+  background:linear-gradient(92deg,var(--sp-accent),#fff1f6 55%,var(--sp-accent));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900;
+}
+html[data-mdx-theme="night"] .specimen .sp-latin{color:var(--sp-accent);opacity:.8}
+html[data-mdx-theme="night"] .specimen .sp-fields dt{color:var(--sp-accent);letter-spacing:.14em}
+html[data-mdx-theme="night"] .specimen .sp-fields dd{color:var(--ink-soft)}
+html[data-mdx-theme="night"] .sp-seal{filter:drop-shadow(0 0 8px var(--fam-glow)) hue-rotate(250deg) saturate(1.4)}
+
+/* ── 较量面板：双方卡、骰子、行动 ── */
+html[data-mdx-theme="night"] .cm-side{border-color:rgba(255,94,138,.2) !important;border-radius:12px}
+html[data-mdx-theme="night"] .cm-side + .cm-side,html[data-mdx-theme="night"] .cm-side:last-of-type{border-color:rgba(232,195,133,.24) !important}
+html[data-mdx-theme="night"] .cm-name{color:var(--ink)}
+html[data-mdx-theme="night"] .cm-power b{color:var(--cinnabar-hi)}
+html[data-mdx-theme="night"] .cj-d20{
+  display:inline-flex;align-items:center;justify-content:center;min-width:56px;padding:5px 10px;border-radius:9px;
+  background:rgba(7,4,12,.6);border:1px solid var(--nt-hair-strong);color:var(--gilt);font-variant-numeric:tabular-nums;
+}
+html[data-mdx-theme="night"] .cj-d20.mdx-crit{border-color:rgba(232,195,133,.7);animation:mdxCrit 1.8s ease-in-out infinite}
+html[data-mdx-theme="night"] .cj-d20.mdx-fumble{color:#ff5d5d;border-color:rgba(255,93,93,.65)}
+html[data-mdx-theme="night"] .cj-mods i{color:var(--ink-soft);border-color:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] .cm-act{
+  position:relative;overflow:hidden;background:rgba(180,120,255,.05) !important;border:1px solid rgba(255,94,138,.22) !important;border-radius:10px;color:var(--ink);
+  transition:border-color .2s,background .2s,transform .16s var(--ease-spring);
+}
+html[data-mdx-theme="night"] .cm-act::before{content:'';position:absolute;left:0;top:14%;bottom:14%;width:3px;border-radius:3px;background:linear-gradient(180deg,#ff8fae,#7a3fd1);transform:scaleY(0);transform-origin:50% 0;transition:transform .28s var(--ease-spring)}
+html[data-mdx-theme="night"] .cm-act:hover{border-color:#ff8fae !important;background:var(--nt-rose-dim) !important;box-shadow:none}
+html[data-mdx-theme="night"] .cm-act:hover::before{transform:scaleY(1)}
+html[data-mdx-theme="night"] .cm-act:active{transform:scale(.97)}
+html[data-mdx-theme="night"] .cm-act-desc{color:var(--ink-faint)}
+
+/* ── 数值条：夜光 + 扫光 ── */
+html[data-mdx-theme="night"] .meter .m-label{color:var(--ink-soft)}
+html[data-mdx-theme="night"] .meter .m-track{background:rgba(28,16,46,.8);box-shadow:inset 0 0 0 1px var(--nt-hair)}
+html[data-mdx-theme="night"] .meter .m-fill{position:relative;overflow:hidden;filter:saturate(1.3) brightness(1.45);box-shadow:0 0 8px -1px var(--mv2,#b478ff)}
+html[data-mdx-theme="night"] .meter .m-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.3) 50%,transparent 68%);animation:mdxSheen 3.4s cubic-bezier(.55,0,.55,.2) infinite}
+
+/* ── 雷达：绯粉多边形 ── */
+html[data-mdx-theme="night"] .radarwrap polygon,html[data-mdx-theme="night"] .radarwrap line{stroke:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] .radarwrap polygon:last-of-type{fill:rgba(242,107,181,.28);stroke:#ff8fc8;filter:drop-shadow(0 0 6px rgba(255,107,157,.5))}
+html[data-mdx-theme="night"] .radarwrap .rlab{fill:var(--ink-soft)}
+html[data-mdx-theme="night"] .radarwrap .rval{fill:var(--gilt)}
+
+/* ── 选项签 ── */
+html[data-mdx-theme="night"] .choice-slip{background:var(--nt-card) !important;border-color:var(--nt-hair-strong) !important;color:var(--ink);box-shadow:var(--nt-shadow)}
+html[data-mdx-theme="night"] .choice-slip:hover{border-color:var(--gilt) !important;box-shadow:var(--nt-float)}
+html[data-mdx-theme="night"] .choice-slip::before{background:radial-gradient(circle at 35% 30%,#dcb8ff,#b45cff 55%,#7a3fd1);box-shadow:0 0 0 2px rgba(5,2,9,.8),0 0 8px rgba(180,120,255,.7)}
+
+/* ── 书签 / 翻页把手 / 全屏钮：紫皮鎏金 + 激活光晕 ── */
+html[data-mdx-theme="night"] .thumb-tab{
+  color:#d8c3ff;border-color:var(--nt-hair) !important;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 42%),linear-gradient(163deg,#2a1440,#170d23 62%,#0e0719) !important;
+}
+html[data-mdx-theme="night"] .thumb-tab.active{
+  color:var(--gilt-hi);border-color:rgba(232,195,133,.55) !important;text-shadow:0 0 14px rgba(232,195,133,.45);
+  background:linear-gradient(180deg,rgba(180,120,255,.24),transparent 46%),linear-gradient(163deg,#4a2280,#2a1040 62%,#170d23) !important;
+}
+html[data-mdx-theme="night"] .thumb-tab::before{background:linear-gradient(180deg,transparent,var(--nt-violet),var(--gilt),transparent);box-shadow:0 0 10px rgba(180,120,255,.65)}
+html[data-mdx-theme="night"] .thumb-tab svg{color:var(--nt-violet);filter:drop-shadow(0 0 5px rgba(180,120,255,.6))}
+html[data-mdx-theme="night"] :is(.leaf-handle,.fs-toggle){background:var(--nt-card) !important;border-color:var(--nt-hair-strong) !important;color:var(--ink);box-shadow:var(--nt-shadow)}
+html[data-mdx-theme="night"] :is(.leaf-handle,.fs-toggle):hover{border-color:var(--gilt) !important;box-shadow:var(--nt-float)}
+html[data-mdx-theme="night"] .fs-icon i{border-color:var(--gilt) !important}
+
+/* ── 目录 / 插页头 / 关闭钮 ── */
+html[data-mdx-theme="night"] :is(.toc-head,.insert-head,.let-head,.rit-head){border-bottom-color:var(--nt-hair) !important}
+html[data-mdx-theme="night"] :is(.toc-sign,.rit-latin){color:var(--nt-violet)}
+html[data-mdx-theme="night"] .rit-head h3{background:linear-gradient(92deg,var(--gilt),#f6e3b8 40%,var(--gilt));-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-mdx-theme="night"] :is(.toc-close,.ih-close,.let-close,.rit-skip){border-color:var(--nt-hair-strong) !important;background:rgba(7,4,12,.45) !important;color:var(--ink)}
+html[data-mdx-theme="night"] :is(.toc-close,.ih-close,.let-close,.rit-skip):hover{border-color:var(--nt-rose) !important;color:var(--nt-rose);background:var(--nt-rose-dim) !important}
+
+/* ── 启程按钮 / 寄出：紫→绯渐变 + 扫光 ── */
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go){
+  position:relative;overflow:hidden;color:#fff !important;border:none !important;
+  background:linear-gradient(120deg,#7a3fd1,#ff5e8a) !important;box-shadow:var(--nt-shadow);
+}
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go)::after{content:'';position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(246,227,184,.45),transparent);transform:skewX(-20deg);transition:left .5s ease}
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go):hover{box-shadow:0 12px 40px -12px rgba(122,63,209,.6)}
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go):hover::after{left:130%}
+html[data-mdx-theme="night"] .rit-foot .rf-step{color:var(--ink-soft)}
+html[data-mdx-theme="night"] .rit-foot .rf-step::after{background:var(--nt-violet)}
+html[data-mdx-theme="night"] .rit-foot .rf-step:hover:not(:disabled){color:var(--gilt)}
+html[data-mdx-theme="night"] .rc-step{color:var(--ink-faint)}
+
+/* ── 封面：召唤法阵（双环逆旋 + 扫描弧） ── */
+html[data-mdx-theme="night"] .cover{
+  background:radial-gradient(120% 92% at 50% 36%,#211234 0%,#0f0817 54%,#07040c 100%) !important;
+  box-shadow:0 30px 70px rgba(0,0,0,.75),0 0 0 1px rgba(233,201,140,.35);
+}
+html[data-mdx-theme="night"] .cover::before{background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.2) 60%,rgba(180,120,255,.08) 85%,transparent) !important}
+html[data-mdx-theme="night"] .cover::after{background:repeating-linear-gradient(180deg,#3a2458 0 1px,#140b22 1px 2px) !important}
+html[data-mdx-theme="night"] .cover-board{border-color:rgba(233,201,140,.35);box-shadow:inset 0 0 40px rgba(122,63,209,.18)}
+html[data-mdx-theme="night"] .cover-board::before{border-color:rgba(233,201,140,.22)}
+html[data-mdx-theme="night"] .cover-board::after{
+  content:'';position:absolute;left:50%;top:50%;width:min(340px,70%);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 260' fill='none'%3E%3Ccircle cx='130' cy='130' r='124' stroke='rgba(180,120,255,.38)'/%3E%3Ccircle cx='130' cy='130' r='113' stroke='rgba(180,120,255,.34)' stroke-width='7' stroke-dasharray='1.4 9.2'/%3E%3Ccircle cx='130' cy='130' r='124' stroke='rgba(232,195,133,.55)' stroke-width='1.6' stroke-dasharray='52 727'/%3E%3Ccircle cx='130' cy='130' r='101' stroke='rgba(255,94,138,.3)' stroke-dasharray='30 14'/%3E%3C/svg%3E") center/contain no-repeat;
+  animation:mdxSpin 28s linear infinite;
+}
+html[data-mdx-theme="night"] .cv-lozenge{border-color:rgba(232,195,133,.32);box-shadow:0 0 24px rgba(255,94,138,.12),inset 0 0 24px rgba(180,120,255,.12)}
+html[data-mdx-theme="night"] .cv-lozenge::before{border-color:rgba(180,120,255,.3)}
+html[data-mdx-theme="night"] .cv-head{background:radial-gradient(closest-side,rgba(122,63,209,.28),rgba(7,4,12,0))}
+html[data-mdx-theme="night"] .cv-head::before{
+  content:'';position:absolute;left:50%;top:50%;width:300px;height:300px;transform:translate(-50%,-50%);pointer-events:none;z-index:-1;
+  background:conic-gradient(from 0deg,transparent 0 336deg,rgba(255,94,138,.6) 354deg,transparent 360deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 61%,#000 62%,#000 67%,transparent 68%);mask:radial-gradient(closest-side,transparent 61%,#000 62%,#000 67%,transparent 68%);
+  animation:mdxSpinR 6s linear infinite;
+}
+html[data-mdx-theme="night"] .cv-title{
+  background:linear-gradient(92deg,#e8c385,#f6e3b8 40%,#e8c385) !important;-webkit-background-clip:text !important;background-clip:text !important;
+  filter:drop-shadow(0 0 18px rgba(232,195,133,.3));
+}
+html[data-mdx-theme="night"] .cv-seal{background:radial-gradient(circle at 38% 32%,#dcb8ff,#9a4dff 50%,#4a1c8a) !important;box-shadow:0 0 24px rgba(255,94,138,.5),0 0 60px rgba(180,120,255,.35) !important}
+html[data-mdx-theme="night"] .cv-seal::before{border-color:rgba(240,225,255,.5)}
+html[data-mdx-theme="night"] .cv-seal span{color:#f7ecff;text-shadow:0 0 8px rgba(255,94,138,.7)}
+
+/* ── 杂项 ── */
+html[data-mdx-theme="night"] *{scrollbar-color:var(--nt-hair-strong) transparent}
+html[data-mdx-theme="night"] ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(180,120,255,.55),rgba(122,63,209,.55));background-clip:padding-box}
+html[data-mdx-theme="night"] :focus-visible{outline-color:var(--gilt)}
+@media (prefers-reduced-motion:reduce){
+  html[data-mdx-theme="night"] *,html[data-mdx-theme="night"] *::before,html[data-mdx-theme="night"] *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
 </style>
 </body>
 </html>

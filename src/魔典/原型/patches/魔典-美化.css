@@ -1,0 +1,124 @@
+/* 魔典-美化 v1 — 覆盖层：放在魔典原有 <style> 之后。只改质感与层次，不动结构与配色体系。 */
+
+:root{
+  --mdx-gilt-rule:linear-gradient(90deg,transparent,rgba(169,138,70,.5) 16%,rgba(201,174,109,.95) 50%,rgba(169,138,70,.5) 84%,transparent);
+  --mdx-lift:0 1px 0 rgba(255,252,242,.55) inset,0 2px 4px rgba(96,66,28,.10),0 12px 26px -10px rgba(70,46,18,.34);
+  --mdx-lift-hi:0 1px 0 rgba(255,252,242,.6) inset,0 3px 6px rgba(96,66,28,.14),0 18px 34px -12px rgba(70,46,18,.42);
+}
+::selection{background:rgba(150,55,46,.2);color:inherit}
+
+/* ── 书页：更深的装订沟与四角压暗，纸面更有厚度 ── */
+.page::before{
+  box-shadow:
+    inset 0 0 0 1px rgba(120,96,56,.30),
+    inset 0 0 0 5px rgba(246,240,222,.16),
+    inset 0 0 0 6px rgba(169,138,70,.16),
+    inset 16px 0 26px -6px rgba(84,60,28,.22),
+    inset -30px 0 64px rgba(120,90,44,.18),
+    inset 0 -34px 64px rgba(120,90,44,.15),
+    inset 0 30px 56px rgba(122,92,46,.08);
+}
+.page.leaving,.page.enter-r,.page.enter-l,.page.entering{will-change:transform,opacity;backface-visibility:hidden}
+
+/* ── 天头 / 地脚：单线换成描金双线 ── */
+.folio-head{
+  border-bottom:none;
+  background-image:linear-gradient(90deg,transparent,rgba(120,88,40,.42) 10%,rgba(120,88,40,.42) 90%,transparent),var(--mdx-gilt-rule);
+  background-size:100% 1px,100% 1px;
+  background-position:0 100%,0 calc(100% - 3px);
+  background-repeat:no-repeat;
+}
+.folio-foot{
+  border-top:none;
+  background-image:var(--mdx-gilt-rule);
+  background-size:100% 1px;background-position:0 0;background-repeat:no-repeat;
+  font-variant-numeric:oldstyle-nums;
+}
+
+/* ── 正文排版：行距、字距、断行更讲究（首字下沉按作者先前的决定保持不加） ── */
+.prose p{
+  line-height:2.05;letter-spacing:.022em;margin:0 0 .55em;
+  text-wrap:pretty;font-kerning:normal;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  text-shadow:0 .5px 0 rgba(255,250,236,.4);
+}
+.prose strong{color:var(--cinnabar-deep);font-weight:700}
+.dlg{color:#7A2A22}
+
+/* ── 章题：描金菱花分隔 ── */
+.chapter-tag{margin:8px 0 22px}
+.chapter-tag h2{position:relative;padding-left:20px;text-shadow:0 1px 0 rgba(255,250,236,.5)}
+.chapter-tag h2::before{
+  content:'';position:absolute;left:2px;top:50%;width:8px;height:8px;
+  transform:translateY(-50%) rotate(45deg);
+  background:linear-gradient(135deg,var(--gilt-hi),var(--gilt-dim));
+  box-shadow:0 0 0 2px rgba(246,240,222,.7),0 0 0 3px rgba(169,138,70,.45);
+}
+.chapter-tag .ct-rule{height:1px;background:var(--mdx-gilt-rule);position:relative}
+.chapter-tag .ct-rule::after{
+  content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;
+  transform:translate(-50%,-50%) rotate(45deg);background:var(--gilt);
+}
+.sec-title::before{
+  content:'';flex:none;width:6px;height:6px;transform:rotate(45deg);
+  background:currentColor;opacity:.75;box-shadow:0 0 0 2px rgba(246,240,222,.6);
+}
+
+/* ── 便签 / 见闻 / 战况：分层阴影 + 一道描金细线 ── */
+.mind-slip,.note-slip{box-shadow:var(--mdx-lift)}
+.news-clip{border-color:rgba(47,74,94,.30);box-shadow:var(--mdx-lift)}
+.news-clip .nc-head{
+  background:linear-gradient(180deg,#3A5B74,#2A4458);
+  box-shadow:inset 0 -1px 0 rgba(201,174,109,.55),inset 0 1px 0 rgba(255,255,255,.08);
+  text-shadow:0 1px 1px rgba(0,0,0,.3);
+}
+.duel-banner{box-shadow:var(--mdx-lift)}
+.duel-banner .db-head{
+  box-shadow:inset 0 -1px 0 rgba(201,174,109,.55),inset 0 1px 0 rgba(255,255,255,.08);
+  text-shadow:0 1px 1px rgba(0,0,0,.3);
+}
+
+/* ── 标本插页（功能卡）：内衬描金框 ── */
+.specimen{outline:1px solid rgba(169,138,70,.30);outline-offset:-6px;box-shadow:var(--mdx-lift),inset 0 0 34px rgba(120,96,56,.10)}
+
+/* ── 数值条：圆润轨道 + 光泽填充，颜色仍取各条自带的朱砂 / 青金 / 苔绿 ── */
+.meter .m-track{
+  height:8px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(96,66,28,.22),rgba(96,66,28,.10));
+  box-shadow:inset 0 1px 2px rgba(43,34,26,.30),0 1px 0 rgba(255,250,238,.65);
+}
+.meter .m-fill{
+  border-radius:999px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0) 60%),
+    linear-gradient(90deg,var(--mv,#A98A46),var(--mv2,#C9AE6D));
+  box-shadow:0 0 6px -1px var(--mv2,#C9AE6D);
+}
+.meter .m-val{font-variant-numeric:tabular-nums}
+
+/* ── 选项签：悬停轻抬，朱砂印点更立体 ── */
+.choice-slip{
+  box-shadow:0 1px 0 rgba(255,252,242,.6) inset,0 3px 8px -3px rgba(96,66,28,.28);
+  transition:transform .22s var(--ease-out),box-shadow .22s var(--ease-out),border-color .22s;
+}
+.choice-slip:hover{transform:translateY(-1px);border-color:rgba(150,55,46,.62);box-shadow:var(--mdx-lift-hi)}
+.choice-slip:active{transform:translateY(0)}
+.choice-slip::before{
+  background:radial-gradient(circle at 35% 30%,var(--cinnabar-hi),var(--cinnabar) 55%,var(--cinnabar-deep));
+  box-shadow:0 0 0 2px rgba(246,240,222,.75),0 1px 3px rgba(0,0,0,.35);
+}
+
+/* ── 目录 ── */
+.toc-item{transition:transform .24s var(--ease-out),border-color .24s,background-color .24s,box-shadow .24s}
+.toc-item:hover{box-shadow:0 6px 16px -10px rgba(70,46,18,.45)}
+.toc-item.on{box-shadow:inset 3px 0 0 var(--cinnabar)}
+
+/* ── 翻页把手 ── */
+.leaf-handle{box-shadow:0 1px 0 rgba(255,252,242,.6) inset,0 10px 24px -6px rgba(0,0,0,.45)}
+
+/* ── 焦点与滚动条 ── */
+:focus-visible{outline:2px solid rgba(169,138,70,.85);outline-offset:2px}
+*{scrollbar-width:thin;scrollbar-color:rgba(120,88,40,.45) transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(169,138,70,.55),rgba(120,88,40,.55));border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-track{background:transparent}

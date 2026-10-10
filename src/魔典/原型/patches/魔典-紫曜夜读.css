@@ -1,0 +1,275 @@
+/* 魔典-紫曜夜读 v1 — 第二套主题，移植自旧版轻前端「紫曜魔章 / 魅夜魔导书」。
+   全部规则挂在 html[data-mdx-theme="night"] 下：不切换时对羊皮纸主题零影响。放在魔典原样式与美化层之后。 */
+
+html[data-mdx-theme="night"]{
+  --desk-0:#050209;--desk-1:#0e0719;
+  --vellum:#170d23;--vellum-hi:#211234;--vellum-aged:#1d1133;
+  --ink:#f4eee1;--ink-soft:#ddd2e8;--ink-faint:#a99ab8;
+  --cinnabar:#ff5e8a;--cinnabar-deep:#c2184f;--cinnabar-hi:#ff8fae;
+  --gilt:#e8c385;--gilt-hi:#ffe9b8;--gilt-dim:#c9a56a;
+  --lapis:#c9a4ff;--lapis-hi:#dcc6ff;
+  --moss:#7ec8a0;--moss-deep:#62b58c;
+  --leather-0:#2a1040;--leather-1:#1a0a24;
+  --nt-violet:#b478ff;--nt-violet-deep:#7a3fd1;--nt-violet-dim:rgba(180,120,255,.14);
+  --nt-rose:#ff5e8a;--nt-rose-dim:rgba(255,94,138,.14);
+  --nt-gilt-dim:rgba(232,195,133,.16);
+  --nt-hair:rgba(200,160,255,.18);--nt-hair-strong:rgba(200,160,255,.36);
+  --nt-card:linear-gradient(180deg,rgba(33,18,52,.78),rgba(15,8,23,.9));
+  --nt-shadow:0 4px 24px -8px rgba(0,0,0,.6);
+  --nt-float:0 12px 40px -12px rgba(122,63,209,.5);
+  --mdx-gilt-rule:linear-gradient(90deg,transparent,rgba(185,143,78,.55) 16%,rgba(255,233,184,.95) 50%,rgba(185,143,78,.55) 84%,transparent);
+  --mdx-lift:var(--nt-shadow);--mdx-lift-hi:var(--nt-float);
+  color-scheme:dark;
+}
+@keyframes mdxBreath{0%,100%{opacity:.6;filter:drop-shadow(0 0 6px rgba(180,120,255,.45))}50%{opacity:1;filter:drop-shadow(0 0 16px rgba(201,160,255,.7))}}
+@keyframes mdxEvIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes mdxSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes mdxSpinR{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+@keyframes mdxSheen{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes mdxCrit{0%,100%{box-shadow:0 0 5px rgba(232,195,133,.25)}50%{box-shadow:0 0 16px rgba(232,195,133,.55)}}
+html[data-mdx-theme="night"] ::selection{background:rgba(180,120,255,.3);color:#fff}
+
+/* ── 书桌：深紫魔素幕布 ── */
+html[data-mdx-theme="night"] body{
+  background:
+    radial-gradient(ellipse at 22% 0%,rgba(180,120,255,.22),transparent 55%),
+    radial-gradient(ellipse at 82% 100%,rgba(255,95,174,.12),transparent 52%),
+    linear-gradient(180deg,#1d1133 0%,#0e0719 55%,#050209 100%);
+  color:var(--ink);
+}
+
+/* ── 书页 / 目录纸 / 插页 / 信笺 / 扉页 / 仪典：鎏金双框角饰 + 顶部法环 + 四芒星 ── */
+html[data-mdx-theme="night"] :is(.page,.toc-paper,.insert,.letter-paper,.ep-frame,.ritual){
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 44 V14 Q3 3 14 3 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 44 V17 Q9 9 17 9 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 12 L18 16 L14 20 L10 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 44 V14 Q41 3 30 3 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 44 V17 Q35 9 27 9 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 12 L26 16 L30 20 L34 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top right/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 0 V30 Q3 41 14 41 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 0 V27 Q9 35 17 35 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 24 L18 28 L14 32 L10 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 0 V30 Q41 41 30 41 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 0 V27 Q35 35 27 35 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 24 L26 28 L30 32 L34 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom right/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 L14.2 9.8 L23 12 L14.2 14.2 L12 23 L9.8 14.2 L1 12 L9.8 9.8 Z' fill='rgba(240,225,255,.7)'/%3E%3C/svg%3E") 88% 84%/12px 12px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 L14.2 9.8 L23 12 L14.2 14.2 L12 23 L9.8 14.2 L1 12 L9.8 9.8 Z' fill='rgba(240,225,255,.6)'/%3E%3C/svg%3E") 9% 18%/15px 15px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='96' fill='none' stroke='rgba(190,130,255,.38)' stroke-width='1'/%3E%3Ccircle cx='100' cy='100' r='86' fill='none' stroke='rgba(190,130,255,.2)' stroke-width='1'/%3E%3Ccircle cx='100' cy='100' r='70' fill='none' stroke='rgba(190,130,255,.14)' stroke-dasharray='3 7'/%3E%3Cpath d='M100 0 L105 7 L100 14 L95 7 Z M100 186 L105 193 L100 200 L95 193 Z M186 100 L193 95 L200 100 L193 105 Z M14 100 L7 95 L0 100 L7 105 Z' fill='rgba(210,150,255,.5)'/%3E%3C/svg%3E") center -90px/360px 360px no-repeat,
+    radial-gradient(ellipse at 22% 0%,rgba(180,120,255,.2),transparent 55%),
+    radial-gradient(ellipse at 82% 100%,rgba(255,95,174,.11),transparent 52%),
+    linear-gradient(180deg,#1d1133 0%,#0e0719 55%,#070310 100%) !important;
+  border-color:rgba(233,201,140,.42);
+  box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 0 1px rgba(233,201,140,.35),inset 0 0 90px rgba(3,1,8,.55);
+  color:var(--ink);
+}
+html[data-mdx-theme="night"] .page::before{
+  box-shadow:inset 0 0 0 1px rgba(233,201,140,.32),inset 0 0 0 9px rgba(5,2,9,.0),inset 0 0 0 10px rgba(233,201,140,.18),inset 0 0 90px rgba(3,1,8,.5);
+}
+/* 页脚中缝：鎏金蔓线 + 紫水晶章扣（呼吸辉光） */
+html[data-mdx-theme="night"] .page::after{
+  content:'';position:absolute;left:50%;bottom:7px;transform:translateX(-50%);z-index:2;pointer-events:none;
+  width:min(300px,60%);height:16px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 16'%3E%3Cpath d='M4 8 H132 M168 8 H296' stroke='rgba(233,201,140,.85)' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M138 3.5 L142.5 8 L138 12.5 L133.5 8 Z M162 3.5 L166.5 8 L162 12.5 L157.5 8 Z' fill='none' stroke='rgba(233,201,140,.95)' stroke-width='1'/%3E%3Cpath d='M150 1 L159 8 L150 15 L141 8 Z' fill='%23b45cff' stroke='%23e2c2ff' stroke-width='1'/%3E%3Ccircle cx='150' cy='8' r='1.8' fill='%23f7ecff'/%3E%3C/svg%3E") center/contain no-repeat;
+  animation:mdxBreath 6.4s ease-in-out infinite;
+}
+
+/* ── 天头 / 地脚 / 章题 ── */
+html[data-mdx-theme="night"] .folio-head{color:var(--gilt-hi);text-shadow:0 0 10px rgba(233,201,140,.25)}
+html[data-mdx-theme="night"] .folio-head .wh-latin{color:var(--nt-violet)}
+html[data-mdx-theme="night"] .folio-foot{color:var(--ink-faint)}
+html[data-mdx-theme="night"] .chapter-tag{color:var(--gilt)}
+html[data-mdx-theme="night"] .chapter-tag h2{
+  background:linear-gradient(92deg,var(--gilt),#f6e3b8 45%,var(--gilt));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+}
+html[data-mdx-theme="night"] .chapter-tag h2::before{background:linear-gradient(135deg,#c78bff,#7a3fd1);box-shadow:0 0 0 2px rgba(5,2,9,.8),0 0 0 3px rgba(233,201,140,.55),0 0 10px rgba(180,120,255,.6)}
+html[data-mdx-theme="night"] .chapter-tag .ct-latin{color:var(--nt-violet)}
+html[data-mdx-theme="night"] .sec-title{color:var(--gilt)}
+html[data-mdx-theme="night"] .sec-title::after{background:linear-gradient(90deg,var(--nt-hair-strong),transparent)}
+html[data-mdx-theme="night"] .sec-title.sv-cinnabar{color:var(--cinnabar-hi)}
+
+/* ── 正文：高亮近白 + 曜紫强调 + 明辉对白 ── */
+html[data-mdx-theme="night"] .prose p{color:#fdf9f0;text-shadow:0 1px 3px rgba(3,1,8,.95),0 0 2px rgba(3,1,8,.9);letter-spacing:.04em}
+html[data-mdx-theme="night"] .prose .em{color:#e8ccff;border-bottom-color:rgba(201,164,255,.35);text-shadow:0 0 10px rgba(180,120,255,.6)}
+html[data-mdx-theme="night"] .prose strong{color:var(--gilt-hi)}
+html[data-mdx-theme="night"] .dlg{color:#f5ecff;font-weight:600;text-shadow:0 0 9px rgba(201,160,255,.55),0 0 2px rgba(3,1,8,.9)}
+
+/* ── 心语：绯心章引弧 ── */
+html[data-mdx-theme="night"] .mind-slip{
+  position:relative;background:linear-gradient(135deg,rgba(255,95,174,.13),rgba(224,51,92,.05));
+  border-left:3px solid #ff5f8e;border-radius:0 12px 12px 0;color:#faeef4;
+  box-shadow:-4px 0 14px -6px rgba(255,95,174,.45);text-shadow:0 1px 2px rgba(3,1,8,.8);
+}
+html[data-mdx-theme="night"] .mind-slip::before{content:'';position:absolute;left:-3px;top:0;bottom:0;width:3px;border-radius:3px;background:linear-gradient(180deg,rgba(255,111,156,.95),rgba(194,46,119,.55),rgba(255,95,174,.18))}
+html[data-mdx-theme="night"] .mind-slip::after{display:none}
+
+/* ── 大陆见闻：鎏金小标题条 ── */
+html[data-mdx-theme="night"] .news-clip{
+  position:relative;background:linear-gradient(135deg,rgba(233,201,140,.10),rgba(180,120,255,.07));
+  border:1px solid rgba(233,201,140,.4);border-radius:12px;color:#f5eee0;
+}
+html[data-mdx-theme="night"] .news-clip::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;opacity:.55;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(233,201,140,.85) 50%,transparent)}
+html[data-mdx-theme="night"] .news-clip .nc-head{
+  background:linear-gradient(90deg,rgba(233,201,140,.2),rgba(180,120,255,.08) 65%,transparent);
+  border-bottom:1px solid rgba(233,201,140,.28);color:#f0d9a4;text-shadow:0 0 9px rgba(233,201,140,.4);box-shadow:none;
+}
+
+/* ── 战况：曜紫警示条 ── */
+html[data-mdx-theme="night"] .duel-banner{
+  background:linear-gradient(90deg,rgba(180,120,255,.2),rgba(255,95,174,.07) 62%,transparent);
+  border:1px solid rgba(233,201,140,.32);border-left:3px solid var(--nt-violet);border-radius:8px;color:#f7f2e6;
+  box-shadow:-4px 0 14px -6px rgba(180,120,255,.55),inset 0 0 26px rgba(180,120,255,.06);
+}
+html[data-mdx-theme="night"] .duel-banner .db-head{background:linear-gradient(90deg,rgba(122,63,209,.65),rgba(255,94,138,.35));color:#f0d9a4;box-shadow:inset 0 -1px 0 rgba(233,201,140,.4)}
+
+/* ── 通用卡片面：半透夜幕 + 发丝边 ── */
+html[data-mdx-theme="night"] :is(.note-slip,.preset-note,.cm-side,.toc-item,.plaque,.chip,.dex-cell,.dex-legend .dl-step,.cameo,.dex-slot,.dx-subtab,.dd-lore,.nf-chip,.nf-keytag,.nf-keyadd,.nf-preview,.nrt-tree,.nrt-race,.nf-ai,.nf-row,.dex-lock,.dw-slot,.manuscript-strip .ms-cap,.ink-slip,.rit-opt,.rit-sum,.rr-banner,.rchip,.race-cat,.race-items,.race-item,.bnd-item,.sc-card,.sc-cur,.sc-ch,.cj-res.miss){
+  background:var(--nt-card) !important;border-color:var(--nt-hair) !important;color:var(--ink);box-shadow:var(--nt-shadow);
+}
+html[data-mdx-theme="night"] :is(.toc-item,.dex-cell,.rit-opt,.rchip,.race-item,.bnd-item,.sc-card,.dx-subtab):hover{border-color:var(--nt-hair-strong) !important;box-shadow:var(--nt-float)}
+html[data-mdx-theme="night"] :is(.toc-item.on,.rit-opt.sel,.rchip.on,.dx-subtab.on,.race-item.sel){
+  background:linear-gradient(180deg,rgba(122,63,209,.32),rgba(15,8,23,.92)) !important;border-color:var(--gilt) !important;
+  box-shadow:inset 3px 0 0 var(--gilt),var(--nt-float);color:var(--gilt-hi);
+}
+html[data-mdx-theme="night"] .note-slip::before{opacity:.25}
+html[data-mdx-theme="night"] .note-slip.cat{border-left:3px solid var(--nt-rose)}
+html[data-mdx-theme="night"] .note-slip.cat::after{display:none}
+
+/* ── 输入控件 ── */
+html[data-mdx-theme="night"] :is(.dw-searchbar input,.nf-f input,.nf-f textarea,.nf-f select,.nrt-bar input,.nf-dim input,.nf-dim textarea,.dex-lock input,.rit-form input,.rit-form textarea,.rel-row select,.sc-in input,.let-body,textarea,input[type="text"]){
+  background:rgba(7,4,12,.6) !important;border-color:var(--nt-hair) !important;color:var(--ink) !important;
+}
+html[data-mdx-theme="night"] :is(input,textarea,select)::placeholder{color:var(--ink-faint)}
+html[data-mdx-theme="night"] :is(input,textarea,select):focus{outline:none;border-color:var(--nt-violet) !important;box-shadow:0 0 0 3px rgba(180,120,255,.18)}
+
+/* ── 事件卡家族（标本插页）：家族色 + 左侧竖向图标柱 + 滑入微回弹 ── */
+html[data-mdx-theme="night"] .specimen{
+  --sp-accent:var(--nt-rose);--fam-dim:var(--nt-rose-dim);--fam-line:rgba(255,94,138,.42);--fam-glow:rgba(255,94,138,.5);
+  position:relative;overflow:hidden;background:var(--nt-card) !important;border:1px solid var(--nt-hair);border-radius:16px;outline:none;
+  box-shadow:var(--nt-shadow);color:var(--ink);animation:mdxEvIn .42s var(--ease-spring) both;
+}
+html[data-mdx-theme="night"] .specimen.t-monstrum{--sp-accent:#ff5e8a;--fam-dim:rgba(255,94,138,.14);--fam-line:rgba(255,94,138,.42);--fam-glow:rgba(255,94,138,.5)}
+html[data-mdx-theme="night"] .specimen.t-res{--sp-accent:#e8c385;--fam-dim:rgba(232,195,133,.16);--fam-line:rgba(232,195,133,.45);--fam-glow:rgba(232,195,133,.5)}
+html[data-mdx-theme="night"] .specimen.t-mandatum{--sp-accent:#b478ff;--fam-dim:rgba(180,120,255,.14);--fam-line:rgba(180,120,255,.44);--fam-glow:rgba(180,120,255,.55)}
+html[data-mdx-theme="night"] .specimen.t-artes{--sp-accent:#8f7bff;--fam-dim:rgba(143,123,255,.15);--fam-line:rgba(143,123,255,.46);--fam-glow:rgba(143,123,255,.55)}
+html[data-mdx-theme="night"] .specimen.t-certamen{--sp-accent:#ff8fae;--fam-dim:rgba(255,94,138,.14);--fam-line:rgba(255,143,174,.45);--fam-glow:rgba(255,94,138,.5)}
+html[data-mdx-theme="night"] .specimen::before{inset:0 0 auto 0;height:1px;border:none;border-radius:0;opacity:.6;background:linear-gradient(90deg,transparent,var(--sp-accent) 30%,var(--gilt) 70%,transparent)}
+html[data-mdx-theme="night"] .specimen::after{content:'';position:absolute;top:-70px;right:-60px;width:220px;height:220px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,var(--fam-dim),rgba(122,63,209,.08) 55%,transparent 72%)}
+html[data-mdx-theme="night"] .specimen .sp-head{padding-bottom:10px;border-bottom:1px solid var(--nt-hair)}
+html[data-mdx-theme="night"] .specimen .sp-emblem{
+  width:44px;height:44px;padding:9px;border:1px solid var(--fam-line);border-radius:12px;color:var(--sp-accent);
+  background:linear-gradient(180deg,var(--fam-dim),rgba(23,13,35,0) 70%);box-shadow:inset 0 0 18px var(--fam-dim);
+  filter:drop-shadow(0 0 7px var(--fam-glow));
+}
+html[data-mdx-theme="night"] .specimen .sp-title{
+  background:linear-gradient(92deg,var(--sp-accent),#fff1f6 55%,var(--sp-accent));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900;
+}
+html[data-mdx-theme="night"] .specimen .sp-latin{color:var(--sp-accent);opacity:.8}
+html[data-mdx-theme="night"] .specimen .sp-fields dt{color:var(--sp-accent);letter-spacing:.14em}
+html[data-mdx-theme="night"] .specimen .sp-fields dd{color:var(--ink-soft)}
+html[data-mdx-theme="night"] .sp-seal{filter:drop-shadow(0 0 8px var(--fam-glow)) hue-rotate(250deg) saturate(1.4)}
+
+/* ── 较量面板：双方卡、骰子、行动 ── */
+html[data-mdx-theme="night"] .cm-side{border-color:rgba(255,94,138,.2) !important;border-radius:12px}
+html[data-mdx-theme="night"] .cm-side + .cm-side,html[data-mdx-theme="night"] .cm-side:last-of-type{border-color:rgba(232,195,133,.24) !important}
+html[data-mdx-theme="night"] .cm-name{color:var(--ink)}
+html[data-mdx-theme="night"] .cm-power b{color:var(--cinnabar-hi)}
+html[data-mdx-theme="night"] .cj-d20{
+  display:inline-flex;align-items:center;justify-content:center;min-width:56px;padding:5px 10px;border-radius:9px;
+  background:rgba(7,4,12,.6);border:1px solid var(--nt-hair-strong);color:var(--gilt);font-variant-numeric:tabular-nums;
+}
+html[data-mdx-theme="night"] .cj-d20.mdx-crit{border-color:rgba(232,195,133,.7);animation:mdxCrit 1.8s ease-in-out infinite}
+html[data-mdx-theme="night"] .cj-d20.mdx-fumble{color:#ff5d5d;border-color:rgba(255,93,93,.65)}
+html[data-mdx-theme="night"] .cj-mods i{color:var(--ink-soft);border-color:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] .cm-act{
+  position:relative;overflow:hidden;background:rgba(180,120,255,.05) !important;border:1px solid rgba(255,94,138,.22) !important;border-radius:10px;color:var(--ink);
+  transition:border-color .2s,background .2s,transform .16s var(--ease-spring);
+}
+html[data-mdx-theme="night"] .cm-act::before{content:'';position:absolute;left:0;top:14%;bottom:14%;width:3px;border-radius:3px;background:linear-gradient(180deg,#ff8fae,#7a3fd1);transform:scaleY(0);transform-origin:50% 0;transition:transform .28s var(--ease-spring)}
+html[data-mdx-theme="night"] .cm-act:hover{border-color:#ff8fae !important;background:var(--nt-rose-dim) !important;box-shadow:none}
+html[data-mdx-theme="night"] .cm-act:hover::before{transform:scaleY(1)}
+html[data-mdx-theme="night"] .cm-act:active{transform:scale(.97)}
+html[data-mdx-theme="night"] .cm-act-desc{color:var(--ink-faint)}
+
+/* ── 数值条：夜光 + 扫光 ── */
+html[data-mdx-theme="night"] .meter .m-label{color:var(--ink-soft)}
+html[data-mdx-theme="night"] .meter .m-track{background:rgba(28,16,46,.8);box-shadow:inset 0 0 0 1px var(--nt-hair)}
+html[data-mdx-theme="night"] .meter .m-fill{position:relative;overflow:hidden;filter:saturate(1.3) brightness(1.45);box-shadow:0 0 8px -1px var(--mv2,#b478ff)}
+html[data-mdx-theme="night"] .meter .m-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.3) 50%,transparent 68%);animation:mdxSheen 3.4s cubic-bezier(.55,0,.55,.2) infinite}
+
+/* ── 雷达：绯粉多边形 ── */
+html[data-mdx-theme="night"] .radarwrap polygon,html[data-mdx-theme="night"] .radarwrap line{stroke:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] .radarwrap polygon:last-of-type{fill:rgba(242,107,181,.28);stroke:#ff8fc8;filter:drop-shadow(0 0 6px rgba(255,107,157,.5))}
+html[data-mdx-theme="night"] .radarwrap .rlab{fill:var(--ink-soft)}
+html[data-mdx-theme="night"] .radarwrap .rval{fill:var(--gilt)}
+
+/* ── 选项签 ── */
+html[data-mdx-theme="night"] .choice-slip{background:var(--nt-card) !important;border-color:var(--nt-hair-strong) !important;color:var(--ink);box-shadow:var(--nt-shadow)}
+html[data-mdx-theme="night"] .choice-slip:hover{border-color:var(--gilt) !important;box-shadow:var(--nt-float)}
+html[data-mdx-theme="night"] .choice-slip::before{background:radial-gradient(circle at 35% 30%,#dcb8ff,#b45cff 55%,#7a3fd1);box-shadow:0 0 0 2px rgba(5,2,9,.8),0 0 8px rgba(180,120,255,.7)}
+
+/* ── 书签 / 翻页把手 / 全屏钮：紫皮鎏金 + 激活光晕 ── */
+html[data-mdx-theme="night"] .thumb-tab{
+  color:#d8c3ff;border-color:var(--nt-hair) !important;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 42%),linear-gradient(163deg,#2a1440,#170d23 62%,#0e0719) !important;
+}
+html[data-mdx-theme="night"] .thumb-tab.active{
+  color:var(--gilt-hi);border-color:rgba(232,195,133,.55) !important;text-shadow:0 0 14px rgba(232,195,133,.45);
+  background:linear-gradient(180deg,rgba(180,120,255,.24),transparent 46%),linear-gradient(163deg,#4a2280,#2a1040 62%,#170d23) !important;
+}
+html[data-mdx-theme="night"] .thumb-tab::before{background:linear-gradient(180deg,transparent,var(--nt-violet),var(--gilt),transparent);box-shadow:0 0 10px rgba(180,120,255,.65)}
+html[data-mdx-theme="night"] .thumb-tab svg{color:var(--nt-violet);filter:drop-shadow(0 0 5px rgba(180,120,255,.6))}
+html[data-mdx-theme="night"] :is(.leaf-handle,.fs-toggle){background:var(--nt-card) !important;border-color:var(--nt-hair-strong) !important;color:var(--ink);box-shadow:var(--nt-shadow)}
+html[data-mdx-theme="night"] :is(.leaf-handle,.fs-toggle):hover{border-color:var(--gilt) !important;box-shadow:var(--nt-float)}
+html[data-mdx-theme="night"] .fs-icon i{border-color:var(--gilt) !important}
+
+/* ── 目录 / 插页头 / 关闭钮 ── */
+html[data-mdx-theme="night"] :is(.toc-head,.insert-head,.let-head,.rit-head){border-bottom-color:var(--nt-hair) !important}
+html[data-mdx-theme="night"] :is(.toc-sign,.rit-latin){color:var(--nt-violet)}
+html[data-mdx-theme="night"] .rit-head h3{background:linear-gradient(92deg,var(--gilt),#f6e3b8 40%,var(--gilt));-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-mdx-theme="night"] :is(.toc-close,.ih-close,.let-close,.rit-skip){border-color:var(--nt-hair-strong) !important;background:rgba(7,4,12,.45) !important;color:var(--ink)}
+html[data-mdx-theme="night"] :is(.toc-close,.ih-close,.let-close,.rit-skip):hover{border-color:var(--nt-rose) !important;color:var(--nt-rose);background:var(--nt-rose-dim) !important}
+
+/* ── 启程按钮 / 寄出：紫→绯渐变 + 扫光 ── */
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go){
+  position:relative;overflow:hidden;color:#fff !important;border:none !important;
+  background:linear-gradient(120deg,#7a3fd1,#ff5e8a) !important;box-shadow:var(--nt-shadow);
+}
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go)::after{content:'';position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(246,227,184,.45),transparent);transform:skewX(-20deg);transition:left .5s ease}
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go):hover{box-shadow:0 12px 40px -12px rgba(122,63,209,.6)}
+html[data-mdx-theme="night"] :is(.rit-enter,.let-send,.nf-go):hover::after{left:130%}
+html[data-mdx-theme="night"] .rit-foot .rf-step{color:var(--ink-soft)}
+html[data-mdx-theme="night"] .rit-foot .rf-step::after{background:var(--nt-violet)}
+html[data-mdx-theme="night"] .rit-foot .rf-step:hover:not(:disabled){color:var(--gilt)}
+html[data-mdx-theme="night"] .rc-step{color:var(--ink-faint)}
+
+/* ── 封面：召唤法阵（双环逆旋 + 扫描弧） ── */
+html[data-mdx-theme="night"] .cover{
+  background:radial-gradient(120% 92% at 50% 36%,#211234 0%,#0f0817 54%,#07040c 100%) !important;
+  box-shadow:0 30px 70px rgba(0,0,0,.75),0 0 0 1px rgba(233,201,140,.35);
+}
+html[data-mdx-theme="night"] .cover::before{background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.2) 60%,rgba(180,120,255,.08) 85%,transparent) !important}
+html[data-mdx-theme="night"] .cover::after{background:repeating-linear-gradient(180deg,#3a2458 0 1px,#140b22 1px 2px) !important}
+html[data-mdx-theme="night"] .cover-board{border-color:rgba(233,201,140,.35);box-shadow:inset 0 0 40px rgba(122,63,209,.18)}
+html[data-mdx-theme="night"] .cover-board::before{border-color:rgba(233,201,140,.22)}
+html[data-mdx-theme="night"] .cover-board::after{
+  content:'';position:absolute;left:50%;top:50%;width:min(340px,70%);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 260' fill='none'%3E%3Ccircle cx='130' cy='130' r='124' stroke='rgba(180,120,255,.38)'/%3E%3Ccircle cx='130' cy='130' r='113' stroke='rgba(180,120,255,.34)' stroke-width='7' stroke-dasharray='1.4 9.2'/%3E%3Ccircle cx='130' cy='130' r='124' stroke='rgba(232,195,133,.55)' stroke-width='1.6' stroke-dasharray='52 727'/%3E%3Ccircle cx='130' cy='130' r='101' stroke='rgba(255,94,138,.3)' stroke-dasharray='30 14'/%3E%3C/svg%3E") center/contain no-repeat;
+  animation:mdxSpin 28s linear infinite;
+}
+html[data-mdx-theme="night"] .cv-lozenge{border-color:rgba(232,195,133,.32);box-shadow:0 0 24px rgba(255,94,138,.12),inset 0 0 24px rgba(180,120,255,.12)}
+html[data-mdx-theme="night"] .cv-lozenge::before{border-color:rgba(180,120,255,.3)}
+html[data-mdx-theme="night"] .cv-head{background:radial-gradient(closest-side,rgba(122,63,209,.28),rgba(7,4,12,0))}
+html[data-mdx-theme="night"] .cv-head::before{
+  content:'';position:absolute;left:50%;top:50%;width:300px;height:300px;transform:translate(-50%,-50%);pointer-events:none;z-index:-1;
+  background:conic-gradient(from 0deg,transparent 0 336deg,rgba(255,94,138,.6) 354deg,transparent 360deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 61%,#000 62%,#000 67%,transparent 68%);mask:radial-gradient(closest-side,transparent 61%,#000 62%,#000 67%,transparent 68%);
+  animation:mdxSpinR 6s linear infinite;
+}
+html[data-mdx-theme="night"] .cv-title{
+  background:linear-gradient(92deg,#e8c385,#f6e3b8 40%,#e8c385) !important;-webkit-background-clip:text !important;background-clip:text !important;
+  filter:drop-shadow(0 0 18px rgba(232,195,133,.3));
+}
+html[data-mdx-theme="night"] .cv-seal{background:radial-gradient(circle at 38% 32%,#dcb8ff,#9a4dff 50%,#4a1c8a) !important;box-shadow:0 0 24px rgba(255,94,138,.5),0 0 60px rgba(180,120,255,.35) !important}
+html[data-mdx-theme="night"] .cv-seal::before{border-color:rgba(240,225,255,.5)}
+html[data-mdx-theme="night"] .cv-seal span{color:#f7ecff;text-shadow:0 0 8px rgba(255,94,138,.7)}
+
+/* ── 杂项 ── */
+html[data-mdx-theme="night"] *{scrollbar-color:var(--nt-hair-strong) transparent}
+html[data-mdx-theme="night"] ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(180,120,255,.55),rgba(122,63,209,.55));background-clip:padding-box}
+html[data-mdx-theme="night"] :focus-visible{outline-color:var(--gilt)}
+@media (prefers-reduced-motion:reduce){
+  html[data-mdx-theme="night"] *,html[data-mdx-theme="night"] *::before,html[data-mdx-theme="night"] *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
