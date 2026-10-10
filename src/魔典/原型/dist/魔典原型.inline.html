@@ -7671,7 +7671,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1008b';
+const UI_VER = '1008c';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -11768,8 +11768,21 @@ html[data-mdx-theme="night"] :focus-visible{outline-color:var(--gilt)}
 @media (prefers-reduced-motion:reduce){
   html[data-mdx-theme="night"] *,html[data-mdx-theme="night"] *::before,html[data-mdx-theme="night"] *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
 }
+
+/* ── 扉页 · 开场白：字色夜读修正（原样式为羊皮纸硬编码深墨，深紫幕布上不可读） ── */
+html[data-mdx-theme="night"] .ep-title{color:var(--gilt-hi);text-shadow:0 0 16px rgba(233,201,140,.25)}
+html[data-mdx-theme="night"] .ep-latin{color:var(--gilt)}
+html[data-mdx-theme="night"] .ep-lsign{color:var(--gilt-dim)}
+html[data-mdx-theme="night"] .ee-line{background:linear-gradient(90deg,transparent,rgba(233,201,140,.55))}
+html[data-mdx-theme="night"] .ee-line.rt{background:linear-gradient(90deg,rgba(233,201,140,.55),transparent)}
+html[data-mdx-theme="night"] .ep-rule::before{background:rgba(233,201,140,.55)}
+html[data-mdx-theme="night"] .ep-rule::after{background:rgba(233,201,140,.35)}
+html[data-mdx-theme="night"] .ep-rule span{border-color:rgba(233,201,140,.6)}
+html[data-mdx-theme="night"] .ep-frame::before{border-color:rgba(233,201,140,.3)}
+html[data-mdx-theme="night"] .ep-text{color:var(--ink);scrollbar-color:rgba(180,120,255,.4) transparent}
+html[data-mdx-theme="night"] .ep-nav{border-top-color:var(--nt-hair)}
 </style>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-10T11:58:25.175Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-10T12:29:09.920Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
