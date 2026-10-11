@@ -9075,6 +9075,22 @@ window.MODIAN_RITUAL = {
    "d": "贴着你灵魂翻书的安静读书人，吐槽三天憋一句、句句致命。图鉴解说四人中最详尽，预警冷静得像念旁白。"
   },
   {
+   "id": "valkyrie",
+   "n": "女武神 · 贡恩",
+   "d": "金盔白翼的天界战姬，军报精确到时辰方位，评语从「勉强合格」一路打到「以荣誉之名」。誓词的主语，正悄悄从神变成你。"
+  },
+  {
+   "id": "banshee",
+   "n": "报丧女妖 · 莫伊菈",
+   "d": "抱着送别名录的黑纱守夜人，预警是一段变调的哼歌。她哭过太多告别——直到遇见一个让她想唱「出生之歌」的名字。"
+  },
+  {
+   "id": "witch",
+   "n": "魔女 · 薇薇",
+   "d": "红帽红袍的萨巴斯实验狂魔，把你的日常写成实验记录。她说教义是错的——样本量为一，确信。"
+  },
+  {
+   "id": "comp_random",  {
    "id": "comp_random",
    "n": "🎲 命运随机",
    "d": "从心界名单中随机降临一位，名字与性格由AI拟定。"
@@ -10053,12 +10069,9 @@ window.MODIAN_RITUAL = {
   "梦魔",
   "小仙女",
   "幽灵",
-  "小恶魔",
-  "灯精",
-  "狐火",
-  "座敷童子",
-  "活人偶",
-  "布吉"
+  "女武神",
+  "报丧女妖",
+  "魔女"
  ],
  "rules": {
   "maxBonds": 4,
@@ -10448,7 +10461,7 @@ const TONE_DIRECTIVE = {
   custom:'自定义开局：严格依照玩家填写的配置展开'
 };
 const FAITH_SELF = ['local','custom'];
-const COMP_SHORT = {familiar:'魔宠·菲娜',mare:'梦魔·露珂',pixie:'小仙女·蒂蒂',ghost:'幽灵·塞蕾丝'};
+const COMP_SHORT = {familiar:'魔宠·菲娜',mare:'梦魔·露珂',pixie:'小仙女·蒂蒂',ghost:'幽灵·塞蕾丝',valkyrie:'女武神·贡恩',banshee:'报丧女妖·莫伊菈',witch:'魔女·薇薇'};
 const MAX_BONDS = (RT.rules && RT.rules.maxBonds) || 4;
 const APT_DEFS = [['ling','灵感','洞察与学习·信息与熟练度'],['mei','魅力','言谈交际·说服而非交战'],['ti','体质','耐力根基·后续扩展体质池'],['xin','信仰','神恩强度·对象不固定']];
 const APT_MIN = {ling:1,mei:1,ti:1,xin:0};
@@ -12124,7 +12137,7 @@ html[data-mdx-theme="night"]:not([data-mdx-off~="heart"]) .letter.sending .let-s
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-11T10:06:28.217Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-11T10:30:55.078Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 

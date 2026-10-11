@@ -368,7 +368,7 @@ const TONE_DIRECTIVE = {
   custom:'自定义开局：严格依照玩家填写的配置展开'
 };
 const FAITH_SELF = ['local','custom'];
-const COMP_SHORT = {familiar:'魔宠·菲娜',mare:'梦魔·露珂',pixie:'小仙女·蒂蒂',ghost:'幽灵·塞蕾丝'};
+const COMP_SHORT = {familiar:'魔宠·菲娜',mare:'梦魔·露珂',pixie:'小仙女·蒂蒂',ghost:'幽灵·塞蕾丝',valkyrie:'女武神·贡恩',banshee:'报丧女妖·莫伊菈',witch:'魔女·薇薇'};
 const MAX_BONDS = (RT.rules && RT.rules.maxBonds) || 4;
 const APT_DEFS = [['ling','灵感','洞察与学习·信息与熟练度'],['mei','魅力','言谈交际·说服而非交战'],['ti','体质','耐力根基·后续扩展体质池'],['xin','信仰','神恩强度·对象不固定']];
 const APT_MIN = {ling:1,mei:1,ti:1,xin:0};
