@@ -603,16 +603,6 @@ function bodyStep1(){
   <div class="sec-title">心界住民 · 脑内之声</div>
   <p class="rit-hint">当你在开局的黎明睁开眼，颅内已经住着一个声音。四位预设住民性格、播报风格与实体化路线各不相同；此选择全程唯一，途中不可更换。</p>
   <div class="rit-grid">${(RT.companions||[]).map(o=>optCard('companion',o)).join('')}</div>
-  ${R.companion==='comp_custom'?`
-  <div class="sec-title">自定义住民</div>
-  <div class="rit-form">
-    <label>住民名字<input data-cc="name" type="text" value="${esc(R.compCustom.name)}" placeholder="留空则由AI命名"></label>
-    <label>住民种族<input data-cc="race" type="text" value="${esc(R.compCustom.race)}" placeholder="例：魔宠 / 梦魔 / 幽灵 / 任意图鉴种族；留空由AI拟定"></label>
-    <label class="wide">性格与语癖<input data-cc="persona" type="text" value="${esc(R.compCustom.persona)}" placeholder="例：冷静毒舌，句尾带「……啧」"></label>
-    <label class="wide">心象外形<input data-cc="look" type="text" value="${esc(R.compCustom.look)}" placeholder="心界中的长相与衣着；留空由AI拟定"></label>
-    <label class="wide">来历<input data-cc="origin" type="text" value="${esc(R.compCustom.origin)}" placeholder="TA 为何住进你脑内；留空由AI拟定"></label>
-    <label class="wide">实体化路线（愿景）<input data-cc="route" type="text" value="${esc(R.compCustom.route)}" placeholder="好感升高后你希望走向什么结局——留空由AI按心界法则拟定"></label>
-  </div>`:''}
   ${R.companion==='comp_random'?`<p class="rit-hint">命运随机将从以下声族抽选：${(RT.companionRandomRaces||[]).map(esc).join(' · ')}<br>已抽：<b>${esc(R.compRandRace||'（尚未掷签）')}</b></p>`:''}`;
 }
 
@@ -705,9 +695,7 @@ function bodyStep4(){
   const region = (RT.regions||[]).find(r=>r.id===R.region);
   const ap = R.apt;
   const compTxt = !R.companion ? ''
-    : R.companion==='none' ? '独自上路（无人格旁白）'
     : R.companion==='comp_random' ? ('命运随机 · '+(R.compRandRace||'?')+'（名字由AI拟定）')
-    : R.companion==='comp_custom' ? ((R.compCustom.name||'由AI命名')+'（自定义 · '+(R.compCustom.race||'种族由AI拟定')+(R.compCustom.persona?(' · '+(R.compCustom.persona.length>18?R.compCustom.persona.slice(0,18)+'…':R.compCustom.persona)):'')+'）')
     : COMP_SHORT[R.companion] || R.companion;
   const heroBits = [R.hero.name,R.hero.gender,R.hero.age?R.hero.age+'岁':'',R.hero.appearance,R.pLevel,R.hero.faction,R.hero.bg,R.hero.outfit].filter(Boolean).join(' · ');
   const bondRows = [...R.bonds].map(([id,entry])=>{
@@ -775,18 +763,8 @@ function buildMsg(){
   if(R.hero.inventory) msg += '行囊：'+R.hero.inventory+'\n';
   const initLv = R.pLevel ? R.pLevel : (mode==='blessed'?'Lv.5':mode==='trial'?'Lv.1':mode==='woven'?'Lv.3':'由背景决定');
   msg += '初始等级：'+(R.pLevel||initLv)+'（Lv.1~220，按对应T阶与等级公式生成）\n';
-  if(R.companion==='none' || !R.companion){
-    msg += '心界住民：无（系统播报使用无人格旁白）\n';
-  }else if(R.companion==='comp_random'){
+  if(R.companion==='comp_random'){
     msg += '心界住民：命运随机（种族：'+(R.compRandRace||'由AI抽取')+'；名字与性格由AI依种族拟定，职能与输出格式遵循【心界住民系统】条目）\n';
-  }else if(R.companion==='comp_custom'){
-    const cc=[['名字',R.compCustom.name],['种族',R.compCustom.race],['性格与语癖',R.compCustom.persona],['心象外形',R.compCustom.look],['来历',R.compCustom.origin],['实体化路线愿景',R.compCustom.route]];
-    const filled=cc.filter(p=>p[1]&&p[1].trim()).map(p=>p[0]+'：'+p[1].trim());
-    const empt=cc.filter(p=>!(p[1]&&p[1].trim())).map(p=>p[0]);
-    msg += '心界住民：玩家自定义住民。';
-    if(filled.length) msg += '玩家已定（AI不得擅改）：'+filled.join('；')+'。';
-    if(empt.length) msg += '以下维度由AI按【心界住民系统】与所选种族补全：'+empt.join('/')+'。';
-    msg += '职能与输出格式遵循【心界住民系统】条目，好感阶段规则与预设住民一致（见该条目·好感与进化通则）\n';
   }else{
     msg += '心界住民：'+(COMP_SHORT[R.companion]||'')+'（预设，性格/口癖/实体化路线严格按其专属条目执行）\n';
   }
