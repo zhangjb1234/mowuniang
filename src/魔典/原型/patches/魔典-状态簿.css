@@ -1,0 +1,53 @@
+/* [修改 3] 书页状态簿（两套主题） */
+.specimen.t-status{--sp-accent:var(--leather-0)}
+.t-status > summary{display:block;list-style:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.t-status > summary::-webkit-details-marker{display:none}
+.t-status > summary:focus{outline:none}
+.t-status > summary:focus-visible{outline:2px solid var(--sp-accent);outline-offset:4px;border-radius:4px}
+.specimen.t-status .sp-head{margin-bottom:0;padding-right:0}
+.specimen.t-status[open] .sp-head{margin-bottom:10px}
+.t-status .sb-chev{flex:none;width:18px;height:18px;margin-left:6px;color:var(--sp-accent);opacity:.8}
+.t-status .sb-chev::before{content:'';display:block;width:7px;height:7px;margin:4px auto 0;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);transition:transform .25s var(--ease-out),margin .25s var(--ease-out)}
+.t-status[open] .sb-chev::before{transform:rotate(225deg);margin-top:8px}
+.t-status .sb-line{display:block;margin-top:6px;font-family:var(--font-sans);font-size:12.5px;line-height:1.5;color:var(--ink-soft);letter-spacing:.04em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-status[open] .sb-line{display:none}
+.t-status .sb-body{animation:sbOpen .32s var(--ease-out) both}
+@keyframes sbOpen{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.sb-hero{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;margin-bottom:4px}
+.sb-name{font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--ink)}
+.sb-name span{margin-left:8px;font-family:var(--font-sans);font-weight:400;font-size:12px;letter-spacing:.06em;color:var(--ink-faint)}
+.sb-tier{margin-left:auto;font-family:var(--font-sans);font-size:12.5px;letter-spacing:.06em;color:var(--sp-accent)}
+.t-status .meter .m-val{width:auto;min-width:66px;font-variant-numeric:tabular-nums}
+.t-status .meter .m-val small{font-size:.78em;font-weight:500;opacity:.7}
+.sb-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0 8px}
+.sb-stat{min-width:0;padding:5px 4px 4px;text-align:center;border:1px solid rgba(120,88,40,.28);border-radius:3px;background:rgba(255,250,238,.34)}
+.sb-stat i{display:block;font-style:normal;font-family:var(--font-sans);font-size:11px;letter-spacing:.12em;color:var(--ink-faint)}
+.sb-stat b{font-family:var(--font-latin);font-size:18px;line-height:1.2;color:var(--ink);font-variant-numeric:tabular-nums}
+.sb-stat em{margin-left:3px;font-style:normal;font-family:var(--font-sans);font-size:11px;color:var(--moss-deep)}
+.sb-sec{display:flex;align-items:center;gap:8px;margin:14px 0 7px;font-family:var(--font-sans);font-size:11.5px;letter-spacing:.24em;color:var(--sp-accent)}
+.sb-sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(120,88,40,.42),transparent)}
+.sb-npcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.sb-npc{min-width:0;padding:8px 11px 9px;border:1px solid rgba(120,88,40,.26);border-radius:3px;background:rgba(255,250,238,.3)}
+.sb-npc-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:1px 8px}
+.sb-npc-h b{font-size:14.5px;color:var(--ink)}
+.sb-npc-h span{font-family:var(--font-sans);font-size:11.5px;color:var(--ink-faint)}
+.sb-npc-h .sb-lv{margin-left:auto;color:var(--sp-accent)}
+.sb-npc .chip-row{margin:5px 0 0}
+.sb-npc .meter{margin:6px 0 4px}
+.sb-npc .meter .m-label{width:30px}
+.sb-npc .meter .m-val{min-width:30px}
+.sb-npc-st{font-size:13px;line-height:1.6;color:var(--ink-soft)}
+.sb-npc-mind{margin-top:2px;font-size:13px;line-height:1.6;font-style:italic;color:var(--ink-faint)}
+.sb-src{margin-top:10px;text-align:right;font-family:var(--font-sans);font-size:11px;letter-spacing:.08em;color:var(--ink-faint);opacity:.85}
+@media (max-width:520px){
+  .sb-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sb-tier{margin-left:0;width:100%}
+  .sb-npcs{grid-template-columns:1fr}
+}
+html[data-mdx-theme="night"] .specimen.t-status{--sp-accent:#6fd4c4;--fam-dim:rgba(111,212,196,.14);--fam-line:rgba(111,212,196,.42);--fam-glow:rgba(111,212,196,.5)}
+html[data-mdx-theme="night"] .specimen.t-status .sp-head{padding-bottom:0;border-bottom-color:transparent}
+html[data-mdx-theme="night"] .specimen.t-status[open] .sp-head{padding-bottom:10px;border-bottom-color:var(--nt-hair);margin-bottom:12px}
+html[data-mdx-theme="night"] .t-status .sb-line{margin-top:10px}
+html[data-mdx-theme="night"] .sb-stat,html[data-mdx-theme="night"] .sb-npc{background:rgba(28,16,46,.55);border-color:var(--nt-hair);border-radius:10px}
+html[data-mdx-theme="night"] .sb-stat em{color:#8fe0a0}
+html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var(--fam-line),transparent)}
