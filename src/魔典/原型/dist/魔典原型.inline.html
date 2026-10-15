@@ -1458,8 +1458,7 @@ window.MODIAN_DATA = {
     "魅力": 10,
     "体质": 10,
     "信仰": 0
-   },
-   "心界住民好感": 0
+   }
   },
   "阵营声望": {
    "魔界友好度": 0,
@@ -7903,7 +7902,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1014a';
+const UI_VER = '1015a';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -9007,7 +9006,7 @@ function renderArtes(){
   ${meter('敏捷', p.敏捷基础??60, 220, ['#A98A46','#C9AE6D'])}
   ${meter('防御', p.防御基础??60, 220, ['#6E5E4C','#8A7040'])}
   <div class="plaque" style="margin-top:9px"><h4>命数<span class="k-latin">Fatum</span></h4>
-    <div class="p-desc">幸运 ${p.幸运??10}/20 · 魔化度 ${p.魔化度??0}/100（${esc(p.魔化段位||'纯人类')}）· 心界住民好感 ${p.心界住民好感??0}</div></div>
+    <div class="p-desc">幸运 ${p.幸运??10}/20 · 魔化度 ${p.魔化度??0}/100（${esc(p.魔化段位||'纯人类')}）· 心界住民好感 ${Stat.get('心界住民.好感度', p.心界住民好感??0)}</div></div>
   <div class="sec-title">资质四象</div>
   ${meter('灵感', g(p,'资质.灵感',10), 20)}${meter('魅力', g(p,'资质.魅力',10), 20, ['#96372E','#B04A3E'])}${meter('体质', g(p,'资质.体质',10), 20, ['#5B6B4C','#7C8B68'])}${meter('信仰', g(p,'资质.信仰',0), 20, ['#43617A','#2F4A5E'])}
   <div class="sec-title">装备槽</div>
@@ -12411,7 +12410,7 @@ html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-14T03:02:04.357Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-15T03:46:36.146Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
