@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const NEW = readFileSync('C:/Users/Administrator/Downloads/跑/_mowuniang_repo/src/魔典/原型/魔典原型.html', 'utf8');
-const OLD = readFileSync('C:/Users/Administrator/Downloads/跑/_snap_pre7.html', 'utf8');
+const OLD = readFileSync('C:/Users/Administrator/Downloads/跑/_snap_pre7b.html', 'utf8'); // v1018a（⑤′升级前）
 const DEMO = readFileSync('C:/Users/Administrator/Downloads/跑/_mowuniang_repo/src/魔典/原型/demo-floors.js', 'utf8');
 
 function makeChain(html, tag) {
@@ -53,6 +53,7 @@ const G = [
 
 const g = newSb.parseFloor(G);
 const gt = FLOWTEXT(g);
+ok('① 场景标头进header', String(g.header || '').includes('『圣历742年·清晨』'), JSON.stringify(g.header));
 ok('① 正文首段=木窗棂', gt.trim().startsWith('木窗棂挡不住透进来的微凉晨光。'), JSON.stringify(gt.slice(0, 60)));
 ok('① 空行分段生效(CRLF)', gt.includes('行军床上坐起') && gt.includes('炉火与碗碟'), '段数=' + (g.flow || []).length);
 ok('① 元数据不进正文', !/type>|scene_time|plotThink|now_plot/.test(gt) && !gt.includes('<正文') && !gt.includes('Opt1'), gt.slice(0, 120));

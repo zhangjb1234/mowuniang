@@ -6404,16 +6404,31 @@ t = t.replace(/<Interleaving>([\s\S]*?)(?:<\/Interleaving\s*>|$)/gi, (whole, inn
        .replace(/<(?:thinking|simple_thinking|think_nya~|think)>(?:(?!<\/(?:thinking|simple_thinking|think_nya~|think)>)[\s\S])*\s*$/i,'')
        .replace(/<\/?(?:thinking|simple_thinking|think_nya~|think|draft|Chain_of_Thought)>\s*/gi,'');
   // ⑤ 附加块 / SUOT / 弹幕 / game 壳 / details
-  // ⑤′ 创世回廊：<type>/<scene_time>/plotThink 注释是给模型看的元数据；<action> 是选项；无 <正文> 时 <now_plot> 即正文。
-  //     只认这几个创世回廊专有标签，其余预设楼层里不会出现，行为不变。
-  t = t.replace(/<(type|scene_time)>[\s\S]*?<\/\1\s*>\n?/gi,'')
-       .replace(/<!--\s*plotThink\b[\s\S]*?-->\n?/gi,'')
+  // ⑤′ 创世回廊：只认它专有的标签，其余预设楼层里不会出现，行为不变。
+  //   · <scene_time> → 场景标头一行；<type>、<dice_calculation>、<review> 与 plotThink/charThink/jp 注释是元数据，删掉
+  //   · <action> → <options>；九种 Optional 模组（DiceCombat 等）→ <战况> 框；无 <正文> 时 <now_plot> 即正文
+  //   · 对白行首的 {角色名}「…」去掉花括号
+  const CG_MOD = {DiceCombat:'掷骰 · 攻击',DiceCheck:'掷骰 · 检定',Initiative:'先攻',EnemyOverview:'敌人总览',SummonOverview:'召唤',ExperienceLog:'经验',LootLog:'战利品',QuestContract:'委托',CombatSnapshot:'战况快照'};
+  t = t.replace(/<scene_time>\s*([\s\S]*?)\s*<\/scene_time\s*>/gi, (w, x)=>{
+         const f = x.split(/[|｜]/).map(v=>v.trim()).filter(Boolean);
+         const m = (f[0]||'').match(/^0*(\d+)-(\d{1,2})-(\d{1,2})T(\d{1,2}:\d{2})/);
+         const when = m ? `${m[1]}年${Number(m[2])}月${Number(m[3])}日 ${m[4]}` : (f[0]||'');
+         return '『' + [when, ...f.slice(1)].filter(Boolean).join(' · ') + '』\n';
+       })
+       .replace(/<(type|dice_calculation|review)>[\s\S]*?<\/\1\s*>\n?/gi,'')
+       .replace(/<!--\s*(?:plotThink\b|charThink\b|jp\s*:)[\s\S]*?-->\n?/gi,'')
        .replace(/<action>([\s\S]*?)<\/action\s*>/gi, (w, inner)=>{
-         const opts = inner.split(/\r?\n/).map(l=>l.trim()).filter(Boolean)
+         const opts = inner.split(/\n/).map(l=>l.trim()).filter(Boolean)
            .map(l=>{ const m = l.match(/^\[\s*Opt\s*\d+\s*[:：]\s*([^\]]{0,6})\]\s*(.+)$/i); return m ? '> ' + (m[1].trim() || '选项') + '：' + m[2].trim() : l; });
          return '<options>\n' + opts.join('\n') + '\n</options>';
+       })
+       .replace(new RegExp('<\\s*(' + Object.keys(CG_MOD).join('|') + ')\\s*>([\\s\\S]*?)<\\/\\s*\\1\\s*>', 'g'), (w, n, body)=>{
+         const lines = body.split(/\n/).map(l=>l.trim()).filter(l=>l && !/^特图的旁白\s*[:：]\s*$/.test(l));
+         return '<战况>【' + CG_MOD[n] + '】\n' + lines.join('\n') + '</战况>';
        });
-  if(!/<\s*正文\s*>/.test(t)) t = t.replace(/<(\/?)\s*now_plot\s*>/gi, '<$1正文>');
+  if(!/<\s*正文\s*>/.test(t) && /<\s*now_plot\s*>/i.test(t)){
+    t = t.replace(/<(\/?)\s*now_plot\s*>/gi, '<$1正文>').replace(/^([ \t]*)\{([^{}\n]{1,30})\}(?=[「『“"])/gm, '$1$2');
+  }
   t = t.replace(/<(disclaimer|Reference_Example|summary|background|safety_check|advice)>[\s\S]*?<\/\1>/gi,'')
        .replace(/<SUOT\b[^>]*>[\s\S]*?<\/SUOT>/gi,'')
        .replace(/<!--\s*Technical Footer Start[\s\S]*?Technical Footer End\s*-->/gi,'')
@@ -7926,7 +7941,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1018a';
+const UI_VER = '1019a';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -12434,7 +12449,7 @@ html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-20T05:34:15.575Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-20T06:06:25.688Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
