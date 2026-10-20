@@ -6334,7 +6334,7 @@ function firstVisibleLineAfter(text, from){
 const FUNC_TAGS = '魔物生成|获得物品|获取任务|技能生成|较量面板';
 function rescueFuncTags(src){
   const held = [];
-  let t = String(src||'').replace(new RegExp(String.raw`<\s*(${FUNC_TAGS})\s*>([\s\S]*?)(?:<\/\s*\1\s*>|(?![\s\S]*<\/\s*\1\s*>)[\s\S]*$)`, 'gi'), (m, name, body)=>{
+  let t = String(src||'').replace(new RegExp(String.raw`(?:^|(?<=\n))[ \t]*<\s*(${FUNC_TAGS})\s*>([\s\S]*?)(?:<\/\s*\1\s*>|(?![\s\S]*<\/\s*\1\s*>)[\s\S]*$)`, 'gi'), (m, name, body)=>{
     held.push({ name, body });
     return '';
   });
@@ -6344,6 +6344,8 @@ function cleanseFloor(raw){
   let t = String(raw||'');
   const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [] };
   if(!t) return out;
+  // ⓪ 泉此方思维链前缀先截：思考里会提到 `<魔物生成>` 等标签名，留给 ⓿ 抢救会把整段思考连同正文一起搬走
+  t = t.replace(/[\s\S]*?<\/konatan_planning~>/i, '');
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
@@ -7902,7 +7904,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1015a';
+const UI_VER = '1016a';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -12410,7 +12412,7 @@ html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-15T03:46:36.146Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-20T01:36:46.779Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
