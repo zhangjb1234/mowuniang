@@ -2906,18 +2906,30 @@ function sbFromStat(sd, prose){
   return {line, html: h};
 }
 function sbFromText(text){
-  const {fields, extras} = parseFields(text);
-  const nameLine = extras.find(x => /^【[^】]+】$/.test(x));
-  const name = nameLine ? nameLine.slice(1, -1) : '';
-  const rest = extras.filter(x => x !== nameLine);
-  const get = re => (fields.find(([k]) => re.test(k)) || [])[1] || '';
-  const hp = get(/^(生命|体力)/), mp = get(/^法力/);
-  const line = [get(/^等级/), hp ? '生命 ' + hp.replace(/\s+/g, '') : '', mp ? '法力 ' + mp.replace(/\s+/g, '') : '', get(/^(所在地|地点|位置)/)].filter(Boolean).join(' · ');
-  let h = name ? `<div class="sb-hero"><div class="sb-name">${esc(name)}</div></div>` : '';
-  if(fields.length || rest.length){
-    h += `<dl class="sp-fields">${fields.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}${rest.map(x => `<dd style="grid-column:1/3">${esc(x)}</dd>`).join('')}</dl>`;
+  /* [修改 6] 按原文顺序绘制：独占一行的「【段名】」是分段标题，其后的「键：值」归入该段。
+     旧实现把所有键值行排在前、段名行堆到最后，看起来像「资产与行囊 / 心界住民 / 阵营与声望」都是空的。 */
+  const lines = String(text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const secs = []; let cur = null;
+  for(const line of lines){
+    const sec = line.match(/^【([^】]+)】$/);
+    if(sec){ cur = {title: sec[1].trim(), fields: [], extras: [], items: []}; secs.push(cur); continue; }
+    if(!cur){ cur = {title: '', fields: [], extras: [], items: []}; secs.push(cur); }
+    const {fields, extras} = parseFields(line);
+    cur.fields.push(...fields); cur.extras.push(...extras);
+    fields.forEach(f => cur.items.push(f)); extras.forEach(x => cur.items.push([null, x]));
   }
-  return {line: line || name, html: h};
+  const all = secs.flatMap(x => x.fields);
+  const get = re => (all.find(([k]) => re.test(k)) || [])[1] || '';
+  const hp = get(/^(生命|体力)/), mp = get(/^法力/) || ((hp.match(/法力[:：]\s*([^｜|]+)/) || [])[1] || '');
+  const name = (get(/^姓名/).split(/[｜|]/)[0] || '').trim();
+  const line = [name, get(/^等级/).split(/[｜|]/)[0].trim(), hp ? '体力 ' + hp.split(/[｜|]/)[0].replace(/\s+/g, '') : '', mp ? '法力 ' + mp.replace(/\s+/g, '') : ''].filter(Boolean).join(' · ');
+  let h = '';
+  for(const sc of secs){
+    if(!sc.fields.length && !sc.extras.length) continue;
+    if(sc.title) h += `<div class="sb-sec">${esc(sc.title)}</div>`;
+    h += `<dl class="sp-fields">${sc.items.map(([k, v]) => k === null ? `<dd style="grid-column:1/3">${esc(v)}</dd>` : `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+  }
+  return {line, html: h};
 }
 function statusCardHtml(f, idx, r){
   if(!r || r.cover) return '';
@@ -3783,7 +3795,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1016a';
+const UI_VER = '1017a';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
