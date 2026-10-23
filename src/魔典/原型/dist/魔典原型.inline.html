@@ -7781,7 +7781,7 @@ function showCover(){
   coverEl.classList.remove('opened');
   document.getElementById('unseal').addEventListener('click', ()=>{
     coverEl.classList.add('opened');
-    enterFullscreen();   // 点击封面即进场伪全屏（真酒馆生效；裸跑静默回退）
+    // 不再自动进入全屏：玩家需要时点右下角全屏钮（修改 9）
     // 只有存在**真实 AI 楼层**才直接落最新页；否则走自定义开局（扉页→仪典）。
     // ⚠ 不能用 getLastMessageId()>0 判「有内容」：封面开场白本身就是 message_id=0 的 AI 层，
     //   用户回一句话后 lastId=1 但书里仍只有封面 → 会跳回封面原地打转（点封面毫无反应）。
@@ -12449,7 +12449,7 @@ html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-20T06:06:25.688Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-23T16:12:21.104Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
