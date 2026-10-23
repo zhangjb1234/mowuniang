@@ -6344,6 +6344,8 @@ function cleanseFloor(raw){
   let t = String(raw||'').replace(/\r\n?/g, '\n');   // 创世回廊等预设输出 CRLF，统一成 \n，否则分段正则认不出空行
   const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [] };
   if(!t) return out;
+  // ⓪′ 狐神抚「狐裁」思维链：预设会预填 <think_fox~> 开头，模型输出里常只有闭标签——闭标签前全截；流式中未闭合则从开标签截到尾
+  t = t.replace(/[\s\S]*?<\/think_?fox~?\s*>/i, '').replace(/<think_?fox~?\s*>[\s\S]*$/i, '');
   // ⓪ 泉此方思维链前缀先截：思考里会提到 `<魔物生成>` 等标签名，留给 ⓿ 抢救会把整段思考连同正文一起搬走
   t = t.replace(/[\s\S]*?<\/konatan_planning~>/i, '');
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
@@ -6435,6 +6437,21 @@ t = t.replace(/<Interleaving>([\s\S]*?)(?:<\/Interleaving\s*>|$)/gi, (whole, inn
        .replace(/<danmu\b[^>]*>[\s\S]*?<\/danmu\s*>/gi,'')
        .replace(/<\/?game\b[^>]*>\n?/gi,'')
        .replace(/<details\b[^>]*>[\s\S]*?<\/details\s*>/gi,'');
+  // ⑤″ 狐神抚：只在楼层带狐神抚专有标签时生效，其余预设行为不变。
+  //   · <fox_selc> → <options>（取 <font> 内文字，去颜文字前缀）；<fox_tip> 等狐系元数据块删掉
+  //   · 无 <正文> 时 <content> 即正文（Kemini 楼层不带狐系标签，不受影响）
+  if(/<\/?(?:fox_selc|fox_tip|fox_hugou|fox_front|fox_extra|fox_memory)\b/i.test(t)){
+    t = t.replace(/<fox_selc>([\s\S]*?)(?:<\/fox_selc>|$)/gi, (w, body)=>{
+      const opts = body.split(/\n/).map(l=>{
+        const f = l.match(/<font\b[^>]*>([\s\S]*?)<\/font>/i);
+        return (f ? f[1] : l).replace(/<[^>]+>/g,'').trim();
+      }).filter(l=>l && !/^[…\.]+|此处继续/.test(l));
+      return opts.length ? '<options>\n' + opts.join('\n') + '\n</options>' : '';
+    });
+    t = t.replace(/<(fox(?:_[a-z_]+)?|timefox|ft_clock|char_date)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+         .replace(/<(fox(?:_[a-z_]+)?)\b[^>]*>[\s\S]*$/i, '');
+    if(!/<\s*正文\s*>/.test(t)) t = t.replace(/<(\/?)content\b[^>]*>/gi, '<$1正文>');
+  }
   // ⑥ Interleaving / content（Gemini Dramatron）＝杂质：整块删除，不再当容器选留
   // 2026-10 定稿（朋友方案）：正文只认 <正文></正文>，功能标签只认五件套（⓿已抢救）；
   // Interleaving 无论开在哪、闭在哪、闭合与否，一律整块剔除——
@@ -12449,7 +12466,7 @@ html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
-<!-- 魔典单文件内联产物 · 构建于 2026-10-23T16:12:21.104Z · 勿手改（源：魔典原型.html） -->
+<!-- 魔典单文件内联产物 · 构建于 2026-10-23T19:00:52.437Z · 勿手改（源：魔典原型.html） -->
 </body>
 </html>
 
