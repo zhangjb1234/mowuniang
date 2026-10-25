@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
+<head><script></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>魔典 · 烛光抄本原型</title>
@@ -159,6 +159,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .note-slip .ns-seal{flex:none;margin-left:auto;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:1px solid rgba(96,66,28,.4);transform:rotate(-8deg)}
 .note-slip.cat .ns-seal{background:var(--cinnabar);color:#F6EFE2;border-color:rgba(120,40,32,.6)}
 .note-slip.konata .ns-seal{background:var(--gilt);color:#4A3616;border-color:rgba(138,112,64,.6);transform:rotate(8deg)}
+.note-slip.fox{background:linear-gradient(172deg,rgba(248,238,226,.94),rgba(240,222,200,.82));border-left:3px solid #C8743A}
+.note-slip.fox::after{content:'';position:absolute;top:0;right:0;border-style:solid;border-width:0 15px 15px 0;border-color:transparent rgba(228,196,160,.9) transparent transparent;opacity:.85}
+.note-slip .ns-avatar.paw.fox{background:linear-gradient(168deg,#E08A3C,#B4592A);font-size:16px;line-height:1}
+.note-slip.fox .ns-seal{background:#C8743A;color:#FFF4E6;border-color:rgba(140,72,30,.6);transform:rotate(-4deg)}
 /* 笺身 */
 .note-slip .ns-body{position:relative;z-index:1;font-size:13.5px;line-height:1.85;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word}
 /* 笺内分段（同一锚点上的多条吐槽） */
@@ -6341,12 +6345,20 @@ function rescueFuncTags(src){
 }
 function cleanseFloor(raw){
   let t = String(raw||'').replace(/\r\n?/g, '\n');   // 创世回廊等预设输出 CRLF，统一成 \n，否则分段正则认不出空行
-  const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [] };
+  const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [], foxNotes: [] };
   if(!t) return out;
   // ⓪ 泉此方思维链前缀先截：思考里会提到 `<魔物生成>` 等标签名，留给 ⓿ 抢救会把整段思考连同正文一起搬走
   t = t.replace(/[\s\S]*?<\/konatan_planning~>/i, '');
   // ⓪′ 狐神抚「狐裁」思维链：预设会预填 <think_fox~> 开头，模型输出里常只有闭标签——闭标签前全截；流式中未闭合则从开标签截到尾
   t = t.replace(/[\s\S]*?<\/think_?fox~?\s*>/i, '').replace(/<think_?fox~?\s*>[\s\S]*$/i, '');
+  // ③′ 狐神抚留言：<fox><details><summary>🦊狐神抚的留言~</summary>留言体</details></fox>
+  //    标题里带 <font>，③ 的猫神正则不收；必须在 ⑤ 删 details 之前提走，否则留言会被一起删掉
+  t = t.replace(/<fox>\s*<details\b[^>]*>\s*<summary\b[^>]*>([\s\S]{0,200}?)<\/summary\s*>([\s\S]*?)<\/details\s*>\s*<\/fox\s*>/gi, (w, title, body)=>{
+    const b = body.trim();
+    if(!b || !/留言|狐/.test(title.replace(/<[^>]+>/g,''))) return w;
+    out.foxNotes.push({ tag:'留言', text:b });
+    return '';
+  });
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
@@ -6447,6 +6459,10 @@ function cleanseFloor(raw){
       }).filter(l=>l && !/^[…\.]+|此处继续/.test(l));
       return opts.length ? '<options>\n' + opts.join('\n') + '\n</options>' : '';
     });
+    for(const m of t.matchAll(/<fox_tip>([\s\S]*?)<\/fox_tip\s*>/gi)){
+      const b = m[1].trim();
+      if(b) out.foxNotes.push({ tag:'狐语', text:b });
+    }
     t = t.replace(/<(fox(?:_[a-z_]+)?|timefox|ft_clock|char_date)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
          .replace(/<(fox(?:_[a-z_]+)?)\b[^>]*>[\s\S]*$/i, '');
     if(!/<\s*正文\s*>/.test(t)) t = t.replace(/<(\/?)content\b[^>]*>/gi, '<$1正文>');
@@ -6627,6 +6643,7 @@ function parseFloor(raw){
   let t = preNormalize(cl.text);
   /* 预设留言：猫神（Reborn）。catNote 合并多段；小此留言（Izumi）待 flow 建好后锚定 */
   r.catNote = cl.catNotes.length ? cl.catNotes.join('\n\n') : null;
+  r.foxNotes = cl.foxNotes || [];
   /* <start> 开局楼层：闭合与未闭合（流式截断）两形态都认；start 当包裹壳时把内层正文标签剥净留字 */
   const starts = extractBlocks(t,'start');
   if(!starts.length){
@@ -6794,24 +6811,32 @@ function proseHtml(text){
    猫神留言（Reborn 小猫之神）：朱印猫爪笺，头像位用朱印猫爪刻印（预设只产文字，无图）
    小此留言（Izumi 泉此方）：青金石笺 + 按楼层种子取的小此头像 */
 function noteSlip(o){
-  const isCat = o.kind === 'cat';
+  const isCat = o.kind === 'cat', isFox = o.kind === 'fox';
   const head =
     `<div class="ns-head">`+
-      (isCat
+      (isFox
+        ? `<span class="ns-avatar paw fox" aria-hidden="true">🦊</span>`
+        : isCat
         ? `<span class="ns-avatar paw">${ICON_paw}</span>`
         : `<img class="ns-avatar" src="${esc(o.img||'')}" alt="小此" referrerpolicy="no-referrer" loading="eager">`)+
       `<span class="ns-title"><span class="ns-cn">${esc(o.title)}</span><span class="ns-latin">${esc(o.latin)}</span></span>`+
-      `<span class="ns-seal">${isCat?'喵':'此'}</span>`+
+      `<span class="ns-seal">${isFox?'狐':isCat?'喵':'此'}</span>`+
     `</div>`;
   const segs = (o.segs && o.segs.length)
     ? o.segs.map(s=>`<div class="ns-seg">${s.tag?`<span class="ns-seg-tag">${esc(s.tag)}</span>`:''}<span class="ns-body">${esc(s.text)}</span></div>`).join('')
     : `<div class="ns-body">${esc(o.text)}</div>`;
-  return `<aside class="note-slip ${isCat?'cat':'konata'}">${head}${segs}</aside>`;
+  return `<aside class="note-slip ${isFox?'fox':isCat?'cat':'konata'}">${head}${segs}</aside>`;
 }
 /* 猫神留言笺：Reborn 的 <details><summary>…留言…</summary> */
 function catNoteHtml(catNote){
   if(!catNote) return '';
   return noteSlip({kind:'cat', title:'小猫之神的留言', latin:'FELIS · NOTA', text:catNote});
+}
+/* 狐神抚留言笺：<fox> 里的留言 + <fox_tip> 吐槽，合成一张；只有一段时不加段标签 */
+function foxNoteHtml(notes){
+  if(!notes || !notes.length) return '';
+  const segs = notes.map(n=>({ tag: notes.length > 1 ? n.tag : '', text: n.text }));
+  return noteSlip({kind:'fox', title:'狐神抚的留言', latin:'VVLPES · NOTA', segs});
 }
 /* 小此留言笺：tucao=吐槽/创作思路/小此对话，konatan_chat=情感陪伴 */
 function konataNoteHtml(note, img, tagText){
@@ -7131,6 +7156,7 @@ function renderFloor(f, floorIdx){
      小此穿插吐槽已由 flowHtml 插到各自锚定的正文段旁。 */
   const konataImg = konataImageFor(f.idx);
   const catSlip = catNoteHtml(r.catNote);
+  const foxSlip = foxNoteHtml(r.foxNotes);
   const tailSlip = konataNoteHtml(r.konataTail, konataImg,
       r.konataTail && r.konataTail.type === 'konatan_chat' ? '情感陪伴' : '创作思路');
   // 页码口径（用户拍板）：序数 = AI 楼层正序（开场白=第 1 页），总数 = 全部 AI 楼层
@@ -7142,7 +7168,7 @@ function renderFloor(f, floorIdx){
     <div class="scroll">
       ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}
       <div class="prose">${flowHtml(r.flow||[], r.midTucao, konataImg)}</div>
-      ${catSlip}${tailSlip}
+      ${catSlip}${foxSlip}${tailSlip}
       ${cards}${statusCard}${choices}
     </div>
     <footer class="folio-foot">
@@ -11902,6 +11928,8 @@ html[data-mdx-theme="night"] :is(.toc-item.on,.rit-opt.sel,.rchip.on,.dx-subtab.
 html[data-mdx-theme="night"] .note-slip::before{opacity:.25}
 html[data-mdx-theme="night"] .note-slip.cat{border-left:3px solid var(--nt-rose)}
 html[data-mdx-theme="night"] .note-slip.cat::after{display:none}
+html[data-mdx-theme="night"] .note-slip.fox{border-left:3px solid #E39A5A}
+html[data-mdx-theme="night"] .note-slip.fox::after{display:none}
 
 /* ── 输入控件 ── */
 html[data-mdx-theme="night"] :is(.dw-searchbar input,.nf-f input,.nf-f textarea,.nf-f select,.nrt-bar input,.nf-dim input,.nf-dim textarea,.dex-lock input,.rit-form input,.rit-form textarea,.rel-row select,.sc-in input,.let-body,textarea,input[type="text"]){
