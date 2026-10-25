@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><script>window.MODIAN_PREVIEW=1;window.MODIAN_THEME_INITIAL="vellum";addEventListener('storage',function(e){if(e.key==='modian_theme_v1')e.stopImmediatePropagation()},true);</script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
+<head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>魔典 · 烛光抄本原型</title>
@@ -1059,6 +1059,7 @@ button.dw-slot{cursor:pointer;font-family:inherit}
  * 或在控制台 / 其他脚本里调用 window.__modianTheme.set('night')。
  * 另含较量面板 d20 的滚骰动画（两套主题通用；系统「减少动态效果」时跳过）。
  */
+window.MODIAN_THEME_DEFAULT = 'night';
 (function () {
   'use strict';
   if (window.__modianTheme) return;
