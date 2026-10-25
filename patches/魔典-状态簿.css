@@ -1,0 +1,412 @@
+[修改 3] 书页状态簿 —— 替代 MVU 的 <StatusPlaceHolderImpl/>
+   ──────────────────────────────────────────────────────────
+   酒馆会把楼层末尾的 <StatusPlaceHolderImpl/> 换成卡内状态栏，但魔典自己读楼层原文排版，
+   占位符永远不会被替换（preNormalize 已剥掉），所以在书页上自绘一张状态卡，
+   位置 = 功能卡片之后、选项之前。
+   取数（只认「这一楼」：翻到旧页看到的是那一页当时的状态，不跟着最新值走）：
+     ① Mvu.getMvuData({type:'message', message_id: 楼层号}).stat_data
+     ② 本楼变量：f.stat（演示数据）/ getVariables({type:'message'}) / chat[楼层号].variables[swipe_id]
+     ③ AI 写的 <状态栏> 文本（parseFloor 收进 r.statusText，只收已闭合的块）
+     ④ 都没有 → 不画；不编假数据，也不退回 schemaDefaults
+   开合：最新一页默认展开、旧页默认折叠成一行摘要；手动开合挂宿主 window，本会话内记住。
+   ══════════════════════════════════════════════════════════ */
+const STATUS_OPEN_KEY = '__modian_status_open';
+function statusOpenMap(){
+  try{ const h = dexHost(); return h[STATUS_OPEN_KEY] || (h[STATUS_OPEN_KEY] = {}); }
+  catch(e){ return window[STATUS_OPEN_KEY] || (window[STATUS_OPEN_KEY] = {}); }
+}
+function statusKeyOf(f, idx){
+  let chat = '';
+  try{
+    const st = hostPick('SillyTavern');
+    const ctx = st && st.getContext && st.getContext();
+    chat = (ctx && (ctx.chatId || (typeof ctx.getCurrentChatId === 'function' && ctx.getCurrentChatId()))) || '';
+  }catch(e){}
+  return String(chat) + '#' + ((f && Number.isInteger(f.idx)) ? f.idx : idx);
+}
+function sbObj(v){ return (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length) ? v : null; }
+function sbNum(v){ if(v === null || v === undefined || v === '') return null; const n = Number(v); return Number.isFinite(n) ? n : null; }
+function sbStr(v){ return (v === null || v === undefined || typeof v === 'object') ? '' : String(v).trim(); }
+function sbKnown(v){ const s = sbStr(v); return (s && !/^(无|未知|空|暂无|none|null|undefined|—|-)$/i.test(s)) ? s : ''; }
+function floorStatData(f, idx){
+  const id = (f && Number.isInteger(f.idx)) ? f.idx : idx;
+  const sdOf = d => sbObj(d && typeof d === 'object' ? d.stat_data : null);
+  try{
+    const mvu = Stat.pick('Mvu');
+    if(mvu && typeof mvu.getMvuData === 'function' && id != null){
+      const s = sdOf(mvu.getMvuData({type:'message', message_id: id}));
+      if(s) return {sd: s, src: '本楼 MVU 变量'};
+    }
+  }catch(e){}
+  if(f && f.stat){ const s = sbObj(f.stat.stat_data) || sbObj(f.stat); if(s) return {sd: s, src: '本楼变量快照'}; }
+  if(id == null) return null;
+  try{
+    const gv = hostPick('getVariables');
+    if(typeof gv === 'function'){
+      const v = gv({type:'message', message_id: id});
+      if(v && typeof v.then !== 'function'){ const s = sdOf(v); if(s) return {sd: s, src: '本楼变量快照'}; }
+    }
+  }catch(e){}
+  try{
+    for(const fr of hostFrames()){
+      const ctx = fr.SillyTavern && fr.SillyTavern.getContext && fr.SillyTavern.getContext();
+      const m = ctx && Array.isArray(ctx.chat) ? ctx.chat[id] : null;
+      if(!m) continue;
+      const vs = m.variables, sw = Number.isInteger(m.swipe_id) ? m.swipe_id : 0;
+      const s = sdOf(Array.isArray(vs) ? vs[sw] : vs);
+      if(s) return {sd: s, src: '本楼变量快照'};
+    }
+  }catch(e){}
+  return null;
+}
+function sbMeter(label, cur, max, color){
+  const pct = max > 0 ? Math.round(Math.max(0, Math.min(cur, max)) / max * 100) : 0;
+  return `<div class="meter"><span class="m-label">${esc(label)}</span><div class="m-track"><div class="m-fill" data-w="${pct}" style="width:${pct}%;--mv:${color[0]};--mv2:${color[1]}"></div></div><span class="m-val">${esc(cur)}<small>/${esc(max)}</small></span></div>`;
+}
+/* 在场角色 = 羁绊里名字（全名或「·」前后任一段）出现在本楼正文里的人 */
+function sbPresent(bonds, prose){
+  const out = [];
+  for(const [name, b] of Object.entries(bonds || {})){
+    if(!b || typeof b !== 'object') continue;
+    const keys = [name, ...name.split(/[·・]/).filter(x => x.length >= 2)];
+    if(keys.some(k => prose.includes(k))) out.push([name, b]);
+  }
+  return out;
+}
+function sbLv(lv, tier){ return [lv != null ? 'Lv.' + lv : '', tier].filter(Boolean).join(' · '); }
+function sbNpc(name, b){
+  const kind = [sbKnown(b.种族), sbKnown(b.当前形态)].filter(Boolean).join(' · ');
+  const lv = sbLv(sbNum(b.等级), sbKnown(b.阶层));
+  const tags = [sbKnown(b.关系), sbKnown(b.心防) ? '心防 ' + sbKnown(b.心防) : ''].filter(Boolean);
+  const fav = sbNum(b.好感度);
+  const favBar = fav === null ? '' : fav < 0 ? meterCentered('好感', fav, 100, ['#43617A','#2F4A5E']) : meter('好感', fav, 100, ['#8A3A52','#B85A74']);
+  const st = sbKnown(b.当前状态), mind = sbKnown(b.心理活动).replace(/^[「『“"]+|[」』”"]+$/g, '');
+  return `<div class="sb-npc">
+    <div class="sb-npc-h"><b>${esc(name)}</b>${kind ? `<span>${esc(kind)}</span>` : ''}${lv ? `<span class="sb-lv">${esc(lv)}</span>` : ''}</div>
+    ${tags.length ? chips(tags) : ''}${favBar}
+    ${st ? `<div class="sb-npc-st">${esc(st)}</div>` : ''}
+    ${mind ? `<div class="sb-npc-mind">「${esc(mind)}」</div>` : ''}
+  </div>`;
+}
+function sbFromStat(sd, prose){
+  const p = sbObj(sd.主角) || {}, w = sbObj(sd.世界) || {}, fame = sbObj(sd.阵营声望) || {};
+  const lv = sbNum(p.等级), tier = sbKnown(p.阶层);
+  const hp = [sbNum(p.当前体力), sbNum(p.体力上限)], mp = [sbNum(p.当前法力), sbNum(p.法力上限)];
+  const hpOk = hp[0] !== null && hp[1] !== null, mpOk = mp[0] !== null && mp[1] !== null;
+  const place = sbKnown(w.地点) || sbKnown(p.所在地);
+  const line = [lv !== null ? 'Lv.' + lv : '', hpOk ? `生命 ${hp[0]}/${hp[1]}` : '', mpOk ? `法力 ${mp[0]}/${mp[1]}` : '', place].filter(Boolean).join(' · ');
+  let h = '';
+  const name = sbKnown(p.姓名);
+  if(name || lv !== null){
+    const sub = [sbKnown(p.种族), sbKnown(p.身份) || sbKnown(p.职业)].filter(Boolean).join(' · ');
+    const lvTxt = sbLv(lv, tier);
+    h += `<div class="sb-hero"><div class="sb-name">${esc(name || '主角')}${sub ? `<span>${esc(sub)}</span>` : ''}</div>${lvTxt ? `<div class="sb-tier">${esc(lvTxt)}</div>` : ''}</div>`;
+  }
+  if(hpOk) h += sbMeter('生命', hp[0], hp[1], ['#6D231C','#B04A3E']);
+  if(mpOk) h += sbMeter('法力', mp[0], mp[1], ['#2F4A5E','#43617A']);
+  const cell = (lbl, base, plus)=>{
+    const b = sbNum(base); if(b === null) return '';
+    const pl = sbNum(plus);
+    return `<div class="sb-stat"><i>${lbl}</i><b>${b}</b>${pl ? `<em>${pl > 0 ? '+' : ''}${pl}</em>` : ''}</div>`;
+  };
+  const cells = cell('战斗力', p.战斗力基础 ?? p.战斗力, p.战斗力加成) + cell('敏捷', p.敏捷基础 ?? p.敏捷, p.敏捷加成)
+              + cell('防御', p.防御基础 ?? p.防御, p.防御加成) + cell('幸运', p.幸运);
+  if(cells) h += `<div class="sb-stats">${cells}</div>`;
+  const rows = [];
+  const q = sbObj(p.资质);
+  if(q) rows.push(['资质', Object.entries(q).map(([k, v]) => `${k} ${sbStr(v)}`).join(' · ')]);
+  const cr = sbNum(p.魔化度), seg = sbKnown(p.魔化段位);
+  if(cr !== null || seg) rows.push(['魔化度', (cr !== null ? String(cr) : '') + (seg ? `（${seg}）` : '')]);
+  const fm = [['教团信任', fame.教团信任度], ['魔界友好', fame.魔界友好度], ['佳婿风评', fame.佳婿风评]]
+    .filter(([, v]) => sbNum(v) !== null).map(([k, v]) => `${k} ${sbNum(v)}`);
+  if(fm.length) rows.push(['阵营', fm.join(' · ')]);
+  if(place) rows.push(['所在地', place]);
+  const st = sbKnown(p.当前状态) || sbKnown(p.状态);
+  if(st) rows.push(['状态', st]);
+  if(rows.length) h += `<dl class="sp-fields">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+  const bf = p.Buff栏;
+  const buffs = Array.isArray(bf) ? bf.map(x => x && typeof x === 'object' ? sbStr(x.名称 || x.名字 || x.name) : sbStr(x)).filter(Boolean)
+              : sbObj(bf) ? Object.keys(bf) : [];
+  if(buffs.length) h += `<div class="sb-sec">增益 · 减益</div>${chips(buffs)}`;
+  const present = sbPresent(sbObj(sd.羁绊), prose);
+  if(present.length) h += `<div class="sb-sec">在场角色 · ${present.length}</div><div class="sb-npcs">${present.map(([n, b]) => sbNpc(n, b)).join('')}</div>`;
+  const an = sbObj(sd.心界住民);
+  if(an && sbKnown(an.名字) && an.名字 !== '未选定'){
+    const af = sbNum(an.好感度);
+    h += `<div class="sb-sec">心界住民</div><div class="sb-npcs"><div class="sb-npc">
+      <div class="sb-npc-h"><b>${esc(an.名字)}</b>${sbKnown(an.实体化进度) ? `<span>${esc(an.实体化进度)}</span>` : ''}</div>
+      ${af !== null ? meter('好感', af, 100, ['#5B6B4C','#7E8E6A']) : ''}
+      ${sbKnown(an.当前状态) ? `<div class="sb-npc-st">${esc(an.当前状态)}</div>` : ''}
+    </div></div>`;
+  }
+  const bt = sbObj(sd.战斗);
+  if(bt && sbKnown(bt.状态) && bt.状态 !== '空闲'){
+    const foe = [sbKnown(bt.当前对手), sbKnown(bt.对手阶层)].filter(Boolean).join(' · ');
+    h += `<div class="sb-sec">较量</div><dl class="sp-fields"><dt>状态</dt><dd>${esc(bt.状态)}</dd>${foe ? `<dt>对手</dt><dd>${esc(foe)}</dd>` : ''}${sbKnown(bt.裁定) ? `<dt>裁定</dt><dd>${esc(bt.裁定)}</dd>` : ''}</dl>`;
+  }
+  return {line, html: h};
+}
+function sbFromText(text){
+  /* [修改 6] 按原文顺序绘制：独占一行的「【段名】」是分段标题，其后的「键：值」归入该段。
+     旧实现把所有键值行排在前、段名行堆到最后，看起来像「资产与行囊 / 心界住民 / 阵营与声望」都是空的。 */
+  const lines = String(text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const secs = []; let cur = null;
+  for(const line of lines){
+    const sec = line.match(/^【([^】]+)】$/);
+    if(sec){ cur = {title: sec[1].trim(), fields: [], extras: [], items: []}; secs.push(cur); continue; }
+    if(!cur){ cur = {title: '', fields: [], extras: [], items: []}; secs.push(cur); }
+    const {fields, extras} = parseFields(line);
+    cur.fields.push(...fields); cur.extras.push(...extras);
+    fields.forEach(f => cur.items.push(f)); extras.forEach(x => cur.items.push([null, x]));
+  }
+  const all = secs.flatMap(x => x.fields);
+  const get = re => (all.find(([k]) => re.test(k)) || [])[1] || '';
+  const hp = get(/^(生命|体力)/), mp = get(/^法力/) || ((hp.match(/法力[:：]\s*([^｜|]+)/) || [])[1] || '');
+  const name = (get(/^姓名/).split(/[｜|]/)[0] || '').trim();
+  const line = [name, get(/^等级/).split(/[｜|]/)[0].trim(), hp ? '体力 ' + hp.split(/[｜|]/)[0].replace(/\s+/g, '') : '', mp ? '法力 ' + mp.replace(/\s+/g, '') : ''].filter(Boolean).join(' · ');
+  let h = '';
+  for(const sc of secs){
+    if(!sc.fields.length && !sc.extras.length) continue;
+    if(sc.title) h += `<div class="sb-sec">${esc(sc.title)}</div>`;
+    h += `<dl class="sp-fields">${sc.items.map(([k, v]) => k === null ? `<dd style="grid-column:1/3">${esc(v)}</dd>` : `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+  }
+  return {line, html: h};
+}
+function statusCardHtml(f, idx, r){
+  if(!r || r.cover) return '';
+  const prose = (r.flow || []).map(x => x.text).join('\n');
+  const got = floorStatData(f, idx);
+  let body = got ? sbFromStat(got.sd, prose) : null, src = got ? got.src : '';
+  if((!body || !body.html) && r.statusText){ body = sbFromText(r.statusText); src = 'AI 状态栏文本'; }
+  if(!body || !body.html) return '';
+  const key = statusKeyOf(f, idx);
+  const mem = statusOpenMap()[key];
+  const open = typeof mem === 'boolean' ? mem : idx === FLOORS.length - 1;
+  return `<details class="specimen t-status" data-status-key="${esc(key)}"${open ? ' open' : ''}>
+    <summary class="sb-sum" title="展开 / 折叠状态簿">
+      <span class="sp-head"><span class="sp-emblem">${ICON.eye}</span><span class="sp-title">状态簿</span><span class="sp-latin">STATVS</span><span class="sb-chev" aria-hidden="true"></span></span>
+      ${body.line ? `<span class="sb-line">${esc(body.line)}</span>` : ''}
+    </summary>
+    <div class="sb-body">${body.html}<div class="sb-src">来源 · ${esc(src)}</div></div>
+  </details>`;
+}
+/* 只记「手动」开合：<details open> 初次插入也会触发 toggle，若用 toggle 记，最新页的默认展开会被当成手动记下 */
+document.addEventListener('click', e=>{
+  const s = e.target && e.target.closest ? e.target.closest('details.t-status > summary') : null;
+  if(!s) return;
+  const d = s.parentElement;
+  setTimeout(()=>{ statusOpenMap()[d.dataset.statusKey] = d.open; if(d.open) paintMeters(d); }, 0);
+});
+function renderFloor(f, floorIdx){
+  const idx = (floorIdx!=null) ? floorIdx : FLOORS.indexOf(f);
+  const r = parseFloor(f.raw);
+  const cards = r.cards.map((c,i)=>cardHtml(c, i===r.cards.length-1)).join('');
+  const statusCard = statusCardHtml(f, idx, r);   // [修改 3] 书页状态簿
+  const choices = r.options.length ? `<div class="choices">${r.options.map((o,i)=>
+    `<button class="choice-slip" data-choice="${esc(o.text)}"><span class="cs-text">${esc(o.text)}</span><span class="cs-tag">${esc(o.label)}</span></button>`).join('')}</div>` : '';
+  const scribe = r.updates ? '命运已誊录 · 状态簿已归档' : '';
+  /* 预设留言（只读标签，不生成）：
+     猫神留言（Reborn）+ 小此末尾留言（Izumi）常显在页末；
+     小此穿插吐槽已由 flowHtml 插到各自锚定的正文段旁。 */
+  const konataImg = konataImageFor(f.idx);
+  const catSlip = catNoteHtml(r.catNote);
+  const foxSlip = foxNoteHtml(r.foxNotes);
+  const mieSlip = mieNoteHtml(r.mieNotes);
+  const tailSlip = konataNoteHtml(r.konataTail, konataImg,
+      r.konataTail && r.konataTail.type === 'konatan_chat' ? '情感陪伴' : '创作思路');
+  // 页码口径（用户拍板）：序数 = AI 楼层正序（开场白=第 1 页），总数 = 全部 AI 楼层
+  const total = FLOORS.length;
+  const ord = idx + 1;
+  const prevOk = idx > 0, nextOk = idx < FLOORS.length - 1;
+  const html = `
+    <header class="folio-head">${worldHeader(f.idx)}</header>
+    <div class="scroll">
+      ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}
+      <div class="prose">${flowHtml(r.flow||[], r.midTucao, konataImg)}</div>
+      ${catSlip}${foxSlip}${mieSlip}${tailSlip}
+      ${cards}${statusCard}${choices}
+    </div>
+    <footer class="folio-foot">
+      <button class="ff-nav ff-prev" data-fnav="prev" ${prevOk?'':'disabled'} aria-label="上一页">‹ 上一页</button>
+      <span class="ff-page">第 ${ord} 页 / 共 ${total} 页 · ${esc(f.label||'')}</span>
+      <span class="ff-side"><span class="ff-scribe">${scribe}</span>${nextOk?`<button class="ff-latest" data-latest aria-label="回至最新页">回至最新页</button>`:''}<button class="ff-nav ff-next" data-fnav="next" ${nextOk?'':'disabled'} aria-label="下一页">下一页 ›</button></span>
+    </footer>`;
+  return {html, r};
+}
+
+/* ════════════════════════════════════════════════════
+   伪全屏 + iframe 高度守卫（完全按幻璃镜机制重做，modian 前缀）
+   蓝本：幻璃镜 GameScreen 伪全屏接管 + galgame-core/iframeGuard 高度守卫
+        + galgame-core/ttFullscreenCompat TT 宿主兼容层（ST 上全 no-op）。
+   进入：父页 <style id="tavern-modian-fs-hide"> 按 mesid 藏其余楼层
+        → .mes fixed 八属性顶满视口（z 99999）→ iframe 100%/100%
+        → __modianFullscreen=true → TT compat 接管（仅 TT 宿主生效）
+        → 同时尝试原生 requestFullscreen（原生全屏是「魔典-锁定前端」的
+          锁定触发器，Esc 退出归浏览器管；原生不可用时纯伪全屏兜底）。
+   退出：先退原生全屏 → 清 .mes 八属性 → 摘藏楼 style → 标志 false
+        → TT compat 恢复祖先链 → restoreIframeHeight（清内联→写目标高）
+        → 守卫 burst（3×100ms 修竞态：全屏改了父页内联样式，不恢复是必现坑）。
+   Esc/浏览器 UI 退出原生全屏 → fullscreenchange 同步走完整退出链。
+   分工：本页负责视觉，「魔典-锁定前端」脚本负责保命（拦酒馆销毁 iframe）。
+   浏览器裸跑：无父页 jQuery → 伪全屏静默跳过，只剩原生全屏尽力而为。
+   ════════════════════════════════════════════════════ */
+const FS_HIDE_ID = 'tavern-modian-fs-hide';
+
+function parentJQ(){ try{ if(window.parent && window.parent !== window && window.parent.$) return window.parent.$; }catch(e){} return null; }
+function selfIframe(){ try{ return window.frameElement || null; }catch(e){ return null; } }
+
+/* ── TauriTavern 宿主全屏兼容层（照 galgame-core/ttFullscreenCompat 内联移植） ──
+   背景：TT 宿主改写过 .mes 结构，并对第三方 fixed 浮层做几何管理；伪全屏直接
+   把父页楼层改成 position:fixed，在 TT 上有两类已知症状——「不能全屏」（祖先链
+   transform/contain 等把 fixed 困进祖先盒）与「发消息后全屏弹出」（楼层重渲染/
+   虚拟化投影重置接管样式）。上游 SillyTavern 上 isTauriTavern() 为 false，
+   三个入口全部 no-op，现有行为零改动。 */
+const ttCompat = (()=>{
+  const LOG = '[魔典·TT全屏兼容]';
+  /* containing-block 陷阱属性 → 恒等值（非恒等值时后代 fixed 以该祖先为包含块而非视口） */
+  const TRAP_PROPS = [
+    ['transform','none'], ['contain','none'], ['filter','none'], ['backdrop-filter','none'],
+    ['perspective','none'], ['will-change','auto'], ['content-visibility','visible'], ['container-type','normal']
+  ];
+  const SURFACE_ATTR = 'data-tt-mobile-surface', SURFACE_VALUE = 'fullscreen-window';
+  let trapRestoreList = [], taggedEls = [], ttHostCache = null;
+
+  /* TT 宿主检测：平台 ABI / 运行标记，本 iframe 与父窗口各查一轮（同源可读） */
+  function isTauriTavern(){
+    if(ttHostCache !== null) return ttHostCache;
+    let detected = false;
+    try{
+      if(window.__TAURITAVERN__ && window.__TAURITAVERN__.abiVersion) detected = true;
+      else if(window.__TAURI_RUNNING__ === true) detected = true;
+    }catch(e){}
+    if(!detected){
+      try{
+        const p = window.parent;
+        if(p && p !== window){
+          if(p.__TAURITAVERN__ && p.__TAURITAVERN__.abiVersion) detected = true;
+          else if(p.__TAURI_RUNNING__ === true) detected = true;
+        }
+      }catch(e){ /* 跨域安全异常，按非 TT 处理 */ }
+    }
+    ttHostCache = detected;
+    return detected;
+  }
+  function readTTDiagnostics(){
+    const out = {};
+    try{
+      const p = (window.parent && window.parent !== window ? window.parent : window);
+      out.abiVersion = (p.__TAURITAVERN__ && p.__TAURITAVERN__.abiVersion) ?? null;
+      out.erProfile = (p.localStorage && p.localStorage.getItem('tt:embeddedRuntimeProfile')) ?? null;
+    }catch(e){ out.erProfile = 'unreadable'; }
+    return out;
+  }
+  /* 进入伪全屏（TT only）：中和祖先链 containing-block 陷阱（存原值，退出按原样
+     恢复；幂等，先恢复上一轮）+ 打 fullscreen-window opt-in 标记（TT 几何防火墙
+     尊重已显式标记的节点，不再当异常浮层修正） */
+  function enter(takeoverEl){
+    if(!isTauriTavern()) return;
+    exit();
+    if(!takeoverEl) return;
+    let neutralized = 0;
+    try{
+      const doc = takeoverEl.ownerDocument;
+      const root = doc && doc.documentElement;
+      let node = takeoverEl.parentElement;
+      while(node){
+        const view = node.ownerDocument && node.ownerDocument.defaultView;
+        if(view){
+          const cs = view.getComputedStyle(node);
+          for(const [prop, identity] of TRAP_PROPS){
+            const value = cs.getPropertyValue(prop);
+            if(value && value !== identity){
+              trapRestoreList.push({
+                el: node, prop,
+                hadInline: node.style.getPropertyValue(prop) !== '',
+                inlineValue: node.style.getPropertyValue(prop),
+                inlinePriority: node.style.getPropertyPriority(prop)
+              });
+              node.style.setProperty(prop, identity, 'important');
+              neutralized++;
+            }
+          }
+        }
+        if(node === root) break;
+        node = node.parentElement;
+      }
+    }catch(err){ console.warn(LOG + ' 祖先链中和失败', err); }
+    try{
+      if(!takeoverEl.hasAttribute(SURFACE_ATTR)){
+        takeoverEl.setAttribute(SURFACE_ATTR, SURFACE_VALUE);
+        taggedEls.push(takeoverEl);
+      }
+    }catch(e){}
+    console.info(LOG + ' 已接管:', Object.assign({ neutralized }, readTTDiagnostics()));
+  }
+  /* 退出伪全屏（TT only）：按原样恢复祖先链与标记（与 enter 成对调用，卸载兜底） */
+  function exit(){
+    while(trapRestoreList.length){
+      const rec = trapRestoreList.pop();
+      try{
+        if(rec.hadInline) rec.el.style.setProperty(rec.prop, rec.inlineValue, rec.inlinePriority);
+        else rec.el.style.removeProperty(rec.prop);
+      }catch(e){}
+    }
+    while(taggedEls.length){
+      const el = taggedEls.pop();
+      try{ el.removeAttribute(SURFACE_ATTR); }catch(e){}
+    }
+  }
+  /* 全屏状态再断言守卫：楼层重渲染/虚拟化投影协调会重置接管元素的
+     内联样式，导致伪全屏丢失——标准 ST 同样发生（新楼到达 → 酒馆重渲染
+     楼层 → position:fixed 被抹 → 退出全屏）。故**不设宿主门槛**，全宿主生效；
+     TT 额外做祖先链中和与 opt-in 标记。 */
+  function installReassert(applyFn, isActive){
+    // iframe 内酒馆助手全局常常不存在 → 逐帧探测（window / parent / top）
+    const frames = [];
+    try{ frames.push(window); }catch(e){}
+    try{ if(window.parent && window.parent!==window) frames.push(window.parent); }catch(e){}
+    try{ if(window.top && window.top!==window) frames.push(window.top); }catch(e){}
+    let events = {};
+    let onFn = null;
+    for(const f of frames){
+      try{ if(!events.tavern_events && f.tavern_events) events = f.tavern_events; }catch(e){}
+      try{ if(!onFn && typeof f.eventOn === 'function') onFn = f.eventOn.bind(f); }catch(e){}
+    }
+    if(!onFn) return ()=>{};
+    const EVENT_KEYS = ['MESSAGE_RECEIVED','MESSAGE_SENT','MESSAGE_UPDATED','MESSAGE_SWIPED',
+      'USER_MESSAGE_RENDERED','CHARACTER_MESSAGE_RENDERED','CHAT_CHANGED','MORE_MESSAGES_LOADED'];
+    let timer, settleTimer;
+    const schedule = ()=>{
+      if(!isActive()) return;
+      window.clearTimeout(timer); window.clearTimeout(settleTimer);
+      timer = window.setTimeout(()=>{
+        if(!isActive()) return;
+        try{ applyFn(); }catch(err){ console.warn(LOG + ' 再断言失败', err); }
+        settleTimer = window.setTimeout(()=>{ if(isActive()){ try{ applyFn(); }catch(e){} } }, 350);
+      }, 250);
+    };
+    const disposers = [];
+    for(const key of EVENT_KEYS){
+      const name = events[key];
+      if(typeof name !== 'string') continue;
+      try{ const d = onFn(name, schedule); if(d && typeof d.stop === 'function') disposers.push(()=>d.stop()); }catch(e){}
+    }
+    return ()=>{
+      window.clearTimeout(timer); window.clearTimeout(settleTimer);
+      while(disposers.length){ try{ disposers.pop()(); }catch(e){} }
+    };
+  }
+  return { isTauriTavern, enter, exit, installReassert };
+})();
+
+function isPseudoFS(){ return window.__modianFullscreen === true; }
+function isAnyFullscreen(){ return isPseudoFS() || !!document.fullscreenElement; }
+
+/* ── 伪全屏接管（照幻璃镜 GameScreen applyPseudoFullscreen） ── */
+function applyPseudoFullscreen(){
+  const p$ = parentJQ(); if(!p$) return false;
+  const iframe = selfIframe();
+  const $mes = iframe ? p$(iframe).closest('.mes') : p$('#chat .mes').last();
+  const floorId = $mes.attr('mesid');
+  let hideStyle = p$('#' + FS_HIDE_ID);
+  if(hideStyle.length === 0) hideStyle = p$('<style id="' + FS_HIDE_ID + '">
