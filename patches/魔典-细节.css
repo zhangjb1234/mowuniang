@@ -1,0 +1,190 @@
+/* 魔典-细节 v1 · 共有部分（两套主题表现不同）。放在魔典全部样式之后。 */
+html{--mdx-corrupt:0;--mdx-corrupt-rgb:122,52,170}
+html[data-mdx-theme="night"]{--mdx-corrupt-rgb:255,70,120}
+
+/* 书页叠层：纸纹 / 星尘（::before）与魔化页缘（::after），位于正文之下 */
+.mdx-fx{position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;overflow:hidden;contain:strict}
+.mdx-fx::after{content:'';position:absolute;inset:0;border-radius:inherit;
+  box-shadow:inset 0 0 calc(18px + 80px*var(--mdx-corrupt)) rgba(var(--mdx-corrupt-rgb),calc(.7*var(--mdx-corrupt)));
+  transition:box-shadow 1.2s ease}
+html[data-mdx-off~="corrupt"] .mdx-fx::after{content:none}
+
+/* 主题切换：羊皮纸→夜读 墨染开；夜读→羊皮纸 烛光点亮 */
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+html.mdx-vt-night::view-transition-new(root){animation:mdxInkSpread .95s cubic-bezier(.65,.05,.3,1) both}
+html.mdx-vt-vellum::view-transition-new(root){animation:mdxCandleLight .95s cubic-bezier(.2,.7,.3,1) both}
+@keyframes mdxInkSpread{
+  0%{clip-path:circle(0 at var(--mdx-vx,50%) var(--mdx-vy,50%));filter:blur(6px)}
+  70%{filter:blur(1px)}
+  100%{clip-path:circle(160% at var(--mdx-vx,50%) var(--mdx-vy,50%));filter:none}}
+@keyframes mdxCandleLight{
+  0%{clip-path:circle(0 at var(--mdx-vx,50%) var(--mdx-vy,50%));filter:brightness(1.9) sepia(.5)}
+  100%{clip-path:circle(160% at var(--mdx-vx,50%) var(--mdx-vy,50%));filter:none}}
+html.mdx-fade body{animation:mdxFade .5s ease both}
+@keyframes mdxFade{from{opacity:.35}to{opacity:1}}
+
+/* 提示条：羊皮纸 = 撕边纸条；夜读 = 浮空符文玻璃 */
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="toast"]) .ink-slip{
+  border-radius:2px;border-bottom:none;padding-bottom:14px;transform-origin:50% 0;
+  background:linear-gradient(176deg,#F7F1E1,#E9DDC0);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),96% 100%,91% calc(100% - 4px),85% 100%,78% calc(100% - 5px),70% 100%,63% calc(100% - 3px),55% 100%,47% calc(100% - 5px),40% 100%,32% calc(100% - 4px),25% 100%,17% calc(100% - 5px),9% 100%,4% calc(100% - 3px),0 100%);
+  filter:drop-shadow(0 8px 12px rgba(0,0,0,.35));box-shadow:none;rotate:-.6deg}
+html[data-mdx-theme="night"]:not([data-mdx-off~="toast"]) .ink-slip{
+  position:relative;padding-right:34px;border-radius:12px !important;
+  background:linear-gradient(135deg,rgba(40,20,66,.9),rgba(14,7,25,.92)) !important;
+  border:1px solid rgba(200,160,255,.42) !important;border-left:3px solid #b478ff !important;
+  box-shadow:0 0 18px rgba(180,120,255,.35),0 10px 30px rgba(0,0,0,.55) !important;
+  animation:slipIn .46s var(--ease-spring) both,mdxHover 4s ease-in-out .5s infinite}
+html[data-mdx-theme="night"]:not([data-mdx-off~="toast"]) .ink-slip::after{content:'';position:absolute;right:11px;top:50%;width:12px;height:18px;margin-top:-9px;opacity:.85;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 18' fill='none' stroke='%23e8c385' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M6 1v16M6 7 2 2M6 7l4-5'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter:drop-shadow(0 0 4px rgba(232,195,133,.7))}
+html[data-mdx-theme="night"] .ink-slip.hide{animation:slipOut .4s ease-in both}
+@keyframes mdxHover{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@media (hover:hover){html[data-mdx-theme="night"]:not([data-mdx-off~="toast"]) .ink-slip{backdrop-filter:blur(6px)}}
+
+/* 空状态：羊皮纸 = 羽毛笔速写；夜读 = 未点亮的星图 */
+html:not([data-mdx-off~="empty"]) .empty-note::before{content:'';display:block;width:72px;height:42px;margin:0 auto 6px;opacity:.8;background:var(--mdx-empty-art) center/contain no-repeat}
+html[data-mdx-theme="vellum"]{--mdx-empty-art:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 42' fill='none' stroke='%238A7040' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M44 4c-9 2-16 10-19 22l-2 8 6-4c9-6 15-14 15-26z'/%3E%3Cpath d='M23 34c4-10 9-17 17-24'/%3E%3Cpath d='M30 23h7M27 28h5' stroke-width='.9'/%3E%3Cpath d='M6 38c8-3 14 2 22-1s14-2 20 0 12 1 18-1' stroke='%2396372E' stroke-width='1' stroke-dasharray='2 3'/%3E%3Ccircle cx='21' cy='37' r='1.3' fill='%2396372E' stroke='none'/%3E%3C/svg%3E")}
+html[data-mdx-theme="night"]{--mdx-empty-art:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 42' fill='none'%3E%3Cpath d='M10 30 24 12l14 10 12-14 12 18' stroke='rgba(200,160,255,.35)' stroke-width='1' stroke-dasharray='2 3'/%3E%3Cg fill='%23140b22' stroke='%23b478ff' stroke-width='1'%3E%3Ccircle cx='10' cy='30' r='2.2'/%3E%3Ccircle cx='24' cy='12' r='2.2'/%3E%3Ccircle cx='38' cy='22' r='2.2'/%3E%3Ccircle cx='62' cy='26' r='2.2'/%3E%3C/g%3E%3Cpath d='M50 3l1.6 4.4L56 9l-4.4 1.6L50 15l-1.6-4.4L44 9l4.4-1.6z' fill='%23e8c385'/%3E%3C/svg%3E")}
+
+/* d20 大成功 / 大失败：颜色随主题 */
+.cj-d20{position:relative}
+.mdx-burst{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;pointer-events:none;z-index:5}
+.mdx-burst.crit{color:var(--mdx-crit,#e8c385);box-shadow:0 -26px 0 -2px currentColor,18px -18px 0 -2px currentColor,26px 0 0 -2px currentColor,18px 18px 0 -2px currentColor,0 26px 0 -2px currentColor,-18px 18px 0 -2px currentColor,-26px 0 0 -2px currentColor,-18px -18px 0 -2px currentColor;animation:mdxSpark .9s cubic-bezier(.2,.8,.3,1) forwards}
+.mdx-burst.crit::after{content:'';position:absolute;inset:-22px;border-radius:50%;border:2px solid currentColor;animation:mdxRing .9s ease-out forwards}
+.mdx-burst.fumble{width:70px;height:70px;margin:-35px 0 0 -35px;background:radial-gradient(closest-side,var(--mdx-fumble,rgba(122,63,209,.75)),transparent);animation:mdxFog 1.3s ease-out forwards}
+.mdx-burst.fumble::after{content:'';position:absolute;inset:14px;border-radius:50%;border:2px dashed var(--mdx-fumble-line,#b478ff);animation:mdxShatter 1.1s ease-out forwards}
+html[data-mdx-theme="vellum"]{--mdx-crit:#C9AE6D;--mdx-fumble:rgba(44,30,18,.7);--mdx-fumble-line:#4E4032}
+@keyframes mdxSpark{0%{transform:scale(.2);opacity:1}100%{transform:scale(1.7);opacity:0}}
+@keyframes mdxRing{0%{transform:scale(.3);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+@keyframes mdxFog{0%{transform:scale(.3);opacity:0}30%{opacity:1}100%{transform:scale(1.5);opacity:0}}
+@keyframes mdxShatter{0%{transform:scale(1) rotate(0);opacity:1}100%{transform:scale(1.9) rotate(50deg);opacity:0}}
+html[data-mdx-off~="crit"] .mdx-burst{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  .mdx-burst,.mdx-ripple,.mdx-seal{animation:none !important;display:none}
+  ::view-transition-new(root){animation:none !important}
+}
+
+/* 魔典-细节 v1 · 羊皮纸（烛光抄本） */
+
+/* 烛光：天头暖光晕轻微摇曳；黄昏 / 夜晚更暖，纸面四角更暗；较量中火苗跳得更急 */
+html[data-mdx-theme="vellum"]{--mdx-candle:.2}
+html[data-mdx-theme="vellum"][data-mdx-time="dusk"]{--mdx-candle:.32}
+html[data-mdx-theme="vellum"][data-mdx-time="night"]{--mdx-candle:.44}
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="candle"]) .folio-head::before{
+  content:'';position:absolute;left:50%;top:-56px;width:72%;height:140px;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,190,104,var(--mdx-candle)),rgba(255,170,80,0));
+  transform:translateX(-50%);animation:mdxFlicker 4.6s ease-in-out infinite;will-change:transform,opacity}
+html[data-mdx-theme="vellum"][data-mdx-battle="1"] .folio-head::before{animation-duration:1.3s;background:radial-gradient(closest-side,rgba(255,140,80,calc(var(--mdx-candle) + .1)),rgba(255,120,60,0))}
+@keyframes mdxFlicker{
+  0%,100%{opacity:.86;transform:translateX(-50%) scale(1)}
+  21%{opacity:1;transform:translateX(-49.2%) scale(1.04,1.06)}
+  38%{opacity:.76;transform:translateX(-50.6%) scale(.98)}
+  62%{opacity:.95;transform:translateX(-49.6%) scale(1.02)}
+  80%{opacity:.82;transform:translateX(-50.3%) scale(.99,1.02)}}
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="candle"])[data-mdx-time="dusk"] .mdx-fx{background:radial-gradient(130% 110% at 50% 0%,transparent 50%,rgba(70,36,10,.18))}
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="candle"])[data-mdx-time="night"] .mdx-fx{background:radial-gradient(130% 110% at 50% 0%,transparent 40%,rgba(36,20,6,.36))}
+
+/* 纸纹：极淡纤维 + 陈年斑点（静态位图，无运行开销） */
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="fiber"]) .mdx-fx::before{content:'';position:absolute;inset:0;opacity:.5;
+  background:
+    radial-gradient(3px 3px at 18% 27%,rgba(120,84,40,.22),transparent),
+    radial-gradient(2px 2px at 73% 61%,rgba(120,84,40,.2),transparent),
+    radial-gradient(4px 3px at 41% 83%,rgba(110,76,36,.16),transparent),
+    radial-gradient(2px 2px at 86% 14%,rgba(120,84,40,.18),transparent),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .85' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .31 0 0 0 0 .16 0 0 0 .55 -.18'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0/240px 240px}
+
+/* 墨渗：新楼层前 6 段像墨水渗进纸里一样淡入 */
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="ink"]) .page.mdx-ink .prose > :nth-child(-n+6){animation:mdxInkIn 1.15s cubic-bezier(.2,.7,.3,1) both}
+html[data-mdx-theme="vellum"] .page.mdx-ink .prose > :nth-child(2){animation-delay:.14s}
+html[data-mdx-theme="vellum"] .page.mdx-ink .prose > :nth-child(3){animation-delay:.28s}
+html[data-mdx-theme="vellum"] .page.mdx-ink .prose > :nth-child(4){animation-delay:.42s}
+html[data-mdx-theme="vellum"] .page.mdx-ink .prose > :nth-child(5){animation-delay:.56s}
+html[data-mdx-theme="vellum"] .page.mdx-ink .prose > :nth-child(6){animation-delay:.7s}
+@keyframes mdxInkIn{0%{opacity:0;filter:blur(2.5px);transform:translateY(2px)}60%{opacity:.85;filter:blur(.4px)}100%{opacity:1;filter:none;transform:none}}
+
+/* 盖章：点选项时朱砂火漆印落下 */
+.mdx-seal{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;z-index:3;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3CradialGradient id='w' cx='38%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23B04A3E'/%3E%3Cstop offset='.55' stop-color='%2396372E'/%3E%3Cstop offset='1' stop-color='%236D231C'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M60 8c14-3 30 4 36 14 8 2 14 12 12 22 6 8 4 20-2 26 2 12-8 22-18 24-4 10-18 16-28 12-10 4-24-2-28-12-12-2-20-14-18-24-8-8-6-22 2-28-2-10 6-20 16-22C46 12 52 10 60 8Z' fill='url(%23w)'/%3E%3Ccircle cx='60' cy='60' r='36' fill='none' stroke='%235D1A13' stroke-width='3'/%3E%3Ctext x='60' y='74' font-size='40' text-anchor='middle' fill='%23F0D9C6' font-family='serif' font-weight='700'%3E%E5%85%B8%3C/text%3E%3C/svg%3E") center/contain no-repeat;
+  filter:drop-shadow(0 2px 3px rgba(40,10,6,.45));animation:mdxStamp .42s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes mdxStamp{0%{transform:scale(1.9) rotate(-22deg);opacity:0}55%{transform:scale(.88) rotate(-9deg);opacity:1}100%{transform:scale(1) rotate(-11deg);opacity:.94}}
+
+/* 卷角：书页右下角悬停微卷，点击翻下一页；触屏常驻小卷角 */
+.mdx-curl{position:absolute;right:0;bottom:0;z-index:4;width:0;height:0;cursor:pointer;border-radius:0 0 14px 0;
+  background:linear-gradient(135deg,#F6EEDA 0%,#E2D3AE 38%,#C8B486 47%,rgba(60,40,15,.32) 50%,transparent 53%);
+  filter:drop-shadow(-2px -2px 3px rgba(60,40,15,.22));transition:width .32s var(--ease-out),height .32s var(--ease-out)}
+html[data-mdx-theme="night"] .mdx-curl,html[data-mdx-off~="curl"] .mdx-curl,.page:has(.ff-next:disabled) .mdx-curl,.page:not(:has(.ff-next)) .mdx-curl{display:none}
+@media (hover:hover){.page:hover .mdx-curl{width:30px;height:30px}.page .mdx-curl:hover{width:52px;height:52px}}
+@media (hover:none){.mdx-curl{width:28px;height:28px}}
+
+/* 页边批注：心语写成页边手写旁注；窄屏保持行内 */
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="margin"]) .mind-slip{
+  background:none;box-shadow:none;border-left:none;border-radius:0;padding:2px 6px;margin:12px auto 14px 4%;
+  font-family:'Ma Shan Zheng','STKaiti','KaiTi','Kaiti SC',cursive;font-size:18px;line-height:1.7;letter-spacing:.04em;color:#7A2E26;
+  rotate:-1.2deg;text-decoration:underline wavy rgba(150,55,46,.32) 1px;text-underline-offset:5px}
+html[data-mdx-theme="vellum"]:not([data-mdx-off~="margin"]) .mind-slip::after{display:none}
+@media (min-width:700px){
+  html[data-mdx-theme="vellum"]:not([data-mdx-off~="margin"]) .mind-slip{float:right;clear:right;width:36%;max-width:none;margin:6px -10px 10px 18px;padding:8px 6px 6px 12px;font-size:16.5px;line-height:1.65;
+    border-left:1px dashed rgba(150,55,46,.35);rotate:1.4deg}
+  html[data-mdx-theme="vellum"] .prose::after{content:'';display:block;clear:both}
+}
+
+/* 魔典-细节 v1 · 紫曜夜读 */
+
+/* 扉页 / 待章 / 仪典文字补亮（原样式为深墨色，夜幕上不可读；已有修正时重复无害） */
+html[data-mdx-theme="night"] .ep-title{color:#ffe9b8;text-shadow:0 0 18px rgba(232,195,133,.35)}
+html[data-mdx-theme="night"] .ep-text{color:#f4eee1;text-shadow:0 1px 3px rgba(3,1,8,.9)}
+html[data-mdx-theme="night"] :is(.ep-latin,.ep-lsign){color:#e8c385}
+html[data-mdx-theme="night"] .ep-nav button{color:#ddd2e8}
+html[data-mdx-theme="night"] .ep-nav .ep-go{color:#ff8fae}
+html[data-mdx-theme="night"] :is(.await-title,.rit-sum-row b,.ra-name,.ra-val,.bnd-nm){color:#f4eee1}
+html[data-mdx-theme="night"] :is(.await-text,.rit-form label,.rit-hint){color:#ddd2e8}
+
+/* 星尘：一个伪元素的阴影光点缓缓上浮（桌面 12 颗 / 手机 6 颗） */
+html[data-mdx-theme="night"]:not([data-mdx-off~="stars"]) .mdx-fx::before{content:'';position:absolute;left:0;top:0;width:2px;height:2px;border-radius:50%;color:rgba(230,210,255,.85);
+  box-shadow:62px 120px 0 0 currentColor,210px 340px 0 .5px rgba(232,195,133,.8),388px 90px 0 0 currentColor,520px 460px 0 .5px currentColor,140px 620px 0 0 rgba(255,143,174,.7),640px 240px 0 0 currentColor,
+             300px 520px 0 0 currentColor,460px 700px 0 .5px rgba(232,195,133,.75),90px 820px 0 0 currentColor,600px 860px 0 0 rgba(255,143,174,.6),250px 160px 0 0 currentColor,700px 560px 0 .5px currentColor;
+  animation:mdxDrift 22s ease-in-out infinite alternate,mdxTwinkle 5.5s ease-in-out infinite;will-change:transform,opacity}
+@media (max-width:760px){
+  html[data-mdx-theme="night"]:not([data-mdx-off~="stars"]) .mdx-fx::before{
+    box-shadow:40px 140px 0 0 currentColor,180px 360px 0 .5px rgba(232,195,133,.8),300px 110px 0 0 currentColor,80px 560px 0 0 rgba(255,143,174,.7),260px 680px 0 0 currentColor,330px 470px 0 .5px currentColor}}
+@keyframes mdxDrift{from{transform:translate(0,30px)}to{transform:translate(14px,-40px)}}
+@keyframes mdxTwinkle{0%,100%{opacity:.55}50%{opacity:1}}
+
+/* 魔力涟漪：点击 / 触摸处荡开一圈紫光 */
+.mdx-ripple{position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;pointer-events:none;z-index:4000;
+  border:1.5px solid rgba(210,160,255,.75);box-shadow:0 0 16px rgba(180,120,255,.5),inset 0 0 14px rgba(180,120,255,.35);
+  animation:mdxRipple .7s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes mdxRipple{0%{transform:scale(.08);opacity:1}100%{transform:scale(1);opacity:0}}
+
+/* 符文天头：两侧轮流浮现卢恩符文（SVG 绘制，不依赖字体） */
+html[data-mdx-theme="night"]:not([data-mdx-off~="rune"]) .folio-head::before,
+html[data-mdx-theme="night"]:not([data-mdx-off~="rune"]) .folio-head::after{content:'';position:absolute;top:50%;width:11px;height:17px;margin-top:-8px;pointer-events:none;opacity:0;
+  filter:drop-shadow(0 0 5px rgba(180,120,255,.9));animation:mdxRune 12s ease-in-out infinite}
+html[data-mdx-theme="night"] .folio-head::before{left:10px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 18' fill='none' stroke='%23dcb8ff' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 1v16M6 7 2 2M6 7l4-5'/%3E%3C/svg%3E") center/contain no-repeat}
+html[data-mdx-theme="night"] .folio-head::after{right:10px;animation-delay:6s;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 18' fill='none' stroke='%23e8c385' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 17 10 8 6 2 2 8l8 9'/%3E%3C/svg%3E") center/contain no-repeat}
+@keyframes mdxRune{0%,6%{opacity:0;transform:translateY(4px)}12%,18%{opacity:.9;transform:none}26%,100%{opacity:0;transform:translateY(-4px)}}
+
+/* 月相：天头正中显示当前月相 */
+.mdx-moon{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;pointer-events:none;display:none}
+html[data-mdx-theme="night"]:not([data-mdx-off~="moon"]) .mdx-moon{display:block;filter:drop-shadow(0 0 6px rgba(232,195,133,.55))}
+.mdx-moon svg{display:block;width:100%;height:100%}
+@media (max-width:560px){.mdx-moon{left:auto;right:6px;top:4px;margin:0}}
+
+/* 法阵联动：较量中章扣与封面法阵转得更快、转绯 */
+html[data-mdx-theme="night"][data-mdx-battle="1"]:not([data-mdx-off~="circle"]) .page::after{animation:mdxBreathRed 1.6s ease-in-out infinite}
+@keyframes mdxBreathRed{0%,100%{opacity:.7;filter:hue-rotate(-75deg) saturate(1.6) drop-shadow(0 0 6px rgba(255,80,110,.5))}50%{opacity:1;filter:hue-rotate(-75deg) saturate(1.6) drop-shadow(0 0 16px rgba(255,80,110,.85))}}
+html[data-mdx-theme="night"][data-mdx-battle="1"]:not([data-mdx-off~="circle"]) .cover-board::after{animation-duration:6s;filter:hue-rotate(-70deg) saturate(1.6)}
+html[data-mdx-theme="night"][data-mdx-battle="1"]:not([data-mdx-off~="circle"]) .folio-head{box-shadow:inset 0 -1px 0 rgba(255,94,138,.5)}
+
+/* 寄出按钮：火漆印换成绯心（羊皮纸保留火漆印）；悬停轻跳，寄出中持续心跳 */
+html[data-mdx-theme="night"]:not([data-mdx-off~="heart"]) .let-send svg{display:none}
+html[data-mdx-theme="night"]:not([data-mdx-off~="heart"]) .let-send::before{content:'';flex:none;width:20px;height:20px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3CradialGradient id='h' cx='35%25' cy='30%25' r='80%25'%3E%3Cstop offset='0' stop-color='%23fff0f6'/%3E%3Cstop offset='.35' stop-color='%23ff8fb8'/%3E%3Cstop offset='1' stop-color='%23d4246a'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M12 21.2C6.2 16.6 2.5 13.3 2.5 8.9 2.5 6 4.8 3.8 7.6 3.8c1.8 0 3.4.9 4.4 2.4 1-1.5 2.6-2.4 4.4-2.4 2.8 0 5.1 2.2 5.1 5.1 0 4.4-3.7 7.7-9.5 12.3Z' fill='url(%23h)' stroke='%23ffe9b8' stroke-width='.9'/%3E%3Cpath d='M7 7.2c-.9.4-1.5 1.2-1.6 2.2' fill='none' stroke='%23fff' stroke-width='1.1' stroke-linecap='round' opacity='.75'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter:drop-shadow(0 0 5px rgba(255,120,170,.75));transform-origin:50% 60%}
+html[data-mdx-theme="night"]:not([data-mdx-off~="heart"]) .let-send:hover::before{animation:mdxHeartPop .5s cubic-bezier(.3,1.6,.5,1)}
+html[data-mdx-theme="night"]:not([data-mdx-off~="heart"]) .letter.sending .let-send::before{animation:mdxHeartBeat .9s ease-in-out infinite}
+@keyframes mdxHeartPop{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1)}}
+@keyframes mdxHeartBeat{0%,40%,100%{transform:scale(1)}15%{transform:scale(1.22)}28%{transform:scale(1.08)}}
+@media (hover:none){html[data-mdx-theme="night"]:not([data-mdx-off~="heart"]) .let-send::before{width:24px;height:24px}}
