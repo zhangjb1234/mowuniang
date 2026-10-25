@@ -15,7 +15,7 @@ const OUT_DIR = path.join(DIR, 'dist');
 mkdirSync(OUT_DIR, { recursive: true });
 
 const SRC = process.env.MODIAN_ASSET_BASE || 'http://localhost:5500/src/魔典/';
-const FILES = ['content-data.js', 'world-data.js', 'demo-floors.js', 'dex-races.js', 'ritual-data.js', 'ritual-v2.js'];
+const FILES = ['content-data.js', 'world-data.js', 'demo-floors.js', 'dex-races.js', 'ritual-data.js', 'ritual-v2.js', '魔典-增强.js'];
 
 let html = readFileSync(path.join(DIR, '魔典原型.html'), 'utf8');
 let residual = [];
