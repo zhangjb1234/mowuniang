@@ -11128,7 +11128,8 @@ function bodyStep2(){
   ${R.customNpcForm?`
   <div class="rit-form cwrap">
     <label>名字<input data-cnp="name" type="text" value="${esc(R.cnp.name)}" placeholder="？？？（由AI命名）"></label>
-    <label>种族<input data-cnp="race" type="text" value="${esc(R.cnp.race)}" placeholder="未知即由AI拟定"></label>
+    <label>种族<input data-cnp="race" type="text" value="${esc(R.cnp.race)}" placeholder="可填 人类 / 任意图鉴种族；未知即由AI拟定"></label>
+    <label class="wide">快捷种族<span class="cnp-qrace"><button type="button" class="rchip" data-cnpq="人类">人类</button><button type="button" class="rchip" data-cnpq="人类女性">人类女性</button><button type="button" class="rchip" data-cnpq="魔物娘（种族由AI拟）">魔物娘</button><button type="button" class="rchip" data-cnpq="精灵">精灵</button><button type="button" class="rchip" data-cnpq="兽人">兽人</button><button type="button" class="rchip" data-cnpq="不死族">不死族</button></span></label>
     <label class="wide">形象/备注<input data-cnp="desc" type="text" value="${esc(R.cnp.desc)}" placeholder="外貌与来历的线索，AI 据此补全"></label>
     <div class="rchip-row"><button type="button" class="rchip rit-enter-mini" id="cnp-add" ${R.bonds.size>=max?'disabled':''}>加入羁绊列表</button></div>
   </div>`:''}
@@ -11477,6 +11478,7 @@ function renderRitual(keepScroll){
   const cnpT = rit.querySelector('#cnp-toggle');
   if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; renderRitual(true); });
   rit.querySelectorAll('[data-cnp]').forEach(el=>el.addEventListener('input', ()=>{ R.cnp[el.dataset.cnp]=el.value; }));
+  rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{ R.cnp.race=el.dataset.cnpq; renderRitual(true); }));
   const cnpAdd = rit.querySelector('#cnp-add');
   if(cnpAdd) cnpAdd.addEventListener('click', ()=>{
     if(R.bonds.size>=MAX_BONDS){ notify('宿命羁绊至多 '+MAX_BONDS+' 位','warn',3000); return; }
@@ -11489,7 +11491,7 @@ function renderRitual(keepScroll){
   const randNpc = rit.querySelector('#bond-rand-npc');
   if(randNpc) randNpc.addEventListener('click', ()=>{
     if(R.bonds.size>=MAX_BONDS){ notify('宿命羁绊至多 '+MAX_BONDS+' 位','warn',3000); return; }
-    const cat=pick(RACE_CATS); const race=pick(cat?cat.items:[]);
+    const cat=pick(RACE_CATS.concat([{items:['人类','人类女性','精灵','兽人','不死族']}])); const race=pick(cat?cat.items:[]);
     const npc={id:'r'+Date.now(),n:'？？？（由AI命名）',rc:race,
       d:'命运随机安排的邂逅。她的名讳与来历，将在旅途中揭晓。',custom:true,rand:true,cat:'自定义'};
     R.customNpcs.push(npc);
