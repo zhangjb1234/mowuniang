@@ -9402,7 +9402,7 @@ window.MODIAN_RITUAL = {
   {
    "id": "comp_random",
    "n": "🎲 命运随机",
-   "d": "从心界名单中随机降临一位，档案与碎晶系统完整生效。"
+   "d": "从心界名单中随机降临一位，名字与性格由AI拟定。"
   },
   {
    "id": "comp_custom",
@@ -10383,6 +10383,15 @@ window.MODIAN_RITUAL = {
    "混合/特殊型"
   ]
  },
+ "companionRandomRaces": [
+  "魔宠",
+  "梦魔",
+  "小仙女",
+  "幽灵",
+  "女武神",
+  "报丧女妖",
+  "魔女"
+ ],
  "rules": {
   "maxBonds": 4,
   "aptitude": {
@@ -11016,7 +11025,7 @@ function bodyStep1(){
     <label class="wide">来历<input data-cc="origin" type="text" value="${esc(R.compCustom.origin)}" placeholder="TA 为何住进你脑内；留空由AI拟定"></label>
     <label class="wide">实体化路线（愿景）<input data-cc="route" type="text" value="${esc(R.compCustom.route)}" placeholder="好感升高后你希望走向什么结局——留空由AI按心界法则拟定"></label>
   </div>`:''}
-  ${R.companion==='comp_random'?`<p class="rit-hint">命运随机将从七位心界住民中降临一位（档案完整）<br>已降临：<b>${esc(R.compRandRace||'（尚未掷签）')}</b></p>`:''}`;
+  ${R.companion==='comp_random'?`<p class="rit-hint">命运随机将从以下声族抽选：${(RT.companionRandomRaces||[]).map(esc).join(' · ')}<br>已抽：<b>${esc(R.compRandRace||'（尚未掷签）')}</b></p>`:''}`;
 }
 
 function bondEntry(id){ return R.bonds.get(id) || {rel:null,dir:null,catOpen:null}; }
@@ -11109,7 +11118,7 @@ function bodyStep4(){
   const ap = R.apt;
   const compTxt = !R.companion ? ''
     : R.companion==='none' ? '独自上路（无人格旁白）'
-    : R.companion==='comp_random' ? ('命运随机 · '+(R.compRandRace||'?')+'（档案完整）')
+    : R.companion==='comp_random' ? ('命运随机 · '+(R.compRandRace||'?')+'（名字由AI拟定）')
     : R.companion==='comp_custom' ? ((R.compCustom.name||'由AI命名')+'（自定义 · '+(R.compCustom.race||'种族由AI拟定')+(R.compCustom.persona?(' · '+(R.compCustom.persona.length>18?R.compCustom.persona.slice(0,18)+'…':R.compCustom.persona)):'')+'）')
     : COMP_SHORT[R.companion] || R.companion;
   const heroBits = [R.hero.name,R.hero.gender,R.hero.age?R.hero.age+'岁':'',R.hero.appearance,R.pLevel,R.hero.faction,R.hero.bg,R.hero.outfit].filter(Boolean).join(' · ');
@@ -11181,7 +11190,7 @@ function buildMsg(){
   if(R.companion==='none' || !R.companion){
     msg += '心界住民：无（系统播报使用无人格旁白）\n';
   }else if(R.companion==='comp_random'){
-    msg += '心界住民：命运随机（'+(R.compRandRace||'（尚未掷签）')+'；按对应心界住民档案加载，碎晶/好感/实体化照常生效）\n';
+    msg += '心界住民：命运随机（种族：'+(R.compRandRace||'由AI抽取')+'；名字与性格由AI依种族拟定，职能与输出格式遵循【心界住民系统】条目）\n';
   }else if(R.companion==='comp_custom'){
     const cc=[['名字',R.compCustom.name],['种族',R.compCustom.race],['性格与语癖',R.compCustom.persona],['心象外形',R.compCustom.look],['来历',R.compCustom.origin],['实体化路线愿景',R.compCustom.route]];
     const filled=cc.filter(p=>p[1]&&p[1].trim()).map(p=>p[0]+'：'+p[1].trim());
@@ -11328,8 +11337,8 @@ function renderRitual(keepScroll){
     }
     else if(g==='companion' && b.dataset.id==='comp_random' && R.companion!=='comp_random'){
       R.companion='comp_random';
-      R.compRandRace = COMP_SHORT[pick(Object.keys(COMP_SHORT))]||'';
-      notify('心界降临：'+R.compRandRace+'（档案完整）','gild',3000);
+      R.compRandRace = pick(RT.companionRandomRaces||[]);
+      notify('心界降临：'+R.compRandRace+'（名字由AI拟定）','gild',3000);
     }
     else if(g==='companion' && R[g]===b.dataset.id){ R[g]=null; }
     else R[g]=b.dataset.id;
