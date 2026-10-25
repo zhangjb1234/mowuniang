@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><script></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
+<head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>魔典 · 烛光抄本原型</title>
@@ -163,6 +163,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .note-slip.fox::after{content:'';position:absolute;top:0;right:0;border-style:solid;border-width:0 15px 15px 0;border-color:transparent rgba(228,196,160,.9) transparent transparent;opacity:.85}
 .note-slip .ns-avatar.paw.fox{background:linear-gradient(168deg,#E08A3C,#B4592A);font-size:16px;line-height:1}
 .note-slip.fox .ns-seal{background:#C8743A;color:#FFF4E6;border-color:rgba(140,72,30,.6);transform:rotate(-4deg)}
+.note-slip.mie{background:linear-gradient(172deg,rgba(244,240,248,.94),rgba(232,226,240,.82));border-left:3px solid #8A6FB0}
+.note-slip.mie::after{content:'';position:absolute;top:0;right:0;border-style:solid;border-width:0 15px 15px 0;border-color:transparent rgba(214,204,228,.9) transparent transparent;opacity:.85}
+.note-slip .ns-avatar.paw.mie{background:linear-gradient(168deg,#B59AD6,#7E62A6);font-size:16px;line-height:1}
+.note-slip.mie .ns-seal{background:#8A6FB0;color:#F7F2FC;border-color:rgba(90,64,130,.6);transform:rotate(6deg)}
+.para-clip .nc-body p{margin:0 0 .7em}
+.para-clip .nc-body p:last-child{margin-bottom:0}
 /* 笺身 */
 .note-slip .ns-body{position:relative;z-index:1;font-size:13.5px;line-height:1.85;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word}
 /* 笺内分段（同一锚点上的多条吐槽） */
@@ -6345,7 +6351,7 @@ function rescueFuncTags(src){
 }
 function cleanseFloor(raw){
   let t = String(raw||'').replace(/\r\n?/g, '\n');   // 创世回廊等预设输出 CRLF，统一成 \n，否则分段正则认不出空行
-  const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [], foxNotes: [] };
+  const out = { text:'', notes: [], suot: '', catNotes: [], konataNotes: [], foxNotes: [], mieNotes: [] };
   if(!t) return out;
   // ⓪ 泉此方思维链前缀先截：思考里会提到 `<魔物生成>` 等标签名，留给 ⓿ 抢救会把整段思考连同正文一起搬走
   t = t.replace(/[\s\S]*?<\/konatan_planning~>/i, '');
@@ -6359,6 +6365,47 @@ function cleanseFloor(raw){
     out.foxNotes.push({ tag:'留言', text:b });
     return '';
   });
+  // ⓪″ 咩咩（v6）：只在楼层带咩咩专有标签时生效，其余预设行为不变。
+  //   · acg_think / combat_driver / story_driver / parallel_line_drive 是思维链，secure_log 是防截断填充，status 是变量照抄：整块删
+  //   · <selection> → <options>；<memory_log> + <wlog> → 咩咩记录笺；<parallel_line> → 正文末尾的「平行线」剪页
+  //   · 无 <正文> 时 <story_scene> 即正文；有 <正文> 时 story_scene 只剩壳，剥掉
+  if(/<\/?(?:story_scene|story_driver|acg_think|memory_log|wlog|parallel_line)\b/i.test(t)){
+    const META = 'acg_think|combat_driver|story_driver|parallel_line_drive|secure_log|status';
+    t = t.replace(new RegExp(`<(${META})\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>`, 'gi'), '');
+    const stray = t.match(/<\/(?:story_driver|acg_think|combat_driver)\s*>/i);
+    if(stray) t = t.slice((stray.index||0) + stray[0].length);
+    t = t.replace(new RegExp(`<(?:${META})\\b[^>]*>[\\s\\S]*$`, 'i'), '').replace(/<\|no-trans\|>/g, '');
+    t = t.replace(/<memory_log\b[^>]*>([\s\S]*?)<\/memory_log\s*>/gi, (w, b)=>{
+      b = b.trim(); if(b) out.mieNotes.push({ tag:'剧情记忆', text:b }); return '';
+    }).replace(/<wlog\b([^>]*)>([\s\S]*?)<\/wlog\s*>/gi, (w, attr, b)=>{
+      const tm = (attr.match(/time\s*=\s*"([^"]*)"/) || [])[1] || '';
+      b = b.replace(/<!--[\s\S]*?-->/g, '').replace(/^[ \t]*\*{3}[ \t]*/gm, '').trim();
+      if(b) out.mieNotes.push({ tag:'世界日志', text: (tm ? tm + '\n' : '') + b });
+      return '';
+    }).replace(/<(?:memory_log|wlog)\b[^>]*>[\s\S]*$/i, '');
+    t = t.replace(/<selection\b[^>]*>([\s\S]*?)(?:<\/selection\s*>|$)/gi, (w, b)=>{
+      const lines = b.split('\n').map(l=>l.trim()).filter(Boolean).map((l, i)=>{
+        const m = l.match(/^([A-Za-z0-9]{1,2})[.．、)]\s*(?:\[([^\]]{1,20})\])?\s*(.+)$/);
+        const label = m ? (m[2] || m[1]) : String.fromCharCode(65 + i);
+        return '> ' + label.replace(/[:：]/g, '').slice(0, 6) + ': ' + (m ? m[3] : l);
+      });
+      return lines.length ? '<options>\n' + lines.join('\n') + '\n</options>' : '';
+    });
+    const paras = [];
+    t = t.replace(/<parallel_line\b[^>]*>([\s\S]*?)(?:<\/parallel_line\s*>|$)/gi, (w, b)=>{
+      b = b.trim(); if(b) paras.push('<平行线>' + b + '</平行线>'); return '';
+    });
+    if(!/<\s*正文\s*>/.test(t) && /<story_scene\b/i.test(t)){
+      t = t.replace(/<story_scene\b[^>]*>/i, '<正文>');
+      const close = [...t.matchAll(/<\/story_scene\s*>/gi)].pop();
+      t = close ? t.slice(0, close.index) + '</正文>' + t.slice((close.index||0) + close[0].length) : t + '\n</正文>';
+    }
+    t = t.replace(/<\/?story_scene\b[^>]*>/gi, '');
+    if(paras.length){
+      const k = t.lastIndexOf('</正文>');
+      t = k >= 0 ? t.slice(0, k) + '\n\n' + paras.join('\n\n') + '\n' + t.slice(k) : t + '\n\n' + paras.join('\n\n');
+    }
+  }
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
@@ -6644,6 +6691,7 @@ function parseFloor(raw){
   /* 预设留言：猫神（Reborn）。catNote 合并多段；小此留言（Izumi）待 flow 建好后锚定 */
   r.catNote = cl.catNotes.length ? cl.catNotes.join('\n\n') : null;
   r.foxNotes = cl.foxNotes || [];
+  r.mieNotes = cl.mieNotes || [];
   /* <start> 开局楼层：闭合与未闭合（流式截断）两形态都认；start 当包裹壳时把内层正文标签剥净留字 */
   const starts = extractBlocks(t,'start');
   if(!starts.length){
@@ -6673,12 +6721,12 @@ function parseFloor(raw){
   body = body.replace(/<\s*状态栏\s*>[\s\S]*?(?:<\/\s*状态栏\s*>|$)/gi,'').replace(/<\s*\/?\s*状态面板\s*\/?>/gi,'');
   // 顺序游走：保真还原 正文段落 / 心语 / 大陆见闻 / 战况 的出现次序
   r.flow = [];
-  const walk = /<\s*(心语|大陆见闻|战况)\s*>([\s\S]*?)<\/\s*\1\s*>/gi;
+  const walk = /<\s*(心语|大陆见闻|战况|平行线)\s*>([\s\S]*?)<\/\s*\1\s*>/gi;
   let last = 0, wm;
   const pushProse = (txt)=>{ txt.split(/\n{2,}|(?<=\S)\n(?=\S)/).map(s=>s.trim()).filter(Boolean).forEach(p=>r.flow.push({type:'prose',text:p})); };
   while((wm = walk.exec(body))){
     pushProse(body.slice(last, wm.index));
-    const type = wm[1]==='心语' ? 'mind' : wm[1]==='大陆见闻' ? 'news' : 'duel';
+    const type = wm[1]==='心语' ? 'mind' : wm[1]==='大陆见闻' ? 'news' : wm[1]==='平行线' ? 'para' : 'duel';
     r.flow.push({type, text: wm[2].trim()});
     last = walk.lastIndex;
   }
@@ -6811,34 +6859,41 @@ function proseHtml(text){
    猫神留言（Reborn 小猫之神）：朱印猫爪笺，头像位用朱印猫爪刻印（预设只产文字，无图）
    小此留言（Izumi 泉此方）：青金石笺 + 按楼层种子取的小此头像 */
 function noteSlip(o){
-  const isCat = o.kind === 'cat', isFox = o.kind === 'fox';
+  const isCat = o.kind === 'cat', isFox = o.kind === 'fox', isMie = o.kind === 'mie';
   const head =
     `<div class="ns-head">`+
-      (isFox
+      (isMie
+        ? `<span class="ns-avatar paw mie" aria-hidden="true">🐑</span>`
+        : isFox
         ? `<span class="ns-avatar paw fox" aria-hidden="true">🦊</span>`
         : isCat
         ? `<span class="ns-avatar paw">${ICON_paw}</span>`
         : `<img class="ns-avatar" src="${esc(o.img||'')}" alt="小此" referrerpolicy="no-referrer" loading="eager">`)+
       `<span class="ns-title"><span class="ns-cn">${esc(o.title)}</span><span class="ns-latin">${esc(o.latin)}</span></span>`+
-      `<span class="ns-seal">${isFox?'狐':isCat?'喵':'此'}</span>`+
+      `<span class="ns-seal">${isMie?'咩':isFox?'狐':isCat?'喵':'此'}</span>`+
     `</div>`;
   const segs = (o.segs && o.segs.length)
     ? o.segs.map(s=>`<div class="ns-seg">${s.tag?`<span class="ns-seg-tag">${esc(s.tag)}</span>`:''}<span class="ns-body">${esc(s.text)}</span></div>`).join('')
     : `<div class="ns-body">${esc(o.text)}</div>`;
-  return `<aside class="note-slip ${isFox?'fox':isCat?'cat':'konata'}">${head}${segs}</aside>`;
+  return `<aside class="note-slip ${isMie?'mie':isFox?'fox':isCat?'cat':'konata'}">${head}${segs}</aside>`;
 }
 /* 猫神留言笺：Reborn 的 <details><summary>…留言…</summary> */
 function catNoteHtml(catNote){
   if(!catNote) return '';
   return noteSlip({kind:'cat', title:'小猫之神的留言', latin:'FELIS · NOTA', text:catNote});
 }
+/* 小此留言笺：tucao=吐槽/创作思路/小此对话，konatan_chat=情感陪伴 */
 /* 狐神抚留言笺：<fox> 里的留言 + <fox_tip> 吐槽，合成一张；只有一段时不加段标签 */
 function foxNoteHtml(notes){
   if(!notes || !notes.length) return '';
   const segs = notes.map(n=>({ tag: notes.length > 1 ? n.tag : '', text: n.text }));
   return noteSlip({kind:'fox', title:'狐神抚的留言', latin:'VVLPES · NOTA', segs});
 }
-/* 小此留言笺：tucao=吐槽/创作思路/小此对话，konatan_chat=情感陪伴 */
+/* 咩咩记录笺：<memory_log> 剧情记忆 + <wlog> 世界日志 */
+function mieNoteHtml(notes){
+  if(!notes || !notes.length) return '';
+  return noteSlip({kind:'mie', title:'咩咩的记录', latin:'OVIS · ACTA', segs: notes});
+}
 function konataNoteHtml(note, img, tagText){
   if(!note) return '';
   return noteSlip({
@@ -6878,6 +6933,7 @@ function flowHtml(flow, midTucao, konataImg){
     }
     if(node.type==='mind') return `<aside class="mind-slip"><span class="ms-sigil" style="color:var(--cinnabar)">${ICON.quill}</span>${esc(node.text)}</aside>`;
     if(node.type==='news') return `<aside class="news-clip"><div class="nc-head">${ICON.news}<span>大陆见闻 · 旅志剪页</span></div><div class="nc-body">${esc(node.text)}</div></aside>`;
+    if(node.type==='para') return `<aside class="news-clip para-clip"><div class="nc-head">${ICON.news}<span>平行线 · 彼方剪影</span></div><div class="nc-body">${node.text.split(/\n+/).map(p=>p.trim()).filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('')}</div></aside>`;
     return `<aside class="duel-banner"><div class="db-head">${ICON.sword}<span>战况 · 血墨战报</span></div><div class="db-body">${esc(node.text)}</div></aside>`;
   }).join('');
 }
@@ -7157,6 +7213,7 @@ function renderFloor(f, floorIdx){
   const konataImg = konataImageFor(f.idx);
   const catSlip = catNoteHtml(r.catNote);
   const foxSlip = foxNoteHtml(r.foxNotes);
+  const mieSlip = mieNoteHtml(r.mieNotes);
   const tailSlip = konataNoteHtml(r.konataTail, konataImg,
       r.konataTail && r.konataTail.type === 'konatan_chat' ? '情感陪伴' : '创作思路');
   // 页码口径（用户拍板）：序数 = AI 楼层正序（开场白=第 1 页），总数 = 全部 AI 楼层
@@ -7168,7 +7225,7 @@ function renderFloor(f, floorIdx){
     <div class="scroll">
       ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}
       <div class="prose">${flowHtml(r.flow||[], r.midTucao, konataImg)}</div>
-      ${catSlip}${foxSlip}${tailSlip}
+      ${catSlip}${foxSlip}${mieSlip}${tailSlip}
       ${cards}${statusCard}${choices}
     </div>
     <footer class="folio-foot">
@@ -8017,7 +8074,7 @@ const ScrollOps = (()=>{
 
 /* 前端界面版本号（肉眼可辨）：每次发布必须随缓存戳同步升位。
    用户打开任一插页，头部小字即显示此版本，一眼断定「跑的是新是旧」。 */
-const UI_VER = '1014a';
+const UI_VER = '1014b';
 
 const MODULES = [
   {key:'home',   tab:'总览', name:'总览',       latin:'Conspectvs',  icon:'eye',    side:'L', render: renderHome},
@@ -9121,7 +9178,7 @@ function renderArtes(){
   ${meter('敏捷', p.敏捷基础??60, 220, ['#A98A46','#C9AE6D'])}
   ${meter('防御', p.防御基础??60, 220, ['#6E5E4C','#8A7040'])}
   <div class="plaque" style="margin-top:9px"><h4>命数<span class="k-latin">Fatum</span></h4>
-    <div class="p-desc">幸运 ${p.幸运??10}/20 · 魔化度 ${p.魔化度??0}/100（${esc(p.魔化段位||'纯人类')}）· 心界住民好感 ${p.心界住民好感??0}</div></div>
+    <div class="p-desc">幸运 ${p.幸运??10}/20 · 魔化度 ${p.魔化度??0}/100（${esc(p.魔化段位||'纯人类')}）· 心界住民好感 ${Stat.get('心界住民.好感度', p.心界住民好感??0)}</div></div>
   <div class="sec-title">资质四象</div>
   ${meter('灵感', g(p,'资质.灵感',10), 20)}${meter('魅力', g(p,'资质.魅力',10), 20, ['#96372E','#B04A3E'])}${meter('体质', g(p,'资质.体质',10), 20, ['#5B6B4C','#7C8B68'])}${meter('信仰', g(p,'资质.信仰',0), 20, ['#43617A','#2F4A5E'])}
   <div class="sec-title">装备槽</div>
@@ -11927,10 +11984,10 @@ html[data-mdx-theme="night"] :is(.toc-item.on,.rit-opt.sel,.rchip.on,.dx-subtab.
 }
 html[data-mdx-theme="night"] .note-slip::before{opacity:.25}
 html[data-mdx-theme="night"] .note-slip.cat{border-left:3px solid var(--nt-rose)}
-html[data-mdx-theme="night"] .note-slip.cat::after{display:none}
 html[data-mdx-theme="night"] .note-slip.fox{border-left:3px solid #E39A5A}
-html[data-mdx-theme="night"] .note-slip.fox::after{display:none}
-
+html[data-mdx-theme="night"] .note-slip.fox::after{display:none}html[data-mdx-theme="night"] .note-slip.cat::after{display:none}
+html[data-mdx-theme="night"] .note-slip.mie{border-left:3px solid #B59AD6}
+html[data-mdx-theme="night"] .note-slip.mie::after{display:none}
 /* ── 输入控件 ── */
 html[data-mdx-theme="night"] :is(.dw-searchbar input,.nf-f input,.nf-f textarea,.nf-f select,.nrt-bar input,.nf-dim input,.nf-dim textarea,.dex-lock input,.rit-form input,.rit-form textarea,.rel-row select,.sc-in input,.let-body,textarea,input[type="text"]){
   background:rgba(7,4,12,.6) !important;border-color:var(--nt-hair) !important;color:var(--ink) !important;
