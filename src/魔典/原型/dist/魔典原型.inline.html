@@ -9164,10 +9164,9 @@ function renderFiles(){
     <div class="plaque"><h4>${esc(k)}<span class="k-latin">${esc(e.阶段||'预兆')}</span></h4>
     ${meter('进度', Number(e.进度)||0, 100, ['#96372E','#B04A3E'])}
     <div class="p-desc">${row('源势力',e.源势力)}${row('目标势力',e.目标势力)}${row('预兆',e.预兆)}${row('起始',e.开始时间)}${row('近况',e.最后更新时间)}</div></div>`; }).join('') : emptyNote('尚无进行中的事件链。')}
-  <div class="sec-title">近期 · 事件卷宗</div>
-  ${recent.length ? [...recent].reverse().map(e=>`
+  ${recent.length ? `<div class="sec-title">近期 · 事件卷宗</div>` + [...recent].reverse().map(e=>`
     <div class="plaque"><h4>${esc(e.键||'未命名事件')}<span class="k-latin">${esc([e.类型,e.时间].filter(Boolean).join(' · ')||'事件')}</span></h4>
-    <div class="p-desc">${esc(e.摘要||'')}${e.地点?`<br>地点 · ${esc(e.地点)}`:''}${e.结果?`<br>结果 · ${esc(e.结果)}`:''}${e.后果?`<br>后果 · ${esc(e.后果)}`:''}</div></div>`).join('') : emptyNote('尚无事件卷宗。')}
+    <div class="p-desc">${esc(e.摘要||'')}${e.地点?`<br>地点 · ${esc(e.地点)}`:''}${e.结果?`<br>结果 · ${esc(e.结果)}`:''}${e.后果?`<br>后果 · ${esc(e.后果)}`:''}</div></div>`).join('') : ''}
   <div class="sec-title">冷却 · 封印中的事件</div>
   ${cdKeys.length ? cdKeys.map(k=>{ const c=cooldowns[k]||{}; return `
     <div class="plaque"><h4>${esc(k)}<span class="k-latin">冷却中</span></h4>
