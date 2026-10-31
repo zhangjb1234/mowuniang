@@ -6406,6 +6406,12 @@ function cleanseFloor(raw){
       t = k >= 0 ? t.slice(0, k) + '\n\n' + paras.join('\n\n') + '\n' + t.slice(k) : t + '\n\n' + paras.join('\n\n');
     }
   }
+  // ⓪‴ 小猫之神（Meowssiah 1.9.x）思维链 <think_nya> / <report_nya>：新版不带 ~，④ 只认 think_nya~ 会漏删。
+  //    思考里会提到 `<background>` `<魔物生成>` `</正文>` 等标签名，不先删会被 ⓿ 抢救和 ⑤ 附加块正则当成真标签，连正文一起吃掉。
+  //    成对整块删 → 只剩闭标签时闭标签前全截 → 流式中未闭合从开标签截到尾。只认这两个专有标签，其余预设行为不变。
+  t = t.replace(/<(think_nya|report_nya)~?\s*>[\s\S]*?<\/\1~?\s*>/gi, '')
+       .replace(/^[\s\S]*?<\/(?:think_nya|report_nya)~?\s*>/i, '')
+       .replace(/<(?:think_nya|report_nya)~?\s*>[\s\S]*$/i, '');
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
