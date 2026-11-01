@@ -6412,6 +6412,16 @@ function cleanseFloor(raw){
   t = t.replace(/<(think_nya|report_nya)~?\s*>[\s\S]*?<\/\1~?\s*>/gi, '')
        .replace(/^[\s\S]*?<\/(?:think_nya|report_nya)~?\s*>/i, '')
        .replace(/<(?:think_nya|report_nya)~?\s*>[\s\S]*$/i, '');
+  // ⓪⁗ [修改 25] 小猫之神 1.9.x：<comment> 是猫神留言（旧版写在 <details><summary>…留言</summary> 里），收进猫爪笺；
+  //    [scene:地区/地点/细处] 场景行换成『地区 · 地点 · 细处』。只在楼层带 think_nya / report_nya / <game> 时生效，其余预设行为不变。
+  if(/<\/?(?:think_nya|report_nya)~?\s*>|<\/?game\b/i.test(String(raw||''))){
+    t = t.replace(/<comment\b[^>]*>([\s\S]*?)<\/comment\s*>/gi, (w, b)=>{
+      b = b.trim();
+      if(b && !out.catNotes.includes(b)) out.catNotes.push(b);
+      return '';
+    }).replace(/<comment\b[^>]*>[\s\S]*$/i, '');
+    t = t.replace(/^[ \t]*\[scene\s*[:：]\s*([^\]\n]+)\][ \t]*$/gim, (w, x)=>'『' + x.split('/').map(v=>v.trim()).filter(Boolean).join(' · ') + '』');
+  }
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
@@ -6721,6 +6731,10 @@ function parseFloor(raw){
     // 正文唯一来源是 <正文></正文>；无正文块时兜底全文（剥功能标签壳）。
     body = t;
     TAGNAMES.forEach(n=>{ if(n!=='正文') body = body.replace(new RegExp(String.raw`<\s*${n}\s*>[\s\S]*?(?:<\/\s*${n}\s*>|$)`,'gi'),''); });
+    // [修改 25] 无 <正文> 兜底时，选项块也从书页正文里剥掉（选项照旧从全文 t 里取，按钮不受影响）
+    body = body.replace(/<options\b[^>]*>[\s\S]*?(?:<\/options\s*>|$)/gi, '')
+               .replace(/<option\b[^>]*>[\s\S]*?<\/option\s*>/gi, '')
+               .replace(/<choice>[\s\S]*?<\/choice>/gi, '');
   }
   body = body.replace(/<\s*\/?\s*(正文|content)\s*>/gi,'');
   // [修改 3] 正文里残留的 <状态栏> 块 / <状态面板/> 不进书页（状态栏由 statusCardHtml 单独绘制）
