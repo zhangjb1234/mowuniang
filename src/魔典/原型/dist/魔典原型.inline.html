@@ -8637,6 +8637,11 @@ async function loadWbIndex(force){
       let m = WB_FALLEN_RE.exec(e.name); if(m){ touch(m[1]).fallen = e; continue; }
       m = WB_HERO_RE.exec(e.name);       if(m){ touch(m[1]).base    = e; }
     }
+    // 女主：「女主·{名}」单人设条目直接认领
+    for(const e of all){
+      const mh = /^女主[·:：](.+)$/.exec(e.name);
+      if(mh){ const nm = mh[1].trim(); if(nm){ const rec = touch(nm); rec.base = e; rec.fallen = null; } }
+    }
     // 心界住民：「心界住民：{种族}·{名}」→ 取 · 之后的本名
     const anima = {};
     for(const e of all){
@@ -8813,6 +8818,13 @@ function stripFallenPreamble(text){
     .join('\n');
 }
 function heroineWbBlock(h){
+  if(h.base && /^女主[·:：]/.test(h.base.name||'')){
+    return wbShell(
+      `<div class="dd-ver on">
+        <div class="dw-cardlabel">档案<span class="wv-tag on">当前生效</span><span class="wv-src">${esc(h.base.name)}</span></div>
+        ${escParas(h.base.content)}
+      </div>`, 'dex-wb');
+  }
   const form = heroineFormOf(h.name);
   const pick = (k)=> k === 'fallen' ? h.fallen : h.base;
   let cur = pick(form);
@@ -8950,7 +8962,7 @@ function renderDexHeroines(){
         return `
     <div class="dex-cell${b?' bonded':''}" data-heroine="${i}" role="button" title="点开查看档案">${cameo(heroDisplayName(h.name).slice(0,1),'女主档案')}
       <div class="dc-name">${esc(heroDisplayName(h.name))}</div></div>`; }).join('')}</div>`
-      : emptyNote('未在绑定世界书中扫到「{名}-基础版 / -堕落版」档案条目。'));
+      : emptyNote('未在绑定世界书中扫到「女主·{名}」档案条目。'));
 }
 /* 「已遭遇」判定器 —— MVU 自由文本 ↔ 名册短名的宽松匹配。
    AI 写入 `图鉴.已遭遇种族` 的形态千差万别：'莉莉姆' / '莉莉姆·堤露埃拉' /
@@ -9792,7 +9804,7 @@ window.MODIAN_RITUAL = {
    "d0": "圣冰华骑士团最强勇者，诺斯库里姆家引以为傲的旗帜。",
    "d": "沦陷当日被堤露埃拉转化的魔界勇者，魔界冰华骑士团团长。",
    "lv": 130,
-   "lv0": 95
+   "lv0": 89
   },
   {
    "id": "mimiru",
@@ -9803,7 +9815,7 @@ window.MODIAN_RITUAL = {
    "rc0": "人类·魔法师",
    "d0": "魔导院百年一遇的天才魔法师，自称「魔法少女」的早熟毒舌天才。",
    "d": "黑山羊之魔女，暗物质触手会和魔力一起比出爱心。",
-   "lv": 127,
+   "lv": 125,
    "lv0": 85
   },
   {
@@ -9815,8 +9827,8 @@ window.MODIAN_RITUAL = {
    "rc0": "人类·神官",
    "d0": "贫民区孤儿院院长兼勇者，把软弱都藏在圣母般微笑下的神之使徒。",
    "d": "改奉堕落之神的黑暗祭司，虔诚的堕落之使徒。",
-   "lv": 120,
-   "lv0": 88
+   "lv": 128,
+   "lv0": 87
   },
   {
    "id": "primela",
