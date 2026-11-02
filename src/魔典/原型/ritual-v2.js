@@ -7,6 +7,22 @@
 (function(){
 'use strict';
 const RT = window.MODIAN_RITUAL || {stepLabels:['塑造此身','心界住民','宿命羁绊','开局地点','启程']};
+/* [修改 28] 开局地点：雷斯卡特耶排第一（本卡主舞台）。只调顺序，不改 ritual-data.js；按 id 找，找不到或已在第一就不动 */
+if(RT && Array.isArray(RT.regions)){ const k = RT.regions.findIndex(r => r && r.id === 'lescatie'); if(k > 0) RT.regions.unshift(RT.regions.splice(k, 1)[0]); }
+/* [修改 29] 开局地点：雷斯卡特耶的说明随第 Ⅲ 步的开局时间变（沦陷前 / 已沦陷 / 交由命运），和女主人设同一口径（R.tOff < 0 为沦陷前）。只换说明文字，id 和名字不变 */
+(function(){
+  const L = (RT && Array.isArray(RT.regions)) ? RT.regions.find(r => r && r.id === 'lescatie') : null;
+  const pd = L && Object.getOwnPropertyDescriptor(L, 'd');
+  if(!pd || pd.get) return;
+  const D0 = '尚未沦陷 · 主神教团的大型神权国家，勇者辈出，圣冰华骑士团所在地';
+  const D1 = '已沦陷 · ' + pd.value;
+  const DN = '随开局时间 · 沦陷前是主神教团的大型神权国家，魔王历 1200 年沦陷后成为魔界国家、魔界骑士文化中心';
+  Object.defineProperty(L, 'd', { configurable:true, enumerable:true, get(){
+    let off = null;
+    try{ off = R ? R.tOff : null; }catch(e){}
+    return off == null ? DN : off < 0 ? D0 : D1;
+  }});
+})();
 /* [修改 21] 步骤名在这里覆盖，不改 ritual-data.js */
 const STEP_LABELS = ['塑造此身','心界住民','时间与女主','宿命羁绊','开局地点','启程'];
 const LAST = STEP_LABELS.length - 1;
