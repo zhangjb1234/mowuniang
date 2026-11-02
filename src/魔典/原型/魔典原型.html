@@ -2241,6 +2241,29 @@ function cleanseFloor(raw){
     }).replace(/<comment\b[^>]*>[\s\S]*$/i, '');
     t = t.replace(/^[ \t]*\[scene\s*[:：]\s*([^\]\n]+)\][ \t]*$/gim, (w, x)=>'『' + x.split('/').map(v=>v.trim()).filter(Boolean).join(' · ') + '』');
   }
+  // ⓪⁵ [修改 26] 命定·织梦：<recorder_output> 外壳 / <recorder_thinking> 公开规划 / <tp> 时间地点 / <gametxt> 正文 / <appendix> 尾标。
+  //    只在楼层带 recorder_* 标签时生效，其余预设行为不变。
+  //    · 规划里会提到 <正文> <魔物生成> 等标签名，必须最先删：成对整块删 → 只剩闭标签时闭标签前全截 → 流式中未闭合从开标签截到尾
+  //    · <tp>时间 @ 地点 | 天气</tp> → 『时间 · 地点 · 天气』场景行；无 <正文> 时 <gametxt> 即正文
+  //    · <appendix> 英文尾标、<recorder_done/> 删掉；<options> 每行开头的「1.」序号去掉
+  if(/<\/?recorder_(?:output|thinking|body|after_format|done)\b/i.test(t)){
+    t = t.replace(/<recorder_thinking\b[^>]*>[\s\S]*?<\/recorder_thinking\s*>/gi, '')
+         .replace(/^[\s\S]*?<\/recorder_thinking\s*>/i, '')
+         .replace(/<recorder_thinking\b[^>]*>[\s\S]*$/i, '');
+    t = t.replace(/<appendix\b[^>]*>[\s\S]*?(?:<\/appendix\s*>|$)/gi, '')
+         .replace(/<recorder_done\s*\/?>/gi, '');
+    t = t.replace(/<tp\b[^>]*>([\s\S]*?)<\/tp\s*>/gi, (w, x)=>{
+      const f = x.replace(/\s+/g, ' ').split(/\s*[@|｜]\s*/).map(v=>v.trim()).filter(Boolean);
+      return f.length ? '『' + f.join(' · ') + '』' : '';
+    }).replace(/<tp\b[^>]*>[^\n]*$/i, '');
+    if(!/<\s*正文\s*>/.test(t) && /<gametxt\b/i.test(t)){
+      t = t.replace(/<gametxt\b[^>]*>/i, '<正文>');
+      const close = [...t.matchAll(/<\/gametxt\s*>/gi)].pop();
+      t = close ? t.slice(0, close.index) + '</正文>' + t.slice((close.index||0) + close[0].length) : t + '\n</正文>';
+    }
+    t = t.replace(/<\/?(?:recorder_output|recorder_body|recorder_after_format|gametxt)\b[^>]*>\n?/gi, '');
+    t = t.replace(/<options\b[^>]*>[\s\S]*?(?:<\/options\s*>|$)/gi, w=>w.replace(/^([ \t]*)[0-9０-９]{1,2}[ \t]*[.．、)）][ \t]*/gm, '$1'));
+  }
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
