@@ -23,6 +23,11 @@ if(RT && Array.isArray(RT.regions)){ const k = RT.regions.findIndex(r => r && r.
     return off == null ? DN : off < 0 ? D0 : D1;
   }});
 })();
+
+/* [修改 30b] 等级→阶段名（按〈等级属性与状态栏体系〉十一阶标尺） */
+const MX_STAGES = ['第一阶·平民阶','第二阶·正规阶','第三阶·精锐阶','第四阶·英杰阶','第五阶·英雄阶','第六阶·传说阶','第七阶·神话阶','第八阶·权柄阶','第九阶·半神阶','第十阶·神阶','第十一阶·神王阶'];
+const mxStage = lv => MX_STAGES[Math.min(10, Math.max(0, Math.ceil((Number(lv)||1)/20)-1))];
+
 /* [修改 21] 步骤名在这里覆盖，不改 ritual-data.js */
 const STEP_LABELS = ['塑造此身','心界住民','时间与女主','宿命羁绊','开局地点','启程'];
 const LAST = STEP_LABELS.length - 1;
@@ -984,7 +989,7 @@ function heroMsg(){
     else s += '  人设（沦陷前）：'+h.rc0+'——'+(h.d0||'')+'\n  人设（沦陷后）：'+h.rc+'——'+(h.d||'')+'\n';
     if(h.mnote && (!P || P.human)) s += '  备注：'+h.mnote+'\n';
     s += '  初始好感度：'+e.fav+'\n';
-    if(P) s += '  等级参考：Lv.'+P.lv+(h.rc0?(P.human?'（沦陷前）':'（沦陷后）')/* [修改 30] 称号与阶段名修正 */:'')+'\n';
+    if(P) s += '  等级参考：Lv.'+P.lv+(h.rc0?('（'+(P.human?'沦陷前':'沦陷后')+'·'+mxStage(P.lv)+'）'):'')+'\n';
     else s += '  等级参考：沦陷前 Lv.'+h.lv0+' / 沦陷后 Lv.'+h.lv+'\n';
   });
   s += '（请在初始化变量时为上述女主写入 羁绊.{角色名}.好感度 = 所列初始好感度——这是玩家定下的起点，AI不得擅改初始值，此后按剧情增减；并把等级参考写入 羁绊.{角色名}.等级，阶层换算按〈等级属性与状态栏体系〉）\n';
