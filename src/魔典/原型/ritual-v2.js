@@ -541,9 +541,17 @@ function closeRitual(enter){
   rit.classList.remove('open');
   tome.classList.remove('rit-on');
   if(enter){
-    clearDraft();
+    /* [修改 32c] 启程时不再清暂存（改为第一页正文到达时清），中途刷新可回到 Ⅵ 重新启程 */
+    saveDraft();
+    const msg = buildMsg();
+    const lb = document.getElementById('modian-letter-body');
+    const cur = lb ? lb.value : '';
+    /* 返回仪典再启程：信笺若被手改过，先问一句再覆盖 */
+    const keep = !!(cur.trim() && window.__ritLastMsg && cur !== window.__ritLastMsg
+      && !confirm('信笺里有你手改过的内容，重新启程会用新的开局定稿覆盖它。\n确定覆盖吗？（取消 = 保留信笺原样）'));
     showAwaiting();
-    enterDraft(buildMsg());
+    if(keep){ openLetter(); }
+    else { window.__ritLastMsg = msg; enterDraft(msg); }
     notify('仪典已成——开局定稿已誊入信笺，过目后寄出。','gild',5200);
   }else{
     showCover();
@@ -606,9 +614,11 @@ function bodyStep0(){
   <div class="sec-title">主角配置 · 以此身<span class="rit-pool" style="font-weight:400">已填写的维度将原样写进开局设定，留空由命运与 AI 补全</span></div>
   <div class="rit-form">
     <label>姓名<input data-hero="name" type="text" value="${esc(R.hero.name)}" placeholder="你在这片大陆的名字，留空由命运补全"></label>
-    <label>性别<input data-hero="gender" type="text" value="${esc(R.hero.gender)}" placeholder="男 / 女"></label>
-    <label>年龄<input data-hero="age" type="text" value="${esc(R.hero.age)}" placeholder="例：18"></label>
-    <label>外貌<input data-hero="appearance" type="text" value="${esc(R.hero.appearance)}" placeholder="例：178cm / 贫乳长发虎牙 / 白发兽耳"></label>
+    <div class="rit-duo"><!-- [修改 32a] 性别、年龄并排占一格 -->
+      <label>性别<input data-hero="gender" type="text" value="${esc(R.hero.gender)}" placeholder="男 / 女"></label>
+      <label>年龄<input data-hero="age" type="text" inputmode="numeric" value="${esc(R.hero.age)}" placeholder="例：18"></label>
+    </div>
+    <label class="wide">外貌<textarea data-hero="appearance" rows="3" placeholder="身高、身材、发色、瞳色、显眼特征……例：178cm / 贫乳长发虎牙 / 白发兽耳">${esc(R.hero.appearance)}</textarea></label>
     <label class="wide">势力<input data-hero="faction" type="text" value="${esc(R.hero.faction)}" placeholder="留空由命运与基调斟酌"></label>
     <label class="wide">前尘往事<textarea data-hero="bg" rows="4" placeholder="你睁开眼之前的来历——可多行书写，留空由AI按基调拟定">${esc(R.hero.bg)}</textarea></label>
     <label class="wide">服装<input data-hero="outfit" type="text" value="${esc(R.hero.outfit)}" placeholder="当前衣着，留空由AI按设定拟定"></label>
@@ -1179,6 +1189,13 @@ function renderRitual(keepScroll){
     }
     else if(g==='companion' && R[g]===b.dataset.id){ R[g]=null; }
     else R[g]=b.dataset.id;
+    /* [修改 32b] 选身份顺手填性别：只在性别为空或仍是「男/女」时改，
+       用户自填的（如「扶她」「无性别」）不覆盖；填完照样可以手改 */
+    if(g==='identity'){
+      const auto = {human_m:'男', human_f:'女', monster:'女'}[b.dataset.id];
+      const cur = String(R.hero.gender||'').trim();
+      if(auto && (!cur || cur==='男' || cur==='女')) R.hero.gender = auto;
+    }
     freshSel = g+':'+b.dataset.id;
     renderRitual(true);
   }));
@@ -1520,5 +1537,8 @@ window.__ritual = {
   isOpen: ()=>rit.classList.contains('open'),
   close: ()=>closeRitual(false),
   toCover: ()=>{ rit.classList.remove('open'); tome.classList.remove('rit-on'); showCover(); },
+  /* [修改 32c] 待寄页「返回仪典修改」：内存里的 R 还在，直接回到 Ⅵ 启程核对 */
+  reopen: ()=>{ window.openRitual(); goStep(LAST); },
+  clearDraft: ()=>clearDraft(),
 };
 })();
