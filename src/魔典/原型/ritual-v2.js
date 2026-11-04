@@ -596,6 +596,13 @@ function stepCrumbs(){
   }).join('')}</nav>`;
 }
 
+/* [修改 33a] 进阶设定（等级 / 信仰 / 资质）折叠后标题旁的摘要 */
+function advSummary(){
+  const lv = R.pLevel ? String(R.pLevel) : '等级未定';
+  const fa = faithText() || '信仰未定';
+  const ap = R.apt || {};
+  return lv+' · '+fa+' · 灵感'+ap.ling+' 魅力'+ap.mei+' 体质'+ap.ti+' 信仰'+ap.xin;
+}
 function bodyStep0(){
   const toneChosen = R.tone && R.tone!=='custom';
   return `
@@ -624,6 +631,9 @@ function bodyStep0(){
     <label class="wide">服装<input data-hero="outfit" type="text" value="${esc(R.hero.outfit)}" placeholder="当前衣着，留空由AI按设定拟定"></label>
     <label class="wide">行囊<textarea data-hero="inventory" rows="3" placeholder="随身之物与资产——原文档照搬，留空由AI按设定拟定">${esc(R.hero.inventory)}</textarea></label>
   </div>
+  <div class="rit-adv${R.advOpen?' open':''}"><!-- [修改 33a] 进阶设定折叠区 -->
+  <button type="button" class="rit-adv-head" data-adv-toggle aria-expanded="${R.advOpen?'true':'false'}"><b>进阶设定</b><span class="rit-adv-sum">${esc(advSummary())}</span><em>${R.advOpen?'收起':'展开'}</em></button>
+  <div class="rit-adv-body">
   <div class="sec-title">初始等级</div>
   <div class="rit-hintbar"><p class="rit-hint">T1平民阶 · T2正规阶 · T3精锐阶 · T4英杰阶 · T5英雄阶 · T6传说阶（无神力者天花板）· T7神话阶 · T8权柄阶 · T9半神阶（魔王位标准线）· T10神阶 · T11神王阶（当前世界现存0）。全大陆共220级、每阶约20级，所选档位即该阶起点级；阶内另有初期/中期/后期/巅峰四段成长。</p></div>
   <div class="rchip-row">${LEVEL_PRESETS.map((o,ix)=>`<button class="rchip${(R.pLevel||'')===o?' on':''}" data-pl="${ix}">${'T'+(ix+1)+' / '+o}</button>`).join('')}</div>
@@ -650,7 +660,8 @@ function bodyStep0(){
         : `<button class="ra-btn" data-apt="${k}" data-d="-1" ${R.apt[k]<=APT_MIN[k]?'disabled':''}>−</button>
            <span class="ra-val">${R.apt[k]}</span>
            <button class="ra-btn" data-apt="${k}" data-d="1" ${R.apt[k]>=20||aptSum()>=APT_POOL||(k==='xin'&&R.faith==='none')?'disabled':''}>＋</button>`}
-    </div>`).join('')}`;
+    </div>`).join('')}
+  </div></div>`;
 }
 function raceCatOf(race){
   for(const c of RACE_CATS){ if(c.items.indexOf(race)>=0) return c.cat; }
@@ -767,6 +778,37 @@ function heroinesHtml(){
 }
 
 function bondEntry(id){ return R.bonds.get(id) || {rel:null,dir:null,catOpen:null}; }
+/* [修改 33j] 宿命羁绊 · 自定义角色的种族点选（独立的检索词 / 展开状态，不影响主角种族） */
+function cnpRaceListed(r){ return r==='人类男性' || r==='人类女性' || !!raceCatOf(r); }
+function cnpRaceLabel(){
+  const r = (R.cnp.race||'').trim();
+  if(!r) return R.cnpRaceCustom ? '自定义 · 在下方填写' : '未选 · 由 AI 拟定';
+  const c = raceCatOf(r);
+  return '已择 '+r+(c?' · '+c:'');
+}
+function cnpRaceHit(r){
+  const q = (R.cnpRaceQ||'').toLowerCase();
+  return !q || r.toLowerCase().indexOf(q)>=0 || (RACE_ALIAS[r]||'').toLowerCase().indexOf(q)>=0;
+}
+function cnpRaceShown(){ return RACE_CATS.reduce((s,c)=>s+c.items.filter(cnpRaceHit).length,0); }
+function cnpRaceAccHtml(){
+  const q = (R.cnpRaceQ||'').toLowerCase();
+  return RACE_CATS.map((c,ci)=>{
+    const matches = c.items.filter(cnpRaceHit);
+    if(q && !matches.length) return '';
+    const hasSel = !!R.cnp.race && c.items.indexOf(R.cnp.race)>=0;
+    const open = !!q || (R.cnpAcc!=null ? R.cnpAcc===ci : false);
+    let lastFam = '';
+    const rows = open ? matches.map(r=>{
+      const f = RACE_FAM[r]||'';
+      const head = (f && f!==lastFam) ? ((lastFam=f), '<div class="race-fam">'+esc(f)+'</div>') : '';
+      const tip = RACE_ALIAS[r] ? ' title="别名：'+esc(RACE_ALIAS[r])+'"' : '';
+      return head+'<button type="button" class="race-item'+(R.cnp.race===r?' sel':'')+'" data-cnprace="'+esc(r)+'"'+tip+'>'+esc(r)+'</button>';
+    }).join('') : '';
+    return `<button type="button" class="race-cat${open?' open':''}${hasSel?' has':''}" data-cnprcat="${ci}">${esc(c.cat)} (${matches.length})${hasSel?' ✦':''}</button>
+      <div class="race-items">${rows}</div>`;
+  }).join('');
+}
 function bodyNpc(){
   const max = MAX_BONDS;
   const items = allBonds().map(npc=>{
@@ -777,6 +819,7 @@ function bodyNpc(){
         <span class="bnd-nm">${esc(npc.n)}</span><span class="bnd-rc">${esc(npc.rc||'')}</span>
         <span class="bnd-rc is-custom">${npc.rand?'随机':'自定义'}</span>
         ${entry&&entry.rel?`<span class="bnd-rel">${esc(entry.rel.n)}${entry.dir?(' · '+esc(entry.dir.n)):''}</span>`:''}
+        <button type="button" class="bnd-edit" data-editnpc="${esc(npc.id)}">✎ 修改</button><!-- [修改 33k] -->
         <button class="bnd-del" data-delnpc="${esc(npc.id)}">✕ 移除</button>
       </div>
       ${npc.d?`<div class="bnd-desc">${esc(npc.d)}</div>`:''}
@@ -793,10 +836,23 @@ function bodyNpc(){
   ${R.customNpcForm?`
   <div class="rit-form cwrap">
     <label>名字<input data-cnp="name" type="text" value="${esc(R.cnp.name)}" placeholder="？？？（由AI命名）"></label>
-    <label>种族<input data-cnp="race" type="text" value="${esc(R.cnp.race)}" placeholder="可填 人类 / 任意图鉴种族；未知即由AI拟定"></label>
-    <label class="wide">快捷种族<span class="cnp-qrace"><button type="button" class="rchip" data-cnpq="人类">人类</button><button type="button" class="rchip" data-cnpq="人类女性">人类女性</button><button type="button" class="rchip" data-cnpq="魔物娘（种族由AI拟）">魔物娘</button><button type="button" class="rchip" data-cnpq="精灵">精灵</button><button type="button" class="rchip" data-cnpq="兽人">兽人</button><button type="button" class="rchip" data-cnpq="不死族">不死族</button></span></label>
+    <div class="cnp-race"><!-- [修改 33j] 种族改成和选角一样点选：人类男性 / 人类女性 + 全部图鉴种族；自定义才手填 -->
+      <div class="cnp-race-h">种族<span class="rit-pool">${esc(cnpRaceLabel())}</span></div>
+      <div class="rchip-row cnp-qrace">
+        <button type="button" class="rchip${R.cnp.race==='人类男性'?' on':''}" data-cnpq="人类男性">人类男性</button>
+        <button type="button" class="rchip${R.cnp.race==='人类女性'?' on':''}" data-cnpq="人类女性">人类女性</button>
+        <button type="button" class="rchip${R.cnpRaceCustom?' on':''}" data-cnpq="__custom__">自定义种族</button>
+        <button type="button" class="rchip${!R.cnp.race&&!R.cnpRaceCustom?' on':''}" data-cnpq="">交给 AI</button>
+      </div>
+      ${R.cnpRaceCustom?`<input data-cnp="race" type="text" value="${esc(R.cnp.race)}" placeholder="写下种族，例：堕落天使与人类的混血">`:''}
+      <div class="dw-searchbar"><input id="cnp-race-q" type="text" value="${esc(R.cnpRaceQ||'')}" placeholder="检索魔物娘种族……"><span class="rchip-hint">${esc(cnpRaceShown())} / ${esc(String(raceTotal()))}</span></div>
+      <div class="race-acc">${cnpRaceAccHtml()}</div>
+    </div>
     <label class="wide">形象/备注<textarea data-cnp="desc" rows="3" placeholder="外貌与来历的线索，可多行书写，AI 据此补全">${esc(R.cnp.desc)}</textarea></label>
-    <div class="rchip-row"><button type="button" class="rchip rit-enter-mini" id="cnp-add" ${R.bonds.size>=max?'disabled':''}>加入羁绊列表</button></div>
+    <div class="rchip-row"><!-- [修改 33k] 编辑已加入的角色时改为「保存修改」 -->
+      <button type="button" class="rchip rit-enter-mini" id="cnp-add" ${R.bonds.size>=max&&!R.cnpEdit?'disabled':''}>${R.cnpEdit?'保存修改':'加入羁绊列表'}</button>
+      ${R.cnpEdit?'<button type="button" class="rchip" id="cnp-cancel">取消修改</button>':''}
+    </div>
   </div>`:''}
   ${items || `<div class="empty-note">（还没有羁绊角色——添加一位自定义角色，或让命运随机一位）</div>`}
   <div class="chip-row">${[...R.bonds].map(([id,entry])=>{
@@ -1208,6 +1264,14 @@ function renderRitual(keepScroll){
     else R.race = b.dataset.race;
     renderRitual(true);
   }));
+  /* [修改 33a] 进阶设定折叠：只切 class，不重绘（保滚动和输入焦点） */
+  const advBtn = rit.querySelector('[data-adv-toggle]');
+  if(advBtn) advBtn.addEventListener('click', ()=>{
+    R.advOpen = !R.advOpen;
+    advBtn.closest('.rit-adv').classList.toggle('open', R.advOpen);
+    advBtn.setAttribute('aria-expanded', R.advOpen ? 'true' : 'false');
+    advBtn.querySelector('em').textContent = R.advOpen ? '收起' : '展开';
+  });
   /* 快速重掷 / 资质 / 等级 */
   const rr = rit.querySelector('#rit-reroll');
   if(rr) rr.addEventListener('click', ()=>{ autoFill(R.tone); renderRitual(true); });
@@ -1293,16 +1357,52 @@ function renderRitual(keepScroll){
   }));
   /* 自定义/随机 NPC */
   const cnpT = rit.querySelector('#cnp-toggle');
-  if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; renderRitual(true); });
+  if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; if(!R.customNpcForm){ R.cnpEdit=null; R.cnpRaceCustom=false; } renderRitual(true); });   // [修改 33k] 收起表单即放弃修改
   rit.querySelectorAll('[data-cnp]').forEach(el=>el.addEventListener('input', ()=>{ R.cnp[el.dataset.cnp]=el.value; }));
-  rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{ R.cnp.race=el.dataset.cnpq; renderRitual(true); }));
+  /* [修改 33j] 种族点选：人类男女 / 自定义 / 交给 AI；图鉴种族走手风琴 */
+  rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{
+    const v = el.dataset.cnpq;
+    if(v==='__custom__'){ if(!R.cnpRaceCustom && cnpRaceListed(R.cnp.race)) R.cnp.race=''; R.cnpRaceCustom=true; }
+    else { R.cnpRaceCustom=false; R.cnp.race=v; }
+    renderRitual(true);
+  }));
+  rit.querySelectorAll('[data-cnprcat]').forEach(b=>b.addEventListener('click', ()=>{
+    const ci=+b.dataset.cnprcat; R.cnpAcc = (R.cnpAcc===ci?null:ci); renderRitual(true);
+  }));
+  rit.querySelectorAll('[data-cnprace]').forEach(b=>b.addEventListener('click', ()=>{
+    R.cnpRaceCustom=false; R.cnp.race=b.dataset.cnprace; renderRitual(true);
+  }));
+  /* [修改 33k] 已加入的自定义 / 随机角色可回到表单修改，关系设定保留 */
+  rit.querySelectorAll('[data-editnpc]').forEach(b=>b.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const npc=allBonds().find(n=>n.id===b.dataset.editnpc); if(!npc) return;
+    const rc = npc.rc==='未知' ? '' : (npc.rc||'');
+    R.cnp={ name: /^？？？/.test(npc.n||'') ? '' : (npc.n||''), race: rc, desc: npc.d||'' };
+    R.cnpRaceCustom = !!rc && !cnpRaceListed(rc);
+    R.cnpAcc = raceCatOf(rc) ? RACE_CATS.findIndex(c=>c.items.indexOf(rc)>=0) : null;
+    R.cnpRaceQ=''; R.cnpEdit=npc.id; R.customNpcForm=true;
+    renderRitual(true);
+    const f = rit.querySelector('.cnp-race'); if(f) f.closest('.rit-form').scrollIntoView({block:'start', behavior:'smooth'});
+  }));
+  const cnpCancel = rit.querySelector('#cnp-cancel');
+  if(cnpCancel) cnpCancel.addEventListener('click', ()=>{
+    R.cnpEdit=null; R.cnpRaceCustom=false; R.cnp={name:'',race:'',desc:''}; R.customNpcForm=false; renderRitual(true);
+  });
   const cnpAdd = rit.querySelector('#cnp-add');
   if(cnpAdd) cnpAdd.addEventListener('click', ()=>{
-    if(R.bonds.size>=MAX_BONDS){ notify('宿命羁绊至多 '+MAX_BONDS+' 位','warn',3000); return; }
-    const npc={id:'c'+Date.now(),n:(R.cnp.name||'').trim()||'？？？（由AI命名）',rc:(R.cnp.race||'').trim()||'未知',d:(R.cnp.desc||'').trim(),custom:true,cat:'自定义'};
-    R.customNpcs.push(npc);
-    R.bonds.set(npc.id,{npc:npc,rel:null,dir:null,catOpen:null});
-    R.cnp={name:'',race:'',desc:''}; R.customNpcForm=false;
+    const nm=(R.cnp.name||'').trim()||'？？？（由AI命名）', rc=(R.cnp.race||'').trim()||'未知', ds=(R.cnp.desc||'').trim();
+    const old = R.cnpEdit ? allBonds().find(n=>n.id===R.cnpEdit) : null;
+    if(old){
+      old.n=nm; old.rc=rc; old.d=ds; old.rand=false;
+      const e=R.bonds.get(old.id); if(e) e.npc=old;
+      notify('已修改：'+nm,'gild',2200);
+    } else {
+      if(R.bonds.size>=MAX_BONDS){ notify('宿命羁绊至多 '+MAX_BONDS+' 位','warn',3000); return; }
+      const npc={id:'c'+Date.now(),n:nm,rc:rc,d:ds,custom:true,cat:'自定义'};
+      R.customNpcs.push(npc);
+      R.bonds.set(npc.id,{npc:npc,rel:null,dir:null,catOpen:null});
+    }
+    R.cnp={name:'',race:'',desc:''}; R.cnpEdit=null; R.cnpRaceCustom=false; R.cnpRaceQ=''; R.customNpcForm=false;
     renderRitual(true);
   });
   const randNpc = rit.querySelector('#bond-rand-npc');
@@ -1325,6 +1425,7 @@ function renderRitual(keepScroll){
     el.addEventListener('compositionend', ()=>{ set(el.value); rerenderKeepFocus(el.id, el); });
   };
   imeBind(rit.querySelector('#race-q'), v=>{ R.raceQ=v; });
+  imeBind(rit.querySelector('#cnp-race-q'), v=>{ R.cnpRaceQ=v; });   // [修改 33j] 羁绊角色种族检索
   /* 存档 / 重置 */
   const ps = rit.querySelector('#prof-save'); if(ps) ps.addEventListener('click', profileSave);
   const pl = rit.querySelector('#prof-load'); if(pl) pl.addEventListener('click', ()=>profileLoad(0));
