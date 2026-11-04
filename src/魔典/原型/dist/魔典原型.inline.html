@@ -7828,9 +7828,25 @@ function showAwaiting(){
   tome.classList.remove('cover-on');   // cover-on 会盖掉 .page，必须先揭
   pageBase.innerHTML = `<div class="scroll">
     <div class="empty-note" style="margin-top:96px">仪典已成——开局定稿已誊入信笺。<br>过目后落印寄出；你的故事，将从这封信的第一行墨迹开始。</div>
+    <div class="await-nav"><!-- [修改 32c] 回仪典 / 重开信笺 -->
+      <button type="button" id="aw-back" class="await-btn">‹ 返回仪典修改</button>
+      <button type="button" id="aw-letter" class="await-btn go">展开信笺 ›</button>
+    </div>
   </div>`;
+  pageBase.querySelector('#aw-back').addEventListener('click', ()=>{
+    closeLetter();
+    if(window.__ritual && window.__ritual.reopen) window.__ritual.reopen();
+  });
+  pageBase.querySelector('#aw-letter').addEventListener('click', ()=>{
+    if(typeof closeToc==='function') closeToc();
+    if(typeof closeInsert==='function') closeInsert();
+    openLetter();
+  });
 }
 function enterReadingChapter(){
+  /* [修改 32c] 第一页正文已到：此时才清仪典暂存（直接在酒馆输入框发送也会走到这里） */
+  try{ if(window.__ritual && window.__ritual.clearDraft) window.__ritual.clearDraft(); }catch(e){}
+  window.__ritLastMsg = '';
   setStage('reading');
   tome.classList.remove('rit-on');
   showFloor(FLOORS.length>1 ? 1 : 0, 1);
@@ -11111,9 +11127,17 @@ function closeRitual(enter){
   rit.classList.remove('open');
   tome.classList.remove('rit-on');
   if(enter){
-    clearDraft();
+    /* [修改 32c] 启程时不再清暂存（改为第一页正文到达时清），中途刷新可回到 Ⅵ 重新启程 */
+    saveDraft();
+    const msg = buildMsg();
+    const lb = document.getElementById('modian-letter-body');
+    const cur = lb ? lb.value : '';
+    /* 返回仪典再启程：信笺若被手改过，先问一句再覆盖 */
+    const keep = !!(cur.trim() && window.__ritLastMsg && cur !== window.__ritLastMsg
+      && !confirm('信笺里有你手改过的内容，重新启程会用新的开局定稿覆盖它。\n确定覆盖吗？（取消 = 保留信笺原样）'));
     showAwaiting();
-    enterDraft(buildMsg());
+    if(keep){ openLetter(); }
+    else { window.__ritLastMsg = msg; enterDraft(msg); }
     notify('仪典已成——开局定稿已誊入信笺，过目后寄出。','gild',5200);
   }else{
     showCover();
@@ -11176,9 +11200,11 @@ function bodyStep0(){
   <div class="sec-title">主角配置 · 以此身<span class="rit-pool" style="font-weight:400">已填写的维度将原样写进开局设定，留空由命运与 AI 补全</span></div>
   <div class="rit-form">
     <label>姓名<input data-hero="name" type="text" value="${esc(R.hero.name)}" placeholder="你在这片大陆的名字，留空由命运补全"></label>
-    <label>性别<input data-hero="gender" type="text" value="${esc(R.hero.gender)}" placeholder="男 / 女"></label>
-    <label>年龄<input data-hero="age" type="text" value="${esc(R.hero.age)}" placeholder="例：18"></label>
-    <label>外貌<input data-hero="appearance" type="text" value="${esc(R.hero.appearance)}" placeholder="例：178cm / 贫乳长发虎牙 / 白发兽耳"></label>
+    <div class="rit-duo"><!-- [修改 32a] 性别、年龄并排占一格 -->
+      <label>性别<input data-hero="gender" type="text" value="${esc(R.hero.gender)}" placeholder="男 / 女"></label>
+      <label>年龄<input data-hero="age" type="text" inputmode="numeric" value="${esc(R.hero.age)}" placeholder="例：18"></label>
+    </div>
+    <label class="wide">外貌<textarea data-hero="appearance" rows="3" placeholder="身高、身材、发色、瞳色、显眼特征……例：178cm / 贫乳长发虎牙 / 白发兽耳">${esc(R.hero.appearance)}</textarea></label>
     <label class="wide">势力<input data-hero="faction" type="text" value="${esc(R.hero.faction)}" placeholder="留空由命运与基调斟酌"></label>
     <label class="wide">前尘往事<textarea data-hero="bg" rows="4" placeholder="你睁开眼之前的来历——可多行书写，留空由AI按基调拟定">${esc(R.hero.bg)}</textarea></label>
     <label class="wide">服装<input data-hero="outfit" type="text" value="${esc(R.hero.outfit)}" placeholder="当前衣着，留空由AI按设定拟定"></label>
@@ -11749,6 +11775,13 @@ function renderRitual(keepScroll){
     }
     else if(g==='companion' && R[g]===b.dataset.id){ R[g]=null; }
     else R[g]=b.dataset.id;
+    /* [修改 32b] 选身份顺手填性别：只在性别为空或仍是「男/女」时改，
+       用户自填的（如「扶她」「无性别」）不覆盖；填完照样可以手改 */
+    if(g==='identity'){
+      const auto = {human_m:'男', human_f:'女', monster:'女'}[b.dataset.id];
+      const cur = String(R.hero.gender||'').trim();
+      if(auto && (!cur || cur==='男' || cur==='女')) R.hero.gender = auto;
+    }
     freshSel = g+':'+b.dataset.id;
     renderRitual(true);
   }));
@@ -12090,6 +12123,9 @@ window.__ritual = {
   isOpen: ()=>rit.classList.contains('open'),
   close: ()=>closeRitual(false),
   toCover: ()=>{ rit.classList.remove('open'); tome.classList.remove('rit-on'); showCover(); },
+  /* [修改 32c] 待寄页「返回仪典修改」：内存里的 R 还在，直接回到 Ⅵ 启程核对 */
+  reopen: ()=>{ window.openRitual(); goStep(LAST); },
+  clearDraft: ()=>clearDraft(),
 };
 })();</script>
 <style>
@@ -12171,6 +12207,9 @@ window.__ritual = {
 .rit-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:2px 0 10px}
 .rit-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;letter-spacing:.14em;color:var(--ink-faint)}
 .rit-form label.wide{grid-column:1/3}
+/* [修改 32a] 性别+年龄并排；手机单栏时也保持并排 */
+.rit-form .rit-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.rit-form .rit-duo input{min-width:0;width:100%;box-sizing:border-box}
 .rit-form input{background:rgba(255,253,246,.35);border:1px solid rgba(120,96,56,.45);border-radius:3px;padding:7px 10px;font-family:var(--font-serif);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s}
 .rit-form input:focus{border-color:var(--cinnabar);box-shadow:0 0 0 2px rgba(150,55,46,.12)}
 .rit-form input::placeholder{color:#A3937A;font-style:normal;letter-spacing:.04em}
@@ -13119,6 +13158,22 @@ html[data-mdx-theme="night"] .t-status .sb-line{margin-top:10px}
 html[data-mdx-theme="night"] .sb-stat,html[data-mdx-theme="night"] .sb-npc{background:rgba(28,16,46,.55);border-color:var(--nt-hair);border-radius:10px}
 html[data-mdx-theme="night"] .sb-stat em{color:#8fe0a0}
 html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var(--fam-line),transparent)}
+/* [修改 32c] 待寄页按钮 */
+.await-nav{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:22px auto 0}
+.await-btn{padding:9px 20px;border-radius:22px;border:1px solid rgba(120,96,56,.5);background:rgba(255,253,246,.4);
+  font-family:var(--font-serif);font-size:14px;letter-spacing:.16em;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
+.await-btn.go{border-color:rgba(109,35,28,.6);color:var(--cinnabar)}
+html[data-mdx-theme="night"] .await-btn{background:rgba(20,11,34,.6);border-color:var(--nt-hair-strong);color:var(--ink-soft)}
+html[data-mdx-theme="night"] .await-btn.go{border-color:var(--nt-rose);color:var(--nt-rose)}
+
+/* [修改 32e] 信笺底栏：手机上不许把字数 / 誊清 / 寄出挤成竖排 */
+.let-foot{flex-wrap:wrap;row-gap:8px}
+.let-count{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.let-erase,.let-send{flex:none;white-space:nowrap}
+.let-send span{white-space:nowrap;writing-mode:horizontal-tb}
+/* [修改 32e] 信笺打开时隐藏右下 Aa 与左下书本圆钮（均 body 直挂，:has 同库已有先例） */
+body:has(#letter.open) #mx-read{opacity:0;pointer-events:none}
+body:has(#letter.open) #mdx-theme-toggle{opacity:0;pointer-events:none}
 </style>
 <script data-modian-inline="detail.js">
 /* 魔典-细节 v1 — 放在魔典全部脚本之后。一个 MutationObserver（rAF 合帧），不开轮询。
@@ -13787,74 +13842,12 @@ function enhanceInsert(){
 }
 
 /* ═════════ 八 · 信笺：常用短句 / 字数段数 / 最近寄出（仅本次会话） ═════════ */
-const PH_KEY = 'mge_quick_phrases_v1';
-const PH_DEF = ['（继续）','（沉默片刻）','（环顾四周）','（点头答应）','（摇头拒绝）','（时间推进到第二天清晨）'];
-const sent = mem.sent || (mem.sent = []);
+/* [修改 32d] 撤掉常用短句 / 管理 / 最近寄出（与 AI 选项重复、开局时意义不明）；只保留「· N 段」统计 */
+try{ localStorage.removeItem('mge_quick_phrases_v1'); }catch(e){}
 function mountLetter(){
   const body = document.getElementById('modian-letter-body');
-  const foot = document.querySelector('#letter .let-foot');
-  if(!body || !foot || document.getElementById('mx-phr')) return;
-  let edit = false;
-  const box = document.createElement('div');
-  box.id = 'mx-phr';
-  const phrases = () => LS.get(PH_KEY, PH_DEF);
-  const paint = ()=>{
-    const list = phrases();
-    box.innerHTML = list.map((p, i) => `<button type="button" class="mx-ph" data-ph="${i}">${H(p)}${edit ? '<i aria-label="删除">×</i>' : ''}</button>`).join('')
-      + (edit ? '<input id="mx-ph-new" maxlength="40" placeholder="新短句，回车添加"><button type="button" class="mx-ph mx-ph-tool" data-pht="done">完成</button>'
-              : `<button type="button" class="mx-ph mx-ph-tool" data-pht="edit" title="管理常用短句">管理</button>${sent.length ? '<button type="button" class="mx-ph mx-ph-tool" data-pht="hist" title="本次会话里寄出过的内容">最近寄出</button>' : ''}`);
-    const ni = box.querySelector('#mx-ph-new');
-    if(ni) ni.addEventListener('keydown', e=>{
-      e.stopPropagation();
-      if(e.key !== 'Enter') return;
-      e.preventDefault();
-      const v = ni.value.trim(); if(!v) return;
-      const l = phrases(); if(!l.includes(v)) l.push(v);
-      LS.set(PH_KEY, l); paint(); box.querySelector('#mx-ph-new').focus();
-    });
-  };
-  const insert = text => {
-    body.focus();
-    const s = body.selectionStart ?? body.value.length, e = body.selectionEnd ?? s;
-    body.setRangeText(text, s, e, 'end');
-    body.dispatchEvent(new Event('input', { bubbles:true }));
-  };
-  const hist = document.createElement('div');
-  hist.id = 'mx-hist'; hist.hidden = true;
-  box.addEventListener('click', e=>{
-    const t = e.target.closest('[data-pht]'), p = e.target.closest('[data-ph]');
-    if(t){
-      const a = t.dataset.pht;
-      if(a === 'edit' || a === 'done'){ edit = a === 'edit'; hist.hidden = true; paint(); if(edit) box.querySelector('#mx-ph-new').focus(); }
-      if(a === 'hist'){
-        hist.hidden = !hist.hidden;
-        hist.innerHTML = '<div class="mx-hist-h">最近寄出 · 只保留在本次会话，刷新酒馆后清空</div>' + sent.map((s, i) => `<button type="button" data-hi="${i}">${H(s.length > 60 ? s.slice(0, 60) + '…' : s)}</button>`).join('');
-      }
-      return;
-    }
-    if(!p) return;
-    const i = +p.dataset.ph;
-    if(edit){ if(e.target.tagName === 'I'){ const l = phrases(); l.splice(i, 1); LS.set(PH_KEY, l); paint(); } return; }
-    insert(phrases()[i]);
-  });
-  hist.addEventListener('click', e=>{
-    const b = e.target.closest('[data-hi]'); if(!b) return;
-    body.value = sent[+b.dataset.hi]; hist.hidden = true;
-    body.dispatchEvent(new Event('input', { bubbles:true })); body.focus();
-  });
-  foot.before(box); foot.before(hist);
-  paint();
-  const record = ()=>{
-    const v = body.value.trim();
-    const btn = document.getElementById('let-send');
-    if(!v || (btn && btn.disabled)) return;
-    const i = sent.indexOf(v); if(i >= 0) sent.splice(i, 1);
-    sent.unshift(v); sent.length = Math.min(sent.length, 5);
-    setTimeout(()=>{ if(!edit) paint(); }, 0);
-  };
-  const btn = document.getElementById('let-send');
-  if(btn) btn.addEventListener('click', record, true);
-  body.addEventListener('keydown', e=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) record(); }, true);
+  if(!body || body.dataset.mxCount) return;
+  body.dataset.mxCount = '1';
   if(typeof updLetterCount === 'function'){
     const orig = updLetterCount;
     updLetterCount = function(){
@@ -14101,29 +14094,15 @@ body.modian-fs-on #mx-read-pop{bottom:auto;top:104px;transform-origin:right top}
 @keyframes mx-fresh{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
 /* ── 信笺 ── */
-#mx-phr{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 0 2px}
-.mx-ph{position:relative;padding:3px 10px;border-radius:12px;border:1px solid rgba(120,88,40,.36);background:rgba(255,252,244,.5);
-  color:var(--ink-soft);font:12px var(--font-sans);letter-spacing:.04em;cursor:pointer;transition:transform .15s ease}
-.mx-ph:active{transform:scale(.95)}
-@media (hover:hover){.mx-ph:hover{border-color:var(--cinnabar);color:var(--cinnabar)}}
-.mx-ph i{margin-left:6px;font-style:normal;color:var(--cinnabar)}
-.mx-ph-tool{border-style:dashed;color:var(--ink-faint)}
-#mx-ph-new{flex:1 1 140px;min-width:0;height:26px;padding:0 10px;border-radius:13px;border:1px solid rgba(150,55,46,.45);
-  background:rgba(255,252,244,.7);color:var(--ink);font:12px var(--font-sans);outline:none}
-#mx-hist{display:flex;flex-direction:column;gap:4px;margin:6px 0 2px;padding:8px;border-radius:4px;border:1px dashed rgba(120,88,40,.35);max-height:150px;overflow-y:auto}
-#mx-hist[hidden]{display:none}
-.mx-hist-h{font:10.5px var(--font-sans);letter-spacing:.1em;color:var(--ink-faint)}
-#mx-hist button{text-align:left;padding:5px 8px;border-radius:3px;border:1px solid transparent;background:rgba(255,252,244,.5);color:var(--ink-soft);
-  font:12.5px/1.6 var(--font-serif);cursor:pointer}
-@media (hover:hover){#mx-hist button:hover{border-color:rgba(150,55,46,.4)}}
+
 
 /* ── 紫曜夜读 ── */
 html[data-mdx-theme="night"] #mx-read{background:linear-gradient(180deg,rgba(33,18,52,.92),rgba(15,8,23,.95));border-color:var(--nt-hair-strong);color:var(--gilt)}
 html[data-mdx-theme="night"] #mx-read-pop{background:linear-gradient(176deg,#21123a,#120a1d);border-color:var(--nt-hair-strong);box-shadow:var(--nt-float)}
-html[data-mdx-theme="night"] :is(.mx-rp-row button,.mx-rp-foot button,#mx-toc-q,.mx-tools .mx-q,.mx-jp input,.mx-ph,#mx-ph-new,#mx-hist button,.mx-dr){
+html[data-mdx-theme="night"] :is(.mx-rp-row button,.mx-rp-foot button,#mx-toc-q,.mx-tools .mx-q,.mx-jp input,.mx-dr){
   background:rgba(20,11,34,.6);border-color:var(--nt-hair-strong);color:var(--ink-soft)}
-html[data-mdx-theme="night"] :is(#mx-toc-q,.mx-tools .mx-q,#mx-ph-new):focus{border-color:var(--nt-rose)}
-html[data-mdx-theme="night"] :is(.mx-rp-foot,.mx-ref,#mx-hist){border-color:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] :is(#mx-toc-q,.mx-tools .mx-q):focus{border-color:var(--nt-rose)}
+html[data-mdx-theme="night"] :is(.mx-rp-foot,.mx-ref){border-color:var(--nt-hair-strong)}
 html[data-mdx-theme="night"] .mx-bprog,html[data-mdx-theme="night"] .mx-qbar{background:var(--nt-hair)}
 html[data-mdx-theme="night"] .ti-hit mark{background:var(--nt-rose-dim);color:var(--cinnabar-hi)}
 html[data-mdx-theme="night"] .mx-q0{--qc:#a99ab8}html[data-mdx-theme="night"] .mx-q1{--qc:#ddd2e8}
@@ -14149,7 +14128,7 @@ html[data-mdx-theme="night"] .mx-quest.mx-fresh::after{box-shadow:0 0 0 2px rgba
   .ti-star{width:32px;height:32px}
 }
 @media (prefers-reduced-motion:reduce){
-  #mx-read,#mx-read-pop,.ti-star,.mx-fold::before,.mx-ref > summary::before,.mx-ph{transition:none}
+  #mx-read,#mx-read-pop,.ti-star,.mx-fold::before,.mx-ref > summary::before{transition:none}
   .mx-quest.mx-fresh::after{animation:none;opacity:1}
 }
 `;
