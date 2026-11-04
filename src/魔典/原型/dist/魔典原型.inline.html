@@ -11182,6 +11182,13 @@ function stepCrumbs(){
   }).join('')}</nav>`;
 }
 
+/* [修改 33a] 进阶设定（等级 / 信仰 / 资质）折叠后标题旁的摘要 */
+function advSummary(){
+  const lv = R.pLevel ? String(R.pLevel) : '等级未定';
+  const fa = faithText() || '信仰未定';
+  const ap = R.apt || {};
+  return lv+' · '+fa+' · 灵感'+ap.ling+' 魅力'+ap.mei+' 体质'+ap.ti+' 信仰'+ap.xin;
+}
 function bodyStep0(){
   const toneChosen = R.tone && R.tone!=='custom';
   return `
@@ -11210,6 +11217,9 @@ function bodyStep0(){
     <label class="wide">服装<input data-hero="outfit" type="text" value="${esc(R.hero.outfit)}" placeholder="当前衣着，留空由AI按设定拟定"></label>
     <label class="wide">行囊<textarea data-hero="inventory" rows="3" placeholder="随身之物与资产——原文档照搬，留空由AI按设定拟定">${esc(R.hero.inventory)}</textarea></label>
   </div>
+  <div class="rit-adv${R.advOpen?' open':''}"><!-- [修改 33a] 进阶设定折叠区 -->
+  <button type="button" class="rit-adv-head" data-adv-toggle aria-expanded="${R.advOpen?'true':'false'}"><b>进阶设定</b><span class="rit-adv-sum">${esc(advSummary())}</span><em>${R.advOpen?'收起':'展开'}</em></button>
+  <div class="rit-adv-body">
   <div class="sec-title">初始等级</div>
   <div class="rit-hintbar"><p class="rit-hint">T1平民阶 · T2正规阶 · T3精锐阶 · T4英杰阶 · T5英雄阶 · T6传说阶（无神力者天花板）· T7神话阶 · T8权柄阶 · T9半神阶（魔王位标准线）· T10神阶 · T11神王阶（当前世界现存0）。全大陆共220级、每阶约20级，所选档位即该阶起点级；阶内另有初期/中期/后期/巅峰四段成长。</p></div>
   <div class="rchip-row">${LEVEL_PRESETS.map((o,ix)=>`<button class="rchip${(R.pLevel||'')===o?' on':''}" data-pl="${ix}">${'T'+(ix+1)+' / '+o}</button>`).join('')}</div>
@@ -11236,7 +11246,8 @@ function bodyStep0(){
         : `<button class="ra-btn" data-apt="${k}" data-d="-1" ${R.apt[k]<=APT_MIN[k]?'disabled':''}>−</button>
            <span class="ra-val">${R.apt[k]}</span>
            <button class="ra-btn" data-apt="${k}" data-d="1" ${R.apt[k]>=20||aptSum()>=APT_POOL||(k==='xin'&&R.faith==='none')?'disabled':''}>＋</button>`}
-    </div>`).join('')}`;
+    </div>`).join('')}
+  </div></div>`;
 }
 function raceCatOf(race){
   for(const c of RACE_CATS){ if(c.items.indexOf(race)>=0) return c.cat; }
@@ -11353,6 +11364,37 @@ function heroinesHtml(){
 }
 
 function bondEntry(id){ return R.bonds.get(id) || {rel:null,dir:null,catOpen:null}; }
+/* [修改 33j] 宿命羁绊 · 自定义角色的种族点选（独立的检索词 / 展开状态，不影响主角种族） */
+function cnpRaceListed(r){ return r==='人类男性' || r==='人类女性' || !!raceCatOf(r); }
+function cnpRaceLabel(){
+  const r = (R.cnp.race||'').trim();
+  if(!r) return R.cnpRaceCustom ? '自定义 · 在下方填写' : '未选 · 由 AI 拟定';
+  const c = raceCatOf(r);
+  return '已择 '+r+(c?' · '+c:'');
+}
+function cnpRaceHit(r){
+  const q = (R.cnpRaceQ||'').toLowerCase();
+  return !q || r.toLowerCase().indexOf(q)>=0 || (RACE_ALIAS[r]||'').toLowerCase().indexOf(q)>=0;
+}
+function cnpRaceShown(){ return RACE_CATS.reduce((s,c)=>s+c.items.filter(cnpRaceHit).length,0); }
+function cnpRaceAccHtml(){
+  const q = (R.cnpRaceQ||'').toLowerCase();
+  return RACE_CATS.map((c,ci)=>{
+    const matches = c.items.filter(cnpRaceHit);
+    if(q && !matches.length) return '';
+    const hasSel = !!R.cnp.race && c.items.indexOf(R.cnp.race)>=0;
+    const open = !!q || (R.cnpAcc!=null ? R.cnpAcc===ci : false);
+    let lastFam = '';
+    const rows = open ? matches.map(r=>{
+      const f = RACE_FAM[r]||'';
+      const head = (f && f!==lastFam) ? ((lastFam=f), '<div class="race-fam">'+esc(f)+'</div>') : '';
+      const tip = RACE_ALIAS[r] ? ' title="别名：'+esc(RACE_ALIAS[r])+'"' : '';
+      return head+'<button type="button" class="race-item'+(R.cnp.race===r?' sel':'')+'" data-cnprace="'+esc(r)+'"'+tip+'>'+esc(r)+'</button>';
+    }).join('') : '';
+    return `<button type="button" class="race-cat${open?' open':''}${hasSel?' has':''}" data-cnprcat="${ci}">${esc(c.cat)} (${matches.length})${hasSel?' ✦':''}</button>
+      <div class="race-items">${rows}</div>`;
+  }).join('');
+}
 function bodyNpc(){
   const max = MAX_BONDS;
   const items = allBonds().map(npc=>{
@@ -11363,6 +11405,7 @@ function bodyNpc(){
         <span class="bnd-nm">${esc(npc.n)}</span><span class="bnd-rc">${esc(npc.rc||'')}</span>
         <span class="bnd-rc is-custom">${npc.rand?'随机':'自定义'}</span>
         ${entry&&entry.rel?`<span class="bnd-rel">${esc(entry.rel.n)}${entry.dir?(' · '+esc(entry.dir.n)):''}</span>`:''}
+        <button type="button" class="bnd-edit" data-editnpc="${esc(npc.id)}">✎ 修改</button><!-- [修改 33k] -->
         <button class="bnd-del" data-delnpc="${esc(npc.id)}">✕ 移除</button>
       </div>
       ${npc.d?`<div class="bnd-desc">${esc(npc.d)}</div>`:''}
@@ -11379,10 +11422,23 @@ function bodyNpc(){
   ${R.customNpcForm?`
   <div class="rit-form cwrap">
     <label>名字<input data-cnp="name" type="text" value="${esc(R.cnp.name)}" placeholder="？？？（由AI命名）"></label>
-    <label>种族<input data-cnp="race" type="text" value="${esc(R.cnp.race)}" placeholder="可填 人类 / 任意图鉴种族；未知即由AI拟定"></label>
-    <label class="wide">快捷种族<span class="cnp-qrace"><button type="button" class="rchip" data-cnpq="人类">人类</button><button type="button" class="rchip" data-cnpq="人类女性">人类女性</button><button type="button" class="rchip" data-cnpq="魔物娘（种族由AI拟）">魔物娘</button><button type="button" class="rchip" data-cnpq="精灵">精灵</button><button type="button" class="rchip" data-cnpq="兽人">兽人</button><button type="button" class="rchip" data-cnpq="不死族">不死族</button></span></label>
+    <div class="cnp-race"><!-- [修改 33j] 种族改成和选角一样点选：人类男性 / 人类女性 + 全部图鉴种族；自定义才手填 -->
+      <div class="cnp-race-h">种族<span class="rit-pool">${esc(cnpRaceLabel())}</span></div>
+      <div class="rchip-row cnp-qrace">
+        <button type="button" class="rchip${R.cnp.race==='人类男性'?' on':''}" data-cnpq="人类男性">人类男性</button>
+        <button type="button" class="rchip${R.cnp.race==='人类女性'?' on':''}" data-cnpq="人类女性">人类女性</button>
+        <button type="button" class="rchip${R.cnpRaceCustom?' on':''}" data-cnpq="__custom__">自定义种族</button>
+        <button type="button" class="rchip${!R.cnp.race&&!R.cnpRaceCustom?' on':''}" data-cnpq="">交给 AI</button>
+      </div>
+      ${R.cnpRaceCustom?`<input data-cnp="race" type="text" value="${esc(R.cnp.race)}" placeholder="写下种族，例：堕落天使与人类的混血">`:''}
+      <div class="dw-searchbar"><input id="cnp-race-q" type="text" value="${esc(R.cnpRaceQ||'')}" placeholder="检索魔物娘种族……"><span class="rchip-hint">${esc(cnpRaceShown())} / ${esc(String(raceTotal()))}</span></div>
+      <div class="race-acc">${cnpRaceAccHtml()}</div>
+    </div>
     <label class="wide">形象/备注<textarea data-cnp="desc" rows="3" placeholder="外貌与来历的线索，可多行书写，AI 据此补全">${esc(R.cnp.desc)}</textarea></label>
-    <div class="rchip-row"><button type="button" class="rchip rit-enter-mini" id="cnp-add" ${R.bonds.size>=max?'disabled':''}>加入羁绊列表</button></div>
+    <div class="rchip-row"><!-- [修改 33k] 编辑已加入的角色时改为「保存修改」 -->
+      <button type="button" class="rchip rit-enter-mini" id="cnp-add" ${R.bonds.size>=max&&!R.cnpEdit?'disabled':''}>${R.cnpEdit?'保存修改':'加入羁绊列表'}</button>
+      ${R.cnpEdit?'<button type="button" class="rchip" id="cnp-cancel">取消修改</button>':''}
+    </div>
   </div>`:''}
   ${items || `<div class="empty-note">（还没有羁绊角色——添加一位自定义角色，或让命运随机一位）</div>`}
   <div class="chip-row">${[...R.bonds].map(([id,entry])=>{
@@ -11794,6 +11850,14 @@ function renderRitual(keepScroll){
     else R.race = b.dataset.race;
     renderRitual(true);
   }));
+  /* [修改 33a] 进阶设定折叠：只切 class，不重绘（保滚动和输入焦点） */
+  const advBtn = rit.querySelector('[data-adv-toggle]');
+  if(advBtn) advBtn.addEventListener('click', ()=>{
+    R.advOpen = !R.advOpen;
+    advBtn.closest('.rit-adv').classList.toggle('open', R.advOpen);
+    advBtn.setAttribute('aria-expanded', R.advOpen ? 'true' : 'false');
+    advBtn.querySelector('em').textContent = R.advOpen ? '收起' : '展开';
+  });
   /* 快速重掷 / 资质 / 等级 */
   const rr = rit.querySelector('#rit-reroll');
   if(rr) rr.addEventListener('click', ()=>{ autoFill(R.tone); renderRitual(true); });
@@ -11879,16 +11943,52 @@ function renderRitual(keepScroll){
   }));
   /* 自定义/随机 NPC */
   const cnpT = rit.querySelector('#cnp-toggle');
-  if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; renderRitual(true); });
+  if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; if(!R.customNpcForm){ R.cnpEdit=null; R.cnpRaceCustom=false; } renderRitual(true); });   // [修改 33k] 收起表单即放弃修改
   rit.querySelectorAll('[data-cnp]').forEach(el=>el.addEventListener('input', ()=>{ R.cnp[el.dataset.cnp]=el.value; }));
-  rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{ R.cnp.race=el.dataset.cnpq; renderRitual(true); }));
+  /* [修改 33j] 种族点选：人类男女 / 自定义 / 交给 AI；图鉴种族走手风琴 */
+  rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{
+    const v = el.dataset.cnpq;
+    if(v==='__custom__'){ if(!R.cnpRaceCustom && cnpRaceListed(R.cnp.race)) R.cnp.race=''; R.cnpRaceCustom=true; }
+    else { R.cnpRaceCustom=false; R.cnp.race=v; }
+    renderRitual(true);
+  }));
+  rit.querySelectorAll('[data-cnprcat]').forEach(b=>b.addEventListener('click', ()=>{
+    const ci=+b.dataset.cnprcat; R.cnpAcc = (R.cnpAcc===ci?null:ci); renderRitual(true);
+  }));
+  rit.querySelectorAll('[data-cnprace]').forEach(b=>b.addEventListener('click', ()=>{
+    R.cnpRaceCustom=false; R.cnp.race=b.dataset.cnprace; renderRitual(true);
+  }));
+  /* [修改 33k] 已加入的自定义 / 随机角色可回到表单修改，关系设定保留 */
+  rit.querySelectorAll('[data-editnpc]').forEach(b=>b.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const npc=allBonds().find(n=>n.id===b.dataset.editnpc); if(!npc) return;
+    const rc = npc.rc==='未知' ? '' : (npc.rc||'');
+    R.cnp={ name: /^？？？/.test(npc.n||'') ? '' : (npc.n||''), race: rc, desc: npc.d||'' };
+    R.cnpRaceCustom = !!rc && !cnpRaceListed(rc);
+    R.cnpAcc = raceCatOf(rc) ? RACE_CATS.findIndex(c=>c.items.indexOf(rc)>=0) : null;
+    R.cnpRaceQ=''; R.cnpEdit=npc.id; R.customNpcForm=true;
+    renderRitual(true);
+    const f = rit.querySelector('.cnp-race'); if(f) f.closest('.rit-form').scrollIntoView({block:'start', behavior:'smooth'});
+  }));
+  const cnpCancel = rit.querySelector('#cnp-cancel');
+  if(cnpCancel) cnpCancel.addEventListener('click', ()=>{
+    R.cnpEdit=null; R.cnpRaceCustom=false; R.cnp={name:'',race:'',desc:''}; R.customNpcForm=false; renderRitual(true);
+  });
   const cnpAdd = rit.querySelector('#cnp-add');
   if(cnpAdd) cnpAdd.addEventListener('click', ()=>{
-    if(R.bonds.size>=MAX_BONDS){ notify('宿命羁绊至多 '+MAX_BONDS+' 位','warn',3000); return; }
-    const npc={id:'c'+Date.now(),n:(R.cnp.name||'').trim()||'？？？（由AI命名）',rc:(R.cnp.race||'').trim()||'未知',d:(R.cnp.desc||'').trim(),custom:true,cat:'自定义'};
-    R.customNpcs.push(npc);
-    R.bonds.set(npc.id,{npc:npc,rel:null,dir:null,catOpen:null});
-    R.cnp={name:'',race:'',desc:''}; R.customNpcForm=false;
+    const nm=(R.cnp.name||'').trim()||'？？？（由AI命名）', rc=(R.cnp.race||'').trim()||'未知', ds=(R.cnp.desc||'').trim();
+    const old = R.cnpEdit ? allBonds().find(n=>n.id===R.cnpEdit) : null;
+    if(old){
+      old.n=nm; old.rc=rc; old.d=ds; old.rand=false;
+      const e=R.bonds.get(old.id); if(e) e.npc=old;
+      notify('已修改：'+nm,'gild',2200);
+    } else {
+      if(R.bonds.size>=MAX_BONDS){ notify('宿命羁绊至多 '+MAX_BONDS+' 位','warn',3000); return; }
+      const npc={id:'c'+Date.now(),n:nm,rc:rc,d:ds,custom:true,cat:'自定义'};
+      R.customNpcs.push(npc);
+      R.bonds.set(npc.id,{npc:npc,rel:null,dir:null,catOpen:null});
+    }
+    R.cnp={name:'',race:'',desc:''}; R.cnpEdit=null; R.cnpRaceCustom=false; R.cnpRaceQ=''; R.customNpcForm=false;
     renderRitual(true);
   });
   const randNpc = rit.querySelector('#bond-rand-npc');
@@ -11911,6 +12011,7 @@ function renderRitual(keepScroll){
     el.addEventListener('compositionend', ()=>{ set(el.value); rerenderKeepFocus(el.id, el); });
   };
   imeBind(rit.querySelector('#race-q'), v=>{ R.raceQ=v; });
+  imeBind(rit.querySelector('#cnp-race-q'), v=>{ R.cnpRaceQ=v; });   // [修改 33j] 羁绊角色种族检索
   /* 存档 / 重置 */
   const ps = rit.querySelector('#prof-save'); if(ps) ps.addEventListener('click', profileSave);
   const pl = rit.querySelector('#prof-load'); if(pl) pl.addEventListener('click', ()=>profileLoad(0));
@@ -13174,6 +13275,171 @@ html[data-mdx-theme="night"] .await-btn.go{border-color:var(--nt-rose);color:var
 /* [修改 32e] 信笺打开时隐藏右下 Aa 与左下书本圆钮（均 body 直挂，:has 同库已有先例） */
 body:has(#letter.open) #mx-read{opacity:0;pointer-events:none}
 body:has(#letter.open) #mdx-theme-toggle{opacity:0;pointer-events:none}
+/* [修改 33a] 进阶设定折叠区 */
+.rit-adv{margin:16px 0 6px;border:1px solid rgba(120,96,56,.38);border-radius:5px;background:rgba(255,253,246,.22)}
+.rit-adv-head{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;background:none;border:none;cursor:pointer;text-align:left;font-family:var(--font-sans);color:var(--ink-soft)}
+.rit-adv-head b{flex:none;font-size:13px;font-weight:600;letter-spacing:.2em;color:var(--ink)}
+.rit-adv-sum{flex:1;min-width:0;font-size:12px;letter-spacing:.04em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rit-adv-head em{flex:none;font-style:normal;font-size:12px;letter-spacing:.14em;color:var(--cinnabar)}
+.rit-adv-body{padding:0 14px 12px}
+.rit-adv:not(.open) .rit-adv-body{display:none}
+html[data-mdx-theme="night"] .rit-adv{background:rgba(20,11,34,.45);border-color:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] .rit-adv-head em{color:var(--nt-rose)}
+/* [修改 33b] 手机字号下限 11px（拉丁装饰字、箭头、雷达图标签不在此列） */
+@media (max-width:760px){
+.preset-note .pn-label,
+.note-slip .ns-seg-tag,
+.let-count,
+.ti-num,
+.cm-name span,
+.cj-mods i,
+.cm-risk,
+.cm-act-name i,
+.choice-slip .cs-tag,
+.init-badge,
+.dex-cell .dc-bond,
+.cameo-sub,
+.ds-met,
+.as-no,
+.dw-foldbar .dfb-note,
+.dw-cat-h .dc-n,
+.dex-slot .ds-no,
+.nf-lab em,
+.nf-hint,
+.nrt-hint,
+.nrt-ccount,
+.nf-drul,
+.nf-ai,
+.nf-row .nr-keys,
+.dex-lock .dl-note,
+.dl-badge,
+.dw-no,
+.wv-tag,
+.wv-src,
+.hs-pending,
+.bond-tag,
+.race-fam,
+.sc-lab em,
+.sc-hint,
+.sc-cur .sc-pill{font-size:11px !important}
+}
+/* [修改 33c] 自定义等级一行：原规则写成 .lv-label .lv-wrap，但 label 上没有 lv-label 这个 class，从未生效——输入框被挤成小方块、「随」掉到下一行 */
+.rit-form .lv-wrap{display:flex;gap:7px;align-items:center}
+.rit-form .lv-wrap input{flex:1;min-width:0}
+/* ══════════ [修改 33] 手机界面美化（浮钮避让 / 装饰减噪 / 空栏压缩 / 仪典排版 / 溢出修复 / 底栏 / 动效减负） ══════════ */
+
+/* 33d 弹页、仪典打开时收起左下主题钮、右侧 Aa 钮与全屏钮——它们压在内容上，挡住数值、输入框和「改」按钮 */
+@media (max-width:760px){
+  html.mx33-sheet :is(#mdx-theme-toggle,#mx-read,#mx-read-pop,.fs-toggle){opacity:0 !important;visibility:hidden !important;pointer-events:none !important}
+}
+
+/* 33e 夜读装饰减噪：插页与仪典的大法环只在标题栏下沿露一道弧；去掉压在小标题上的四个菱形和落在正文上的两颗星（书页本体不变） */
+html[data-mdx-theme="night"] :is(.insert){
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 44 V14 Q3 3 14 3 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 44 V17 Q9 9 17 9 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 12 L18 16 L14 20 L10 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 44 V14 Q41 3 30 3 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 44 V17 Q35 9 27 9 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 12 L26 16 L30 20 L34 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top right/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 0 V30 Q3 41 14 41 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 0 V27 Q9 35 17 35 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 24 L18 28 L14 32 L10 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 0 V30 Q41 41 30 41 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 0 V27 Q35 35 27 35 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 24 L26 28 L30 32 L34 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom right/44px 44px no-repeat,
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><circle cx='100' cy='100' r='96' fill='none' stroke='rgba(190,130,255,.24)' stroke-width='1'/><circle cx='100' cy='100' r='86' fill='none' stroke='rgba(190,130,255,.12)' stroke-width='1'/></svg>") center -268px/340px no-repeat,
+    radial-gradient(ellipse at 22% 0%,rgba(180,120,255,.2),transparent 55%),
+    radial-gradient(ellipse at 82% 100%,rgba(255,95,174,.11),transparent 52%),
+    linear-gradient(180deg,#1d1133 0%,#0e0719 55%,#070310 100%) !important;
+}
+html[data-mdx-theme="night"] :is(.ritual){
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 44 V14 Q3 3 14 3 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 44 V17 Q9 9 17 9 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 12 L18 16 L14 20 L10 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 44 V14 Q41 3 30 3 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 44 V17 Q35 9 27 9 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 12 L26 16 L30 20 L34 16 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") top right/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M3 0 V30 Q3 41 14 41 H44' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M9 0 V27 Q9 35 17 35 H44' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M14 24 L18 28 L14 32 L10 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom left/44px 44px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M41 0 V30 Q41 41 30 41 H0' fill='none' stroke='rgba(233,201,140,.7)' stroke-width='1.2'/%3E%3Cpath d='M35 0 V27 Q35 35 27 35 H0' fill='none' stroke='rgba(233,201,140,.32)' stroke-width='1'/%3E%3Cpath d='M30 24 L26 28 L30 32 L34 28 Z' fill='%23a94dff' stroke='%23dcb8ff' stroke-width='.8'/%3E%3C/svg%3E") bottom right/44px 44px no-repeat,
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><circle cx='100' cy='100' r='96' fill='none' stroke='rgba(190,130,255,.24)' stroke-width='1'/><circle cx='100' cy='100' r='86' fill='none' stroke='rgba(190,130,255,.12)' stroke-width='1'/></svg>") center -206px/340px no-repeat,
+    radial-gradient(ellipse at 22% 0%,rgba(180,120,255,.2),transparent 55%),
+    radial-gradient(ellipse at 82% 100%,rgba(255,95,174,.11),transparent 52%),
+    linear-gradient(180deg,#1d1133 0%,#0e0719 55%,#070310 100%) !important;
+}
+
+/* 33f 空状态：插页 / 仪典里改成一行浅色提示，不再是带插画的虚线大框；连续空栏由脚本合并成「暂无：A、B」一行 */
+:is(.insert,.ritual) .empty-note{margin:6px 0 12px;padding:9px 12px;border:none;border-left:2px solid rgba(96,66,28,.32);border-radius:0 4px 4px 0;
+  background:rgba(96,66,28,.06);font-size:12.5px;line-height:1.6;letter-spacing:.06em;text-align:left}
+html:not([data-mdx-off~="empty"]) :is(.insert,.ritual) .empty-note::before{content:none;display:none}
+html[data-mdx-theme="night"] :is(.insert,.ritual) .empty-note{background:rgba(190,130,255,.06) !important;border:none !important;border-left:2px solid rgba(190,130,255,.38) !important;box-shadow:none !important}
+.mx33-merged{display:none !important}
+.mx33-empty-group b{font-weight:700;margin-right:8px;letter-spacing:.2em;color:var(--gilt-dim)}
+html[data-mdx-theme="night"] .mx33-empty-group b{color:var(--gilt)}
+
+@media (max-width:560px){
+  /* 33g 仪典手机排版：步骤条只给当前步写字，其余缩成罗马数字圆点，不再被截成半个字 */
+  .rit-crumbs{gap:3px}
+  .rc-step:not(.on){font-size:0;gap:0;padding:4px 2px}
+  .rc-step:not(.on) em{font-size:10.5px}
+  .rc-sep{width:10px}
+  /* 心界住民：单列，未选中只露两行简介，选中后展开全文 */
+  .rit-grid:has(> .rit-opt[data-g="companion"]){grid-template-columns:1fr}
+  .rit-opt[data-g="companion"]:not(.sel) i{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  /* 宿命羁绊：两颗按钮横排到说明下面，不再挤成三行竖字 */
+  .rit-hintbar{flex-direction:column;align-items:stretch;gap:2px}
+  .rit-hintbar .rchip-row{flex-wrap:nowrap}
+  .rit-hintbar .rchip{flex:1 1 0;justify-content:center;text-align:center;white-space:nowrap}
+
+  /* 33h 溢出修复：卷册删改整页超出右缘；图鉴搜索栏的三颗排序钮被截断 */
+  .sc-grid{grid-template-columns:minmax(0,1fr)}
+  .sc-card{min-width:0}
+  .sc-chapters{flex-wrap:wrap}
+  .dw-searchbar{flex-wrap:wrap}
+  .dw-searchbar input{flex:1 1 100%;min-width:0}
+  .dw-searchbar .dw-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+  .dw-searchbar .dw-tab{width:100%}
+}
+
+/* 33i 手机底栏：12 枚书签收成 5 枚常用 + 「更多」，带文字、每枚约 65px 宽；其余 7 枚进「更多」面板 */
+#mx33-more-btn{display:none}
+html.mx33-dock #mx33-more-btn{display:flex}
+html.mx33-dock #tome nav.thumb-tabs .thumb-tab.mx33-sec{display:none !important}
+html.mx33-dock #tome nav.thumb-tabs{overflow:visible}
+html.mx33-dock #tome nav.thumb-tabs::before,html.mx33-dock #tome nav.thumb-tabs::after{display:none !important}
+html.mx33-dock #tome nav.thumb-tabs .thumb-tab{flex:1 1 0 !important;width:auto !important;min-width:0 !important;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+html.mx33-dock #tome nav.thumb-tabs .thumb-tab span{display:block !important;writing-mode:horizontal-tb;font-size:11px;line-height:1;letter-spacing:.12em;text-shadow:none;white-space:nowrap}
+#mx33-more-veil{position:fixed;inset:0;z-index:3004;display:none}
+#mx33-more-veil.open{display:block}
+#mx33-more{position:fixed;left:10px;right:10px;z-index:3005;display:none;padding:12px 12px 14px;border-radius:14px;
+  background:linear-gradient(176deg,#F7F1E1,#E9DDC0);border:1px solid rgba(120,88,40,.5);box-shadow:0 16px 34px rgba(30,20,10,.38);color:var(--ink)}
+#mx33-more.open{display:block;animation:mx33Up .18s ease-out}
+.mx33-more-h{margin:0 4px 10px;font-size:12px;letter-spacing:.3em;color:var(--ink-faint)}
+.mx33-more-g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mx33-more-i{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 2px 10px;border-radius:10px;border:1px solid rgba(120,88,40,.3);
+  background:rgba(255,252,242,.62);color:var(--ink);font:inherit;font-size:12px;letter-spacing:.1em;cursor:pointer}
+.mx33-more-i svg{width:20px;height:20px}
+.mx33-more-i.active{border-color:var(--cinnabar);color:var(--cinnabar)}
+html[data-mdx-theme="night"] #mx33-more{background:linear-gradient(160deg,rgba(40,20,66,.98),rgba(14,7,25,.98));border-color:rgba(233,201,140,.42);box-shadow:0 18px 40px rgba(0,0,0,.6)}
+html[data-mdx-theme="night"] .mx33-more-h{color:var(--gilt-dim)}
+html[data-mdx-theme="night"] .mx33-more-i{background:rgba(255,255,255,.04);border-color:rgba(200,160,255,.22);color:var(--ink)}
+html[data-mdx-theme="night"] .mx33-more-i.active{border-color:var(--gilt);color:var(--gilt-hi)}
+@keyframes mx33Up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion:reduce){#mx33-more.open{animation:none}}
+
+/* [修改 33j] 宿命羁绊 · 自定义角色种族点选 */
+.rit-form .cnp-race{grid-column:1/-1;min-width:0}
+.cnp-race-h{font-size:13px;letter-spacing:.12em;color:var(--ink-soft);margin-bottom:6px;font-family:var(--font-sans)}
+.cnp-race-h .rit-pool{margin-left:10px;font-weight:400}
+.cnp-race .cnp-qrace{margin:0 0 8px}
+.cnp-race > input[data-cnp="race"]{width:100%;margin:0 0 8px}
+.cnp-race .race-acc{max-height:340px;overflow:auto;overscroll-behavior:contain;padding-right:2px}
+/* [修改 33k] 修改按钮 */
+.bnd-edit{margin-left:auto;background:none;border:none;font-family:var(--font-serif);font-size:11.5px;color:var(--gilt-dim);letter-spacing:.1em;cursor:pointer;padding:2px 4px}
+.bnd-edit:hover{text-decoration:underline;color:var(--ink)}
+.bnd-edit + .bnd-del{margin-left:0}
+html[data-mdx-theme="night"] .bnd-edit{color:var(--nt-gilt-dim)}
+
+/* [修改 33l] 电脑端排版：仪典步骤条一行放下六步（原来「Ⅵ 启程」掉到第二行）；
+   行囊等左侧插页原来按内容收缩、只有书页四成宽，字挤在一条窄栏里，改成固定宽度 */
+@media (min-width:761px){
+  .rit-crumbs{flex-wrap:nowrap;gap:4px}
+  .rc-step{letter-spacing:.08em;padding:4px 6px;white-space:nowrap}
+  .rc-sep{width:16px;flex:none}
+  .insert.from-left{width:min(520px,68%)}
+}
+/* [修改 33l] 夜读：仪典里的小表单（自定义角色 / 地点 / 身份）原来是浅灰底，和夜读不搭 */
+html[data-mdx-theme="night"] .rit-form.cwrap{background:rgba(20,11,34,.5);border-color:var(--nt-hair-strong)}
 </style>
 <script data-modian-inline="detail.js">
 /* 魔典-细节 v1 — 放在魔典全部脚本之后。一个 MutationObserver（rAF 合帧），不开轮询。
@@ -14861,6 +15127,147 @@ function boot(){
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 
+</script>
+<script>
+/* [修改 33] 手机界面美化：33d 浮钮避让 / 33f 连续空栏合并 / 33i 底栏 5 枚 + 更多 */
+(function(){
+  const root = document.documentElement;
+  const mq = window.matchMedia('(max-width:560px)');
+  const PRIMARY = ['toc-tab','dex','quill-tab','home','sarcina'];   // 手机底栏常驻的 5 枚，其余进「更多」
+  const keyOf = b => b.id || b.dataset.mod || '';
+  let moreBtn = null, pop = null, veil = null;
+
+  /* 33d：插页或仪典打开时给 <html> 挂 mx33-sheet，CSS 据此收起三颗浮钮 */
+  function syncSheet(){
+    const ins = document.getElementById('insert'), tome = document.getElementById('tome');
+    const on = !!((ins && ins.classList.contains('open')) || (tome && tome.classList.contains('rit-on')));
+    root.classList.toggle('mx33-sheet', on);
+    if(on) closeMore();
+    syncMoreActive();
+  }
+
+  /* 33f：插页 / 仪典里「小标题 + 空提示」连续出现两组以上时，合并成一行「暂无：A、B」（原节点只隐藏不删除） */
+  function titleText(t){
+    const s = [...t.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
+    return s || t.textContent.trim();
+  }
+  function mergeEmpty(){
+    document.querySelectorAll('#insert .insert-body, #tome .rit-body').forEach(body => {
+      /* [修改 33f] 先只读不写：算出该合并的连续空栏，和上次结果相同就什么都不动。
+         否则每次重排都会删掉再插回合并行 → 触发自己的 MutationObserver → 下一帧再排，
+         插页开着时每秒约 660 次 DOM 变动（实测），手机发热耗电 */
+      const plan = [];
+      { const ks = [...body.children].filter(n => !n.classList.contains('mx33-empty-group')); let cur = [];
+        for(let i = 0; i < ks.length; i++){
+          const t = ks[i], n = ks[i + 1];
+          if(t.classList.contains('sec-title') && n && n.classList.contains('empty-note')){ cur.push(titleText(t)); i++; }
+          else { if(cur.length >= 2) plan.push(cur.join('、')); cur = []; }
+        }
+        if(cur.length >= 2) plan.push(cur.join('、')); }
+      const sig = plan.join('|');
+      const have = body.querySelectorAll(':scope > .mx33-empty-group').length;
+      if(body.__mx33sig === sig && have === plan.length) return;
+      body.__mx33sig = sig;
+      body.querySelectorAll(':scope > .mx33-empty-group').forEach(n => n.remove());
+      body.querySelectorAll(':scope > .mx33-merged').forEach(n => n.classList.remove('mx33-merged'));
+      const kids = [...body.children];
+      let run = [];
+      const flush = () => {
+        if(run.length >= 2){
+          const g = document.createElement('div');
+          g.className = 'empty-note mx33-empty-group';
+          g.innerHTML = '<b>暂无</b>';
+          g.appendChild(document.createTextNode(run.map(p => titleText(p[0])).join('、')));
+          body.insertBefore(g, run[0][0]);
+          run.forEach(p => { p[0].classList.add('mx33-merged'); p[1].classList.add('mx33-merged'); });
+        }
+        run = [];
+      };
+      for(let i = 0; i < kids.length; i++){
+        const t = kids[i], n = kids[i + 1];
+        if(t.classList.contains('sec-title') && n && n.classList.contains('empty-note') && !n.classList.contains('mx33-empty-group')){
+          run.push([t, n]); i++;
+        } else flush();
+      }
+      flush();
+    });
+  }
+
+  /* 33i：手机横向底栏（书签栏带 rail-h 类时）只留 5 枚常用，其余收进「更多」面板；面板里的按钮转点原书签，原有逻辑不变 */
+  function navs(){ return [...document.querySelectorAll('#tome nav.thumb-tabs')]; }
+  function closeMore(){
+    if(pop) pop.classList.remove('open');
+    if(veil) veil.classList.remove('open');
+    if(moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+  }
+  function syncMoreActive(){
+    if(moreBtn) moreBtn.classList.toggle('active', !!document.querySelector('#tome .thumb-tab.mx33-sec.active'));
+  }
+  function openMore(){
+    if(!pop){
+      veil = document.createElement('div'); veil.id = 'mx33-more-veil';
+      veil.addEventListener('click', closeMore);
+      pop = document.createElement('div'); pop.id = 'mx33-more'; pop.setAttribute('role', 'menu'); pop.setAttribute('aria-label', '更多书签');
+      document.body.append(veil, pop);
+    }
+    pop.innerHTML = '<div class="mx33-more-h">更多书签</div><div class="mx33-more-g"></div>';
+    const grid = pop.lastChild;
+    document.querySelectorAll('#tome .thumb-tab.mx33-sec').forEach(b => {
+      const it = document.createElement('button');
+      it.type = 'button'; it.setAttribute('role', 'menuitem');
+      it.className = 'mx33-more-i' + (b.classList.contains('active') ? ' active' : '');
+      const svg = b.querySelector('svg'), lab = b.querySelector('span');
+      it.innerHTML = svg ? svg.outerHTML : '';
+      const s = document.createElement('span'); s.textContent = lab ? lab.textContent : (b.getAttribute('aria-label') || '');
+      it.appendChild(s);
+      it.addEventListener('click', () => { closeMore(); b.click(); });
+      grid.appendChild(it);
+    });
+    const r = moreBtn.getBoundingClientRect();
+    pop.style.bottom = Math.max(8, window.innerHeight - r.top + 8) + 'px';
+    pop.classList.add('open'); veil.classList.add('open');
+    moreBtn.setAttribute('aria-expanded', 'true');
+  }
+  function dock(){
+    const ns = navs(); if(!ns.length) return;
+    const on = mq.matches && ns.some(n => /(^|\s)rail-h/.test(n.className));
+    root.classList.toggle('mx33-dock', on);
+    if(!moreBtn){
+      const host = ns.find(n => n.querySelector('[data-mod="home"]')) || ns[ns.length - 1];
+      moreBtn = document.createElement('button');
+      moreBtn.type = 'button'; moreBtn.id = 'mx33-more-btn'; moreBtn.className = 'thumb-tab mx33-more-btn';
+      moreBtn.setAttribute('aria-label', '更多书签'); moreBtn.setAttribute('aria-haspopup', 'menu'); moreBtn.setAttribute('aria-expanded', 'false');
+      moreBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><span>更多</span>';
+      moreBtn.addEventListener('click', e => { e.stopPropagation(); (pop && pop.classList.contains('open')) ? closeMore() : openMore(); });
+      host.appendChild(moreBtn);
+    }
+    ns.forEach(n => n.querySelectorAll('.thumb-tab').forEach(b => {
+      if(b === moreBtn) return;
+      b.classList.toggle('mx33-sec', on && !PRIMARY.includes(keyOf(b)));
+    }));
+    if(!on) closeMore();
+    syncMoreActive();
+  }
+
+  let raf = 0;
+  const obs = [];
+  /* 自己改完 DOM 后丢掉自己引起的变动记录，避免回调再排一帧 */
+  function schedule(){ if(raf) return; raf = requestAnimationFrame(() => { raf = 0; mergeEmpty(); dock(); syncSheet(); obs.forEach(o => o.takeRecords()); }); }
+  function boot(){
+    const tome = document.getElementById('tome'), ins = document.getElementById('insert');
+    if(!tome) return;
+    const treeObs = new MutationObserver(schedule); treeObs.observe(tome, { childList:true, subtree:true });
+    const attrObs = new MutationObserver(schedule); obs.push(treeObs, attrObs);
+    [tome, ins].forEach(el => el && attrObs.observe(el, { attributes:true, attributeFilter:['class'] }));
+    const watchNavs = () => navs().forEach(n => { if(!n.dataset.mx33w){ n.dataset.mx33w = '1'; attrObs.observe(n, { attributes:true, attributeFilter:['class'] }); } });
+    watchNavs(); new MutationObserver(watchNavs).observe(tome, { childList:true });
+    (mq.addEventListener ? mq.addEventListener('change', schedule) : mq.addListener(schedule));
+    window.addEventListener('resize', schedule);
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMore(); });
+    schedule();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
 </script>
 </body>
 </html>
