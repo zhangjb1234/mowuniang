@@ -492,74 +492,12 @@ function enhanceInsert(){
 }
 
 /* ═════════ 八 · 信笺：常用短句 / 字数段数 / 最近寄出（仅本次会话） ═════════ */
-const PH_KEY = 'mge_quick_phrases_v1';
-const PH_DEF = ['（继续）','（沉默片刻）','（环顾四周）','（点头答应）','（摇头拒绝）','（时间推进到第二天清晨）'];
-const sent = mem.sent || (mem.sent = []);
+/* [修改 32d] 撤掉常用短句 / 管理 / 最近寄出（与 AI 选项重复、开局时意义不明）；只保留「· N 段」统计 */
+try{ localStorage.removeItem('mge_quick_phrases_v1'); }catch(e){}
 function mountLetter(){
   const body = document.getElementById('modian-letter-body');
-  const foot = document.querySelector('#letter .let-foot');
-  if(!body || !foot || document.getElementById('mx-phr')) return;
-  let edit = false;
-  const box = document.createElement('div');
-  box.id = 'mx-phr';
-  const phrases = () => LS.get(PH_KEY, PH_DEF);
-  const paint = ()=>{
-    const list = phrases();
-    box.innerHTML = list.map((p, i) => `<button type="button" class="mx-ph" data-ph="${i}">${H(p)}${edit ? '<i aria-label="删除">×</i>' : ''}</button>`).join('')
-      + (edit ? '<input id="mx-ph-new" maxlength="40" placeholder="新短句，回车添加"><button type="button" class="mx-ph mx-ph-tool" data-pht="done">完成</button>'
-              : `<button type="button" class="mx-ph mx-ph-tool" data-pht="edit" title="管理常用短句">管理</button>${sent.length ? '<button type="button" class="mx-ph mx-ph-tool" data-pht="hist" title="本次会话里寄出过的内容">最近寄出</button>' : ''}`);
-    const ni = box.querySelector('#mx-ph-new');
-    if(ni) ni.addEventListener('keydown', e=>{
-      e.stopPropagation();
-      if(e.key !== 'Enter') return;
-      e.preventDefault();
-      const v = ni.value.trim(); if(!v) return;
-      const l = phrases(); if(!l.includes(v)) l.push(v);
-      LS.set(PH_KEY, l); paint(); box.querySelector('#mx-ph-new').focus();
-    });
-  };
-  const insert = text => {
-    body.focus();
-    const s = body.selectionStart ?? body.value.length, e = body.selectionEnd ?? s;
-    body.setRangeText(text, s, e, 'end');
-    body.dispatchEvent(new Event('input', { bubbles:true }));
-  };
-  const hist = document.createElement('div');
-  hist.id = 'mx-hist'; hist.hidden = true;
-  box.addEventListener('click', e=>{
-    const t = e.target.closest('[data-pht]'), p = e.target.closest('[data-ph]');
-    if(t){
-      const a = t.dataset.pht;
-      if(a === 'edit' || a === 'done'){ edit = a === 'edit'; hist.hidden = true; paint(); if(edit) box.querySelector('#mx-ph-new').focus(); }
-      if(a === 'hist'){
-        hist.hidden = !hist.hidden;
-        hist.innerHTML = '<div class="mx-hist-h">最近寄出 · 只保留在本次会话，刷新酒馆后清空</div>' + sent.map((s, i) => `<button type="button" data-hi="${i}">${H(s.length > 60 ? s.slice(0, 60) + '…' : s)}</button>`).join('');
-      }
-      return;
-    }
-    if(!p) return;
-    const i = +p.dataset.ph;
-    if(edit){ if(e.target.tagName === 'I'){ const l = phrases(); l.splice(i, 1); LS.set(PH_KEY, l); paint(); } return; }
-    insert(phrases()[i]);
-  });
-  hist.addEventListener('click', e=>{
-    const b = e.target.closest('[data-hi]'); if(!b) return;
-    body.value = sent[+b.dataset.hi]; hist.hidden = true;
-    body.dispatchEvent(new Event('input', { bubbles:true })); body.focus();
-  });
-  foot.before(box); foot.before(hist);
-  paint();
-  const record = ()=>{
-    const v = body.value.trim();
-    const btn = document.getElementById('let-send');
-    if(!v || (btn && btn.disabled)) return;
-    const i = sent.indexOf(v); if(i >= 0) sent.splice(i, 1);
-    sent.unshift(v); sent.length = Math.min(sent.length, 5);
-    setTimeout(()=>{ if(!edit) paint(); }, 0);
-  };
-  const btn = document.getElementById('let-send');
-  if(btn) btn.addEventListener('click', record, true);
-  body.addEventListener('keydown', e=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) record(); }, true);
+  if(!body || body.dataset.mxCount) return;
+  body.dataset.mxCount = '1';
   if(typeof updLetterCount === 'function'){
     const orig = updLetterCount;
     updLetterCount = function(){
@@ -806,29 +744,15 @@ body.modian-fs-on #mx-read-pop{bottom:auto;top:104px;transform-origin:right top}
 @keyframes mx-fresh{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
 /* ── 信笺 ── */
-#mx-phr{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 0 2px}
-.mx-ph{position:relative;padding:3px 10px;border-radius:12px;border:1px solid rgba(120,88,40,.36);background:rgba(255,252,244,.5);
-  color:var(--ink-soft);font:12px var(--font-sans);letter-spacing:.04em;cursor:pointer;transition:transform .15s ease}
-.mx-ph:active{transform:scale(.95)}
-@media (hover:hover){.mx-ph:hover{border-color:var(--cinnabar);color:var(--cinnabar)}}
-.mx-ph i{margin-left:6px;font-style:normal;color:var(--cinnabar)}
-.mx-ph-tool{border-style:dashed;color:var(--ink-faint)}
-#mx-ph-new{flex:1 1 140px;min-width:0;height:26px;padding:0 10px;border-radius:13px;border:1px solid rgba(150,55,46,.45);
-  background:rgba(255,252,244,.7);color:var(--ink);font:12px var(--font-sans);outline:none}
-#mx-hist{display:flex;flex-direction:column;gap:4px;margin:6px 0 2px;padding:8px;border-radius:4px;border:1px dashed rgba(120,88,40,.35);max-height:150px;overflow-y:auto}
-#mx-hist[hidden]{display:none}
-.mx-hist-h{font:10.5px var(--font-sans);letter-spacing:.1em;color:var(--ink-faint)}
-#mx-hist button{text-align:left;padding:5px 8px;border-radius:3px;border:1px solid transparent;background:rgba(255,252,244,.5);color:var(--ink-soft);
-  font:12.5px/1.6 var(--font-serif);cursor:pointer}
-@media (hover:hover){#mx-hist button:hover{border-color:rgba(150,55,46,.4)}}
+
 
 /* ── 紫曜夜读 ── */
 html[data-mdx-theme="night"] #mx-read{background:linear-gradient(180deg,rgba(33,18,52,.92),rgba(15,8,23,.95));border-color:var(--nt-hair-strong);color:var(--gilt)}
 html[data-mdx-theme="night"] #mx-read-pop{background:linear-gradient(176deg,#21123a,#120a1d);border-color:var(--nt-hair-strong);box-shadow:var(--nt-float)}
-html[data-mdx-theme="night"] :is(.mx-rp-row button,.mx-rp-foot button,#mx-toc-q,.mx-tools .mx-q,.mx-jp input,.mx-ph,#mx-ph-new,#mx-hist button,.mx-dr){
+html[data-mdx-theme="night"] :is(.mx-rp-row button,.mx-rp-foot button,#mx-toc-q,.mx-tools .mx-q,.mx-jp input,.mx-dr){
   background:rgba(20,11,34,.6);border-color:var(--nt-hair-strong);color:var(--ink-soft)}
-html[data-mdx-theme="night"] :is(#mx-toc-q,.mx-tools .mx-q,#mx-ph-new):focus{border-color:var(--nt-rose)}
-html[data-mdx-theme="night"] :is(.mx-rp-foot,.mx-ref,#mx-hist){border-color:var(--nt-hair-strong)}
+html[data-mdx-theme="night"] :is(#mx-toc-q,.mx-tools .mx-q):focus{border-color:var(--nt-rose)}
+html[data-mdx-theme="night"] :is(.mx-rp-foot,.mx-ref){border-color:var(--nt-hair-strong)}
 html[data-mdx-theme="night"] .mx-bprog,html[data-mdx-theme="night"] .mx-qbar{background:var(--nt-hair)}
 html[data-mdx-theme="night"] .ti-hit mark{background:var(--nt-rose-dim);color:var(--cinnabar-hi)}
 html[data-mdx-theme="night"] .mx-q0{--qc:#a99ab8}html[data-mdx-theme="night"] .mx-q1{--qc:#ddd2e8}
@@ -854,7 +778,7 @@ html[data-mdx-theme="night"] .mx-quest.mx-fresh::after{box-shadow:0 0 0 2px rgba
   .ti-star{width:32px;height:32px}
 }
 @media (prefers-reduced-motion:reduce){
-  #mx-read,#mx-read-pop,.ti-star,.mx-fold::before,.mx-ref > summary::before,.mx-ph{transition:none}
+  #mx-read,#mx-read-pop,.ti-star,.mx-fold::before,.mx-ref > summary::before{transition:none}
   .mx-quest.mx-fresh::after{animation:none;opacity:1}
 }
 `;
