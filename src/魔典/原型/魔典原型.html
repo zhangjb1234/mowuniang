@@ -3622,9 +3622,25 @@ function showAwaiting(){
   tome.classList.remove('cover-on');   // cover-on 会盖掉 .page，必须先揭
   pageBase.innerHTML = `<div class="scroll">
     <div class="empty-note" style="margin-top:96px">仪典已成——开局定稿已誊入信笺。<br>过目后落印寄出；你的故事，将从这封信的第一行墨迹开始。</div>
+    <div class="await-nav"><!-- [修改 32c] 回仪典 / 重开信笺 -->
+      <button type="button" id="aw-back" class="await-btn">‹ 返回仪典修改</button>
+      <button type="button" id="aw-letter" class="await-btn go">展开信笺 ›</button>
+    </div>
   </div>`;
+  pageBase.querySelector('#aw-back').addEventListener('click', ()=>{
+    closeLetter();
+    if(window.__ritual && window.__ritual.reopen) window.__ritual.reopen();
+  });
+  pageBase.querySelector('#aw-letter').addEventListener('click', ()=>{
+    if(typeof closeToc==='function') closeToc();
+    if(typeof closeInsert==='function') closeInsert();
+    openLetter();
+  });
 }
 function enterReadingChapter(){
+  /* [修改 32c] 第一页正文已到：此时才清仪典暂存（直接在酒馆输入框发送也会走到这里） */
+  try{ if(window.__ritual && window.__ritual.clearDraft) window.__ritual.clearDraft(); }catch(e){}
+  window.__ritLastMsg = '';
   setStage('reading');
   tome.classList.remove('rit-on');
   showFloor(FLOORS.length>1 ? 1 : 0, 1);
@@ -5259,6 +5275,9 @@ window.__MODIAN = { showFloor, openInsert, parseFloor, notify, diag,
 .rit-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:2px 0 10px}
 .rit-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;letter-spacing:.14em;color:var(--ink-faint)}
 .rit-form label.wide{grid-column:1/3}
+/* [修改 32a] 性别+年龄并排；手机单栏时也保持并排 */
+.rit-form .rit-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.rit-form .rit-duo input{min-width:0;width:100%;box-sizing:border-box}
 .rit-form input{background:rgba(255,253,246,.35);border:1px solid rgba(120,96,56,.45);border-radius:3px;padding:7px 10px;font-family:var(--font-serif);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s}
 .rit-form input:focus{border-color:var(--cinnabar);box-shadow:0 0 0 2px rgba(150,55,46,.12)}
 .rit-form input::placeholder{color:#A3937A;font-style:normal;letter-spacing:.04em}
@@ -6031,6 +6050,22 @@ html[data-mdx-theme="night"] .t-status .sb-line{margin-top:10px}
 html[data-mdx-theme="night"] .sb-stat,html[data-mdx-theme="night"] .sb-npc{background:rgba(28,16,46,.55);border-color:var(--nt-hair);border-radius:10px}
 html[data-mdx-theme="night"] .sb-stat em{color:#8fe0a0}
 html[data-mdx-theme="night"] .sb-sec::after{background:linear-gradient(90deg,var(--fam-line),transparent)}
+/* [修改 32c] 待寄页按钮 */
+.await-nav{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:22px auto 0}
+.await-btn{padding:9px 20px;border-radius:22px;border:1px solid rgba(120,96,56,.5);background:rgba(255,253,246,.4);
+  font-family:var(--font-serif);font-size:14px;letter-spacing:.16em;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
+.await-btn.go{border-color:rgba(109,35,28,.6);color:var(--cinnabar)}
+html[data-mdx-theme="night"] .await-btn{background:rgba(20,11,34,.6);border-color:var(--nt-hair-strong);color:var(--ink-soft)}
+html[data-mdx-theme="night"] .await-btn.go{border-color:var(--nt-rose);color:var(--nt-rose)}
+
+/* [修改 32e] 信笺底栏：手机上不许把字数 / 誊清 / 寄出挤成竖排 */
+.let-foot{flex-wrap:wrap;row-gap:8px}
+.let-count{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.let-erase,.let-send{flex:none;white-space:nowrap}
+.let-send span{white-space:nowrap;writing-mode:horizontal-tb}
+/* [修改 32e] 信笺打开时隐藏右下 Aa 与左下书本圆钮（均 body 直挂，:has 同库已有先例） */
+body:has(#letter.open) #mx-read{opacity:0;pointer-events:none}
+body:has(#letter.open) #mdx-theme-toggle{opacity:0;pointer-events:none}
 </style>
 
 <script>
