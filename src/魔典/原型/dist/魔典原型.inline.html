@@ -11190,31 +11190,106 @@ window.MODIAN_RITUAL = {
     modal.className = 'mcr-modal';
     modal.innerHTML = '<div class="mcr-sheet" role="dialog" aria-label="心界档案"><div class="mcr-head"><b>心界档案 · ' + esc(clean(st.种族) + '·' + clean(st.名字)) + '</b><button type="button" class="mcr-btn" data-mcr-close>关闭</button></div>' +
       '<p class="mcr-note">名字和种族开局后不能改（变量里的 心界住民.名字 要和这里一致，世界书才认得她）。其余内容改完点「保存」，下一楼起生效。</p>' +
-      '<div data-mcr-host></div><div class="mcr-foot"><span class="mcr-st" data-mcr-save-st></span><button type="button" class="mcr-btn hot" data-mcr-act="save">保存到本聊天</button></div></div>';
+      '<div data-mcr-host></div><div class="mcr-foot"><span class="mcr-st" data-mcr-save-st></span><button type="button" class="mcr-btn" data-mcr-act="wb"></button><button type="button" class="mcr-btn hot" data-mcr-act="save">保存到本聊天</button></div></div>';
     doc.body.appendChild(modal);
+    (function () { var wbb = modal.querySelector('[data-mcr-act="wb"]'); if (!wbb) return; readPin().then(function (pn) { wbb.textContent = (pn && pn !== 'off') ? '撤下世界书条目' : '定格到世界书'; }, function () { wbb.textContent = '定格到世界书'; }); })();
     mountForm(modal.querySelector('[data-mcr-host]'), st, { inGame: true, notify: opts.notify });
     function close() { modal.remove(); doc.removeEventListener('keydown', onKey); }
     function onKey(e) { if (e.key === 'Escape') close(); }
     doc.addEventListener('keydown', onKey);
     modal.addEventListener('click', async function (ev) {
       if (ev.target === modal || (ev.target.closest && ev.target.closest('[data-mcr-close]'))) { close(); return; }
+      var wbb = ev.target.closest && ev.target.closest('[data-mcr-act="wb"]');
+      if (wbb) {
+        var s3 = modal.querySelector('[data-mcr-save-st]');
+        if (busyMap.get(st)) { s3.textContent = '等 AI 写完再操作'; return; }
+        st.名字 = data.名字; st.种族 = data.种族;
+        (async function () {
+          try {
+            var pn = await readPin();
+            if (pn && pn !== 'off') { await unpin(); s3.textContent = '已撤下世界书条目（聊天变量档案保留）'; wbb.textContent = '定格到世界书'; }
+            else { var nm = await materialize(st); s3.textContent = '已定格「' + nm + '」，全聊天生效'; wbb.textContent = '撤下世界书条目'; }
+            if (typeof opts.notify === 'function') opts.notify(s3.textContent, 'gild');
+          } catch (e) { s3.textContent = '操作失败：' + (e && e.message ? e.message : e); s3.classList.add('err'); }
+        })();
+        return;
+      }
       var b = ev.target.closest && ev.target.closest('[data-mcr-act="save"]');
       if (!b) return;
       var s = modal.querySelector('[data-mcr-save-st]');
       if (busyMap.get(st)) { s.textContent = '等 AI 写完再保存'; return; }
       st.名字 = data.名字; st.种族 = data.种族;
-      try { await saveToChat(st); close(); if (typeof opts.notify === 'function') opts.notify('心界档案已保存，下一楼起生效', 'gild'); }
+      try { await saveToChat(st);
+        var pn = await readPin();
+        if (pn && pn !== 'off') { if (pn !== entryNameOf(st)) await removeEntry(pn); await materialize(st); }
+        close(); if (typeof opts.notify === 'function') opts.notify('心界档案已保存，下一楼起生效' + (pn && pn !== 'off' ? '（世界书条目已同步）' : ''), 'gild'); }
       catch (e) { s.textContent = '保存失败：' + (e && e.message ? e.message : e); s.classList.add('err'); }
     });
     return true;
   }
 
-  window.__mdxCustomRes = {
+    /* ---------- [修改 34+] 定格到世界书：档案写成角色世界书条目（照抄「心界住民：自定义」模板+内嵌JSON），跨聊天永久生效 ---------- */
+  var WB_NAME = '魔物娘图鉴世界';
+  var PIN_KEY = 'mge_custom_resident_wb';
+  function entryNameOf(st) { return '心界住民：自定义·' + cleanLine(st.名字, BASE_LIM.名字); }
+  async function readPin() {
+    var gv = host('getVariables'); if (!gv) return '';
+    try { var v = gv({ type: 'chat' }) || {}; return String(v[PIN_KEY] || ''); } catch (e) { return ''; }
+  }
+  async function writePin(v) { await writeChat(function (x) { if (v) x[PIN_KEY] = v; else delete x[PIN_KEY]; }); }
+  async function removeEntry(name) {
+    var gw = host('getWorldbook'), rw = host('replaceWorldbook');
+    if (!gw || !rw) throw new Error('找不到酒馆助手的 worldbook API');
+    var wb = await gw(WB_NAME); if (!Array.isArray(wb)) throw new Error('读不到世界书「' + WB_NAME + '」');
+    await rw(WB_NAME, wb.filter(function (e) { return (e.comment || '') !== name; }));
+  }
+  async function buildEntryContent(st) {
+    var gw = host('getWorldbook'); if (!gw) throw new Error('找不到酒馆助手的 getWorldbook');
+    var wb = await gw(WB_NAME);
+    var tpl = null;
+    for (var i = 0; i < wb.length; i++) { if ((wb[i].comment || '') === '心界住民：自定义') { tpl = String(wb[i].content || ''); break; } }
+    if (!tpl) throw new Error('世界书里没有「心界住民：自定义」模板条目（修改34a），无法定格——请重新导入最新卡恢复该条目');
+    var d = JSON.stringify(exportable(st)).replace(/<\//g, '<\\/');
+    var i1 = tpl.indexOf('var mcr = null;');
+    var cutEnd = "if (!mcr || typeof mcr !== 'object') mcr = {};";
+    var i2 = tpl.indexOf(cutEnd);
+    var i3 = tpl.indexOf('var mcrOn =');
+    if (i1 < 0 || i2 < 0 || i3 < 0 || i2 < i1 || i3 < i2) throw new Error('模板条目结构与 34a 不符，无法定格');
+    var gate = 'var mcrOn = !!mcrName && !!mcrRace && (mgeResName === mcrName || mgeResName.indexOf(mcrName) >= 0);';
+    return tpl.slice(0, i1) + 'var mcr = ' + d + ';\n' + tpl.slice(i2 + cutEnd.length, i3) + gate + tpl.slice(tpl.indexOf('\n', i3));
+  }
+  async function materialize(st) {
+    if (!hasDossier(st)) throw new Error('还没有完整五阶段档案（先点 AI 补全）');
+    var gw = host('getWorldbook'), rw = host('replaceWorldbook');
+    if (!gw || !rw) throw new Error('找不到酒馆助手的 worldbook API');
+    var name = entryNameOf(st);
+    var content = await buildEntryContent(st);
+    var wb = await gw(WB_NAME);
+    var hit = null, maxUid = -1;
+    for (var i = 0; i < wb.length; i++) {
+      if ((wb[i].comment || '') === name) hit = wb[i];
+      var u = Number(wb[i].uid); if (Number.isFinite(u) && u > maxUid) maxUid = u;
+    }
+    if (hit) { hit.content = content; hit.enabled = true; hit.constant = true; }
+    else wb.push({ uid: maxUid + 1, comment: name, content: content, key: [], keysecondary: [], constant: true,
+      selective: false, order: 205.9, position: 4, depth: 4, disable: false, addMemo: true,
+      excludeRecursion: true, preventRecursion: true, probability: 100, useProbability: true });
+    await rw(WB_NAME, wb);
+    await writePin(name);
+    return name;
+  }
+  async function unpin() {
+    var pn = await readPin();
+    if (pn && pn !== 'off') await removeEntry(pn);
+    await writePin('off');
+  }
+window.__mdxCustomRes = {
     VAR_KEY: VAR_KEY, blank: blank, isReady: isReady, hasDossier: hasDossier,
     mountForm: mountForm, openEditor: openEditor,
     saveToChat: saveToChat, clearChat: clearChat, readFromChat: readFromChat,
     msgLine: msgLine, summary: summary, exportJSON: exportJSON, importJSON: importJSON,
     exportable: exportable,
+    materialize: materialize, unmaterialize: unpin, pinnedName: readPin,
     isBusy: function (st) { return !!(st && busyMap.get(st)); }
   };
 })();
@@ -11775,7 +11850,12 @@ function closeRitual(enter){
     if(mcrLaunching) return;
     mcrLaunching = true;
     m.saveToChat(R.customRes).then(
-      ()=>{ mcrLaunching = false; closeRitualNow(true); },
+      ()=>{ mcrLaunching = false; var go = function(){ closeRitualNow(true); };
+      if (m.hasDossier(R.customRes) && typeof m.materialize === 'function') {
+        m.pinnedName().then(function (pn) { if (pn === 'off') return go();
+          m.materialize(R.customRes).then(go, function (e) { if (typeof notify === 'function') notify('档案定格世界书失败：' + (e && e.message ? e.message : e) + '（聊天变量档案正常，可稍后在「心界档案」里重试）', 'warn', 5200); go(); });
+        }, go);
+      } else go(); },
       e=>{ mcrLaunching = false; notify('心界档案没能写进本聊天：'+(e&&e.message?e.message:e)+'。仪典没有关闭，可以再点一次','warn',7000); }
     );
     return;
