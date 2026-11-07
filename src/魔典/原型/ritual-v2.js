@@ -553,7 +553,12 @@ function closeRitual(enter){
     if(mcrLaunching) return;
     mcrLaunching = true;
     m.saveToChat(R.customRes).then(
-      ()=>{ mcrLaunching = false; closeRitualNow(true); },
+      ()=>{ mcrLaunching = false; var go = function(){ closeRitualNow(true); };
+      if (m.hasDossier(R.customRes) && typeof m.materialize === 'function') {
+        m.pinnedName().then(function (pn) { if (pn === 'off') return go();
+          m.materialize(R.customRes).then(go, function (e) { if (typeof notify === 'function') notify('档案定格世界书失败：' + (e && e.message ? e.message : e) + '（聊天变量档案正常，可稍后在「心界档案」里重试）', 'warn', 5200); go(); });
+        }, go);
+      } else go(); },
       e=>{ mcrLaunching = false; notify('心界档案没能写进本聊天：'+(e&&e.message?e.message:e)+'。仪典没有关闭，可以再点一次','warn',7000); }
     );
     return;
