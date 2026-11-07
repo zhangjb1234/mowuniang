@@ -9630,6 +9630,11 @@ window.MODIAN_RITUAL = {
    "d": "天界与机巧魔导联手打造的究极造物：高傲天使、好色巨龙、冷淡女仆三位一体，事事互相拆台，唯独在「共同的主人＝你」这件事上契合得天衣无缝。"
   },
   {
+   "id": "comp_custom",
+   "n": "✎ 自定义住民",
+   "d": "自填本名/种族/一句话设定——五阶段×十一晶照常运转，内容由AI按种族图鉴现挂"
+  },
+  {
    "id": "comp_random",
    "n": "🎲 命运随机",
    "d": "从心界名单中随机降临一位，名字与性格由AI拟定。"
@@ -11109,7 +11114,7 @@ function freshR(){
     race:null, hero:{name:'',gender:'',age:'',appearance:'',faction:'',bg:'',outfit:'',inventory:''},
     pLevel:'', apt:{ling:10,mei:10,ti:10,xin:0}, aptMode:'pool', tuneLeft:6,
     faith:null, faithCustom:'',
-    companion:null,
+    companion:null, resCustom:{name:'',race:'',desc:''},
     bonds:new Map(), customNpcs:[], region:null, regionCustom:'',
     customNpcForm:false, cnp:{name:'',race:'',desc:''},
     rollSummary:'' };
@@ -11164,7 +11169,7 @@ function autoFill(toneId){
   const toneName = pickName(RT.tones,toneId);
   const tlName = relText(R.tOff);
   const idText = isM ? ('魔物娘 · '+R.race+(R.rollRace||'')) : (female?'人类女性':'人类男性');
-  R.rollSummary = '🎲 '+toneName+'　→　'+idText+'　·　'+R.hero.name+'　·　'+tlName+'　·　住民：'+(COMP_SHORT[R.companion]||'');
+  R.rollSummary = '🎲 '+toneName+'　→　'+idText+'　·　'+R.hero.name+'　·　'+tlName+'　·　住民：'+(R.companion==='comp_custom'?'自定义住民':(COMP_SHORT[R.companion]||''));
   notify(toneName+' · '+(isM?('魔物娘 · '+R.race):(female?'人类女性':'人类男性')),'gild',3000);
 }
 function rollToneField(P, kind, toneId, isM){
@@ -11209,7 +11214,7 @@ function stepFilled(i){
   if(!R) return false;
   if(i===0) return !!(R.tone || R.identity || R.faith || R.pLevel ||
     Object.keys(R.hero).some(k=>String(R.hero[k]||'').trim()));
-  if(i===1) return !!R.companion;
+  if(i===1) return R.companion==='comp_custom' ? !!(R.resCustom&&R.resCustom.name&&R.resCustom.name.trim()) : !!R.companion;
   if(i===2) return R.tOff != null || R.heroines.size > 0;
   if(i===3) return R.bonds.size > 0;
   if(i===4) return !!R.region;
@@ -11334,10 +11339,15 @@ function raceAccHtml(){
 function bodyStep1(){
   return `
   <div class="sec-title">心界住民 · 脑内之声</div>
-  <p class="rit-hint">当你在开局的黎明睁开眼，颅内已经住着一个声音。四位预设住民性格、播报风格与实体化路线各不相同；此选择全程唯一，途中不可更换。</p>
-  <div class="rit-grid">${(RT.companions||[]).map(o=>optCard('companion',o)).join('')}</div>`;
+  <p class="rit-hint">十三位预设住民性格、口癖与成长路线各不相同；也可选「✎ 自定义住民」自填要素（五阶成长照常运转，内容由AI按种族图鉴现挂），或交给命运随机。此选择全程唯一，途中不可更换。</p>
+  <div class="rit-grid">${(RT.companions||[]).map(o=>optCard('companion',o)).join('')}</div>
+  ${R.companion==='comp_custom' ? `
+  <div class="rit-form">
+    <label>本名<input data-rc="name" type="text" value="${esc(R.resCustom.name)}" placeholder="她的名字（必填）"></label>
+    <label>种族<input data-rc="race" type="text" value="${esc(R.resCustom.race)}" placeholder="图鉴种族名，如：阿拉克尼"></label>
+    <label class="wide">一句话设定<textarea data-rc="desc" rows="2" placeholder="性格/口癖/来历线索；可留空，交给AI按种族图鉴自拟并从此锁定">${esc(R.resCustom.desc)}</textarea></label>
+  </div>` : ''}`;
 }
-
 function bodyTime(){
   const off = R.tOff, has = off != null;
   const p = has ? pctOf(off) : 50;
@@ -11527,6 +11537,7 @@ function bodySummary(){
   const ap = R.apt;
   const compTxt = !R.companion ? ''
     : R.companion==='none' ? '独自上路（无人格旁白）'
+    : R.companion==='comp_custom' ? '自定义住民'
     : COMP_SHORT[R.companion] || R.companion;
   const heroBits = [R.hero.name,R.hero.gender,R.hero.age?R.hero.age+'岁':'',R.hero.appearance,R.pLevel,R.hero.faction,R.hero.bg,R.hero.outfit].filter(Boolean).join(' · ');
   const bondRows = [...R.bonds].map(([id,entry])=>{
@@ -11632,8 +11643,11 @@ function buildMsg(){
   msg += '初始等级：'+(R.pLevel||initLv)+'（Lv.1~220，按对应T阶与等级公式生成）\n';
   if(R.companion==='none' || !R.companion){
     msg += '心界住民：无（系统播报使用无人格旁白）\n';
+  }else if(R.companion==='comp_custom'){
+    const rc = R.resCustom||{};
+    msg += '心界住民：'+(rc.race?rc.race+'·':'')+rc.name+'（自定义住民，按〈心界住民：万用模板〉执行：种族外貌本能按其种族图鉴正典；设定要素：'+(rc.desc||'无，AI按种族正典自拟并从此锁定')+'）\n';
   }else{
-    msg += '心界住民：'+(COMP_SHORT[R.companion]||'')+'（预设，性格/口癖/实体化路线严格按其专属条目执行）\n';
+    msg += '心界住民：'+(COMP_SHORT[R.companion]||'')+'（预设，性格/口癖/成长路线严格按其专属条目执行）\n';
   }
   msg += '开局地点：'+(region?region.n:'随机');
   if(R.region==='custom' && R.regionCustom) msg += '（'+R.regionCustom+'）';
@@ -11743,6 +11757,7 @@ function profileApply(d, step){
   nr.region=d.region||null; nr.regionCustom=d.locCustom||'';
   nr.customNpcs=(d.customNpcs||[]).filter(n=>n && n.id && !isPresetId(n.id));
   nr.companion=d.companion||null;
+  nr.resCustom=Object.assign({name:'',race:'',desc:''}, d.resCustom||{});
   nr.faith=d.faith||null; nr.faithCustom=d.faithCustom||'';
   nr.heroines=new Map();
   (Array.isArray(d.heroines)?d.heroines:[]).forEach(h=>{ if(h && isPresetId(h.id)) nr.heroines.set(h.id,{fav:clampFav(h.fav)}); });
@@ -12002,6 +12017,7 @@ function renderRitual(keepScroll){
   const cnpT = rit.querySelector('#cnp-toggle');
   if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; if(!R.customNpcForm){ R.cnpEdit=null; R.cnpRaceCustom=false; } renderRitual(true); });   // [修改 33k] 收起表单即放弃修改
   rit.querySelectorAll('[data-cnp]').forEach(el=>el.addEventListener('input', ()=>{ R.cnp[el.dataset.cnp]=el.value; }));
+  rit.querySelectorAll('[data-rc]').forEach(el=>el.addEventListener('input', ()=>{ R.resCustom[el.dataset.rc]=el.value; }));
   /* [修改 33j] 种族点选：人类男女 / 自定义 / 交给 AI；图鉴种族走手风琴 */
   rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{
     const v = el.dataset.cnpq;
