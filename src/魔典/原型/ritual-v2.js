@@ -472,7 +472,7 @@ function freshR(){
     race:null, hero:{name:'',gender:'',age:'',appearance:'',faction:'',bg:'',outfit:'',inventory:''},
     pLevel:'', apt:{ling:10,mei:10,ti:10,xin:0}, aptMode:'pool', tuneLeft:6,
     faith:null, faithCustom:'',
-    companion:null, resCustom:{name:'',race:'',desc:''},
+    companion:null, customRes: null,
     bonds:new Map(), customNpcs:[], region:null, regionCustom:'',
     customNpcForm:false, cnp:{name:'',race:'',desc:''},
     rollSummary:'' };
@@ -527,7 +527,7 @@ function autoFill(toneId){
   const toneName = pickName(RT.tones,toneId);
   const tlName = relText(R.tOff);
   const idText = isM ? ('魔物娘 · '+R.race+(R.rollRace||'')) : (female?'人类女性':'人类男性');
-  R.rollSummary = '🎲 '+toneName+'　→　'+idText+'　·　'+R.hero.name+'　·　'+tlName+'　·　住民：'+(R.companion==='comp_custom'?'自定义住民':(COMP_SHORT[R.companion]||''));
+  R.rollSummary = '🎲 '+toneName+'　→　'+idText+'　·　'+R.hero.name+'　·　'+tlName+'　·　住民：'+(compLabel(R.companion)||'');
   notify(toneName+' · '+(isM?('魔物娘 · '+R.race):(female?'人类女性':'人类男性')),'gild',3000);
 }
 function rollToneField(P, kind, toneId, isM){
@@ -538,7 +538,30 @@ function rollToneField(P, kind, toneId, isM){
   return pick(set) || '';
 }
 
+/* [修改 34] 启程前：自定义住民先检查、写进本聊天变量 mge_custom_resident，写成功才关仪典；
+   选了别的住民就清掉本聊天里的旧档案（清不掉也不拦启程） */
+let mcrLaunching = false;
 function closeRitual(enter){
+  if(!enter) return closeRitualNow(false);
+  const m = MCR();
+  if(R.companion===COMP_CUSTOM){
+    if(!m){ notify('自定义住民模块（魔典-自定义住民.js）没有加载，请刷新后再试','warn',5000); return; }
+    if(m.isBusy(R.customRes)){ notify('AI 还在写心界档案，写完再启程','warn',3600); return; }
+    if(!m.isReady(customRes())){ notify('自定义住民还没填名字和种族','warn',3600); return; }
+    const clash = customClash();
+    if(clash){ notify('自定义住民的名字和预设住民「'+clash+'」重了，两份人设会同时生效，请改名','warn',5200); return; }
+    if(mcrLaunching) return;
+    mcrLaunching = true;
+    m.saveToChat(R.customRes).then(
+      ()=>{ mcrLaunching = false; closeRitualNow(true); },
+      e=>{ mcrLaunching = false; notify('心界档案没能写进本聊天：'+(e&&e.message?e.message:e)+'。仪典没有关闭，可以再点一次','warn',7000); }
+    );
+    return;
+  }
+  if(m && m.readFromChat()) m.clearChat().catch(()=>{});
+  closeRitualNow(true);
+}
+function closeRitualNow(enter){
   rit.classList.remove('open');
   tome.classList.remove('rit-on');
   if(enter){
@@ -572,7 +595,7 @@ function stepFilled(i){
   if(!R) return false;
   if(i===0) return !!(R.tone || R.identity || R.faith || R.pLevel ||
     Object.keys(R.hero).some(k=>String(R.hero[k]||'').trim()));
-  if(i===1) return R.companion==='comp_custom' ? !!(R.resCustom&&R.resCustom.name&&R.resCustom.name.trim()) : !!R.companion;
+  if(i===1) return compDone();
   if(i===2) return R.tOff != null || R.heroines.size > 0;
   if(i===3) return R.bonds.size > 0;
   if(i===4) return !!R.region;
@@ -694,18 +717,50 @@ function raceAccHtml(){
   }).join('');
 }
 
+/* [修改 34] 自定义心界住民（实现在 魔典-自定义住民.js，对外是 window.__mdxCustomRes） */
+const COMP_CUSTOM = 'comp_custom';
+const MCR = () => window.__mdxCustomRes || null;
+function customRes(){
+  const m = MCR(); if(!m) return null;
+  if(!R.customRes) R.customRes = m.blank();
+  return R.customRes;
+}
+/* 预设住民的名字（「种族·名字」取 · 后面那段），用来防止自定义住民和预设撞名 */
+function presetResNames(){
+  const out = [];
+  Object.values(COMP_SHORT||{}).forEach(s=>{ const n = String(s||'').split('·').pop().trim(); if(n) out.push(n); });
+  (RT.companions||[]).forEach(o=>{
+    if(!o || o.id==='comp_random') return;
+    const n = noEmoji(String(o.n||'')).replace(/[（(].*$/,'').split('·').pop().trim(); if(n) out.push(n);
+  });
+  return [...new Set(out)];
+}
+/* 撞名就返回那个预设名字：预设条目按名字判定，撞了会两份人设同时生效 */
+function customClash(){
+  const n = R.customRes ? String(R.customRes.名字||'').trim() : '';
+  if(n.length < 2) return '';
+  return presetResNames().find(p => p.length>=2 && (p.indexOf(n)>=0 || n.indexOf(p)>=0)) || '';
+}
+function compDone(){
+  if(!R.companion) return false;
+  if(R.companion!==COMP_CUSTOM) return true;
+  const m = MCR();
+  return !!(m && m.isReady(R.customRes) && !customClash());
+}
+function compLabel(id, p){
+  if(id===COMP_CUSTOM){ const c = p ? p.customRes : R.customRes; return '自定义' + (c && c.名字 ? '·'+c.名字 : ''); }
+  return COMP_SHORT[id] || '';
+}
+
 function bodyStep1(){
   return `
   <div class="sec-title">心界住民 · 脑内之声</div>
-  <p class="rit-hint">十三位预设住民性格、口癖与成长路线各不相同；也可选「✎ 自定义住民」自填要素（五阶成长照常运转，内容由AI按种族图鉴现挂），或交给命运随机。此选择全程唯一，途中不可更换。</p>
-  <div class="rit-grid">${(RT.companions||[]).map(o=>optCard('companion',o)).join('')}</div>
-  ${R.companion==='comp_custom' ? `
-  <div class="rit-form">
-    <label>本名<input data-rc="name" type="text" value="${esc(R.resCustom.name)}" placeholder="她的名字（必填）"></label>
-    <label>种族<input data-rc="race" type="text" value="${esc(R.resCustom.race)}" placeholder="图鉴种族名，如：阿拉克尼"></label>
-    <label class="wide">一句话设定<textarea data-rc="desc" rows="2" placeholder="性格/口癖/来历线索；可留空，交给AI按种族图鉴自拟并从此锁定">${esc(R.resCustom.desc)}</textarea></label>
-  </div>` : ''}`;
+  <p class="rit-hint">十三位预设住民性格、口癖与成长路线各不相同；也可以自定义住民——填名字和种族即可，AI 按预设住民的统一格式补全五阶段档案，也可以不补全、游玩中即兴；或交给命运随机。此选择全程唯一，途中不可更换。</p>
+  <div class="rit-grid">${(RT.companions||[]).map(o=>optCard('companion',o)).join('')}${MCR()?optCard('companion',{id:COMP_CUSTOM,n:'自定义住民',d:'自己定名字和种族；AI 按预设住民的统一格式补全五个阶段，也可以不补全、游玩中即兴'}):''}</div>
+  ${R.companion===COMP_CUSTOM && MCR() ? '<div id="mcr-host"></div>' : ''}<!-- [修改 34] 自定义住民表单挂载点 -->
+`;
 }
+
 function bodyTime(){
   const off = R.tOff, has = off != null;
   const p = has ? pctOf(off) : 50;
@@ -895,7 +950,7 @@ function bodySummary(){
   const ap = R.apt;
   const compTxt = !R.companion ? ''
     : R.companion==='none' ? '独自上路（无人格旁白）'
-    : R.companion==='comp_custom' ? '自定义住民'
+    : R.companion===COMP_CUSTOM ? ((MCR() ? MCR().summary(customRes()) : '自定义') + (customClash() ? '（与预设「'+customClash()+'」撞名，请改名）' : ''))
     : COMP_SHORT[R.companion] || R.companion;
   const heroBits = [R.hero.name,R.hero.gender,R.hero.age?R.hero.age+'岁':'',R.hero.appearance,R.pLevel,R.hero.faction,R.hero.bg,R.hero.outfit].filter(Boolean).join(' · ');
   const bondRows = [...R.bonds].map(([id,entry])=>{
@@ -1001,9 +1056,8 @@ function buildMsg(){
   msg += '初始等级：'+(R.pLevel||initLv)+'（Lv.1~220，按对应T阶与等级公式生成）\n';
   if(R.companion==='none' || !R.companion){
     msg += '心界住民：无（系统播报使用无人格旁白）\n';
-  }else if(R.companion==='comp_custom'){
-    const rc = R.resCustom||{};
-    msg += '心界住民：'+(rc.race?rc.race+'·':'')+rc.name+'（自定义住民，按〈心界住民：万用模板〉执行：种族外貌本能按其种族图鉴正典；设定要素：'+(rc.desc||'无，AI按种族正典自拟并从此锁定')+'）\n';
+  }else if(R.companion===COMP_CUSTOM && MCR()){
+    msg += MCR().msgLine(customRes());   // [修改 34] 自带换行；人设交给「心界住民：自定义」条目
   }else{
     msg += '心界住民：'+(COMP_SHORT[R.companion]||'')+'（预设，性格/口癖/成长路线严格按其专属条目执行）\n';
   }
@@ -1076,6 +1130,7 @@ function heroMsg(){
 function collectProfile(){
   const comps=[]; R.bonds.forEach((entry,npcId)=>{ comps.push({npcId:npcId,rel:entry.rel?entry.rel.v:null,dir:entry.dir?entry.dir.v:null,catOpen:entry.catOpen}); });
   const heroines=[]; R.heroines.forEach((h,id)=>{ heroines.push({id:id,fav:h.fav}); });
+  d.customRes = (R.customRes && MCR()) ? MCR().exportable(R.customRes) : null;   // [修改 34] 含五阶段档案，约 6–10KB
   return {mode:R.tone,timeline:R.tOff==null?null:(R.tOff<0?'before':'after'),tlCustom:R.tlCustom,tOff:R.tOff,heroines:heroines,layout:6,
     identity:R.identity,race:R.race,raceCustom:R.identityCustom,
     name:R.hero.name,gender:R.hero.gender,age:R.hero.age,height:R.hero.appearance,faction:R.hero.faction,
@@ -1115,7 +1170,11 @@ function profileApply(d, step){
   nr.region=d.region||null; nr.regionCustom=d.locCustom||'';
   nr.customNpcs=(d.customNpcs||[]).filter(n=>n && n.id && !isPresetId(n.id));
   nr.companion=d.companion||null;
-  nr.resCustom=Object.assign({name:'',race:'',desc:''}, d.resCustom||{});
+  /* [修改 34] 自定义住民（含档案）；旧配置里的 compName / compRace 迁过来 */
+  nr.customRes = (d.customRes && MCR()) ? Object.assign(MCR().blank(), d.customRes) : null;
+  if(!nr.customRes && MCR() && d.compName && d.compRace){
+    nr.customRes = Object.assign(MCR().blank(), { 名字:d.compName, 种族:d.compRace, 设定:d.compPersona||'', 外貌:d.compLook||'', 核心梗:[d.compOrigin,d.compRoute].filter(Boolean).join('；') });
+  }
   nr.faith=d.faith||null; nr.faithCustom=d.faithCustom||'';
   nr.heroines=new Map();
   (Array.isArray(d.heroines)?d.heroines:[]).forEach(h=>{ if(h && isPresetId(h.id)) nr.heroines.set(h.id,{fav:clampFav(h.fav)}); });
@@ -1167,7 +1226,7 @@ function profileMenu(){
     return '';
   };
   const race = p => p.race && p.race!=='__custom__' ? p.race : '';
-  const brief = p => [pickName(RT.tones,p.mode), race(p), COMP_SHORT[p.companion], pickName(RT.regions,p.region)]
+  const brief = p => [pickName(RT.tones,p.mode), race(p), compLabel(p.companion, p), pickName(RT.regions,p.region)]
     .filter(Boolean).map(noEmoji).join(' · ');
   const comps = p => p.comps || [];
   const prog = p => [!!(p.mode||p.identity||p.name), !!p.companion,
@@ -1375,7 +1434,6 @@ function renderRitual(keepScroll){
   const cnpT = rit.querySelector('#cnp-toggle');
   if(cnpT) cnpT.addEventListener('click', ()=>{ R.customNpcForm=!R.customNpcForm; if(!R.customNpcForm){ R.cnpEdit=null; R.cnpRaceCustom=false; } renderRitual(true); });   // [修改 33k] 收起表单即放弃修改
   rit.querySelectorAll('[data-cnp]').forEach(el=>el.addEventListener('input', ()=>{ R.cnp[el.dataset.cnp]=el.value; }));
-  rit.querySelectorAll('[data-rc]').forEach(el=>el.addEventListener('input', ()=>{ R.resCustom[el.dataset.rc]=el.value; }));
   /* [修改 33j] 种族点选：人类男女 / 自定义 / 交给 AI；图鉴种族走手风琴 */
   rit.querySelectorAll('[data-cnpq]').forEach(el=>el.addEventListener('click', ()=>{
     const v = el.dataset.cnpq;
@@ -1454,6 +1512,15 @@ function renderRitual(keepScroll){
   rit.querySelectorAll('[data-pload]').forEach(b=>b.addEventListener('click', ()=>profileLoad(+b.dataset.pload)));
   rit.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click', ()=>profileDelete(+b.dataset.pdel)));
 
+  /* [修改 34] 自定义住民表单：每次重绘后挂上。表单自己管输入，onChange 里不要调 renderRitual（会把正在打字的输入框换掉） */
+  if(R.step===1 && R.companion===COMP_CUSTOM && MCR()){
+    const host = rit.querySelector('#mcr-host');
+    if(host) MCR().mountForm(host, customRes(), {
+      races: RACE_CATS.reduce((a,c)=>a.concat(c.items), []),
+      notify: (msg,kind)=>notify(msg, kind||'gild', 3600),
+      onChange: ()=>{ saveDraftSoon(); /* 有按完成判定 disabled 的按钮就在这里只改那颗按钮，见 ④ */ }
+    });
+  }
   rit.querySelector('.rit-body').scrollTop = keepScroll ? stOld : 0;
   const crumbs = rit.querySelector('.rit-crumbs'), onStep = rit.querySelector('.rc-step.on');
   if(crumbs && onStep && crumbs.scrollWidth > crumbs.clientWidth){
@@ -1643,6 +1710,7 @@ else injectCssV21();
 
 document.addEventListener('keydown', e=>{
   if(!R || !rit.classList.contains('open') || e.altKey || e.ctrlKey || e.metaKey) return;
+  if(e.target.closest && e.target.closest('.mcr')) return;   /* [修改 34] 档案弹窗/表单内按键不翻页 */
   if(e.key==='Escape' && R.profOpen){ R.profOpen = false; renderRitual(true); return; }
   const t = e.target;
   if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
