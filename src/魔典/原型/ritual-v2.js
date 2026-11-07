@@ -393,7 +393,8 @@ const TONE_DIRECTIVE = {
   custom:'自定义开局：严格依照玩家填写的配置展开'
 };
 const FAITH_SELF = ['local','custom'];
-const COMP_SHORT = {familiar:'魔宠·菲娜',mare:'梦魔·露珂',pixie:'小仙女·蒂蒂',ghost:'幽灵·塞蕾丝',valkyrie:'女武神·西格露恩',banshee:'报丧女妖·莫伊菈',witch:'白蛇·雪代白子'};
+const COMP_SHORT = {witch:'白蛇·雪代白子',valkyrie:'女武神·西格露恩',bicorn:'双角兽·摩根',echidna:'厄喀德娜·蕾雅',hatter:'疯帽子·切茜娅',lamp:'灯精·莎赫拉',nightgaunt:'夜魇·娜希丝',orc:'高等兽人·赫尔加',zdrake:'尸龙·法芙娜',akaname:'垢舐鬼·小夜',slimeq:'史莱姆女王·莉姆露娅',banshee:'报丧女妖·莫伊菈',chimera:'奇美拉·艾尔托莉雅'};
+const COMP_IDS = Object.keys(COMP_SHORT);
 const MAX_BONDS = (RT.rules && RT.rules.maxBonds) || 4;
 const APT_DEFS = [['ling','灵感','洞察与学习·信息与熟练度'],['mei','魅力','言谈交际·说服而非交战'],['ti','体质','耐力根基·后续扩展体质池'],['xin','信仰','神恩强度·对象不固定']];
 const APT_MIN = {ling:1,mei:1,ti:1,xin:0};
@@ -520,8 +521,8 @@ function autoFill(toneId){
   // 4. 信仰随机（自填两档不参与）
   const fp = (RT.faiths||[]).filter(f=>FAITH_SELF.indexOf(f.id)<0);
   const f = pick(fp); if(f){ R.faith = f.id; R.faithCustom=''; }
-  // 5. 住民随机（七位之一）
-  R.companion = pick(['familiar','mare','pixie','ghost','valkyrie','banshee','witch']);
+  // 5. 住民随机（十三位之一）
+  R.companion = pick(['witch','valkyrie','bicorn','echidna','hatter','lamp','nightgaunt','orc','zdrake','akaname','slimeq','banshee','chimera']);
   // 横幅
   const toneName = pickName(RT.tones,toneId);
   const tlName = relText(R.tOff);
@@ -1244,6 +1245,11 @@ function renderRitual(keepScroll){
       else { R.tone='custom'; R.rollSummary=''; R.tOff=null; R.identity=null; R.race=null; }
     }
     else if(g==='companion' && R[g]===b.dataset.id){ R[g]=null; }
+    else if(g==='companion' && b.dataset.id==='comp_random'){
+      /* [修改 34] 命运随机住民：当场从十三位中抽一位，可重掷可改选 */
+      R.companion = COMP_IDS[Math.floor(Math.random()*COMP_IDS.length)];
+      notify('命运随机 · '+COMP_SHORT[R.companion],'gild',3000);
+    }
     else R[g]=b.dataset.id;
     /* [修改 32b] 选身份顺手填性别：只在性别为空或仍是「男/女」时改，
        用户自填的（如「扶她」「无性别」）不覆盖；填完照样可以手改 */
