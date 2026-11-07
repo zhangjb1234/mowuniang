@@ -7175,13 +7175,21 @@ function sbFromStat(sd, prose){
   if(buffs.length) h += `<div class="sb-sec">增益 · 减益</div>${chips(buffs)}`;
   const present = sbPresent(sbObj(sd.羁绊), prose);
   if(present.length) h += `<div class="sb-sec">在场角色 · ${present.length}</div><div class="sb-npcs">${present.map(([n, b]) => sbNpc(n, b)).join('')}</div>`;
+  function resStage(an2){
+    const lv = Number(Stat.get('主角.等级', 1))||1;
+    return __stageOf(an2.好感度, an2.碎晶数, lv);
+  }
+function __stageOf(fav, sh, lv){
+  const t = Math.max(1, Math.min(11, Math.ceil((Number(lv)||1)/20)));
+  fav = Number(fav)||0; sh = Number(sh)||0;
+  return (fav>=100&&sh>=11&&t>=8)?5:(fav>=75&&sh>=8&&t>=6)?4:(fav>=50&&sh>=5&&t>=4)?3:(fav>=20&&sh>=2&&t>=2)?2:1;
+}
   const an = sbObj(sd.心界住民);
   if(an && sbKnown(an.名字) && an.名字 !== '未选定'){
     const af = sbNum(an.好感度);
     h += `<div class="sb-sec">心界住民</div><div class="sb-npcs"><div class="sb-npc">
-      <div class="sb-npc-h"><b>${esc(an.名字)}</b>${sbKnown(an.实体化进度) ? `<span>${esc(an.实体化进度)}</span>` : ''}</div>
+      <div class="sb-npc-h"><b>${esc(an.名字)}</b><span>阶段${resStage(an)}/5</span></div>
       ${af !== null ? meter('好感', af, 100, ['#5B6B4C','#7E8E6A']) : ''}
-      ${sbKnown(an.当前状态) ? `<div class="sb-npc-st">${esc(an.当前状态)}</div>` : ''}
     </div></div>`;
   }
   const bt = sbObj(sd.战斗);
@@ -8923,24 +8931,24 @@ function renderDexAnima(){
   if(!__wbIndex && !__wbIndexing) loadWbIndex();
   const xj = Stat.get('心界住民', g(D,'schemaDefaults.心界住民', null)) || null;
   const named = xj && xj.名字 && xj.名字 !== '未选定';
-  const mem = (xj && xj.已唤醒记忆) || [];
   return `
   <div class="sec-title">心界 · 住民</div>
   ${named ? `
-  <div class="plaque"><h4>${esc(xj.名字)}<span class="k-latin">Anima Mundi</span><span class="init-badge">${esc(xj.实体化进度||'未实体化')}</span></h4>
-    <div class="p-desc">${esc(xj.当前状态||'—— 颅内那盏灯尚未开口。')}</div></div>
+  <div class="plaque"><h4>${esc(xj.名字)}<span class="k-latin">Anima Mundi</span><span class="init-badge">阶段${dexStage(xj)}/5</span></h4></div>
   ${meter('好感度', xj.好感度??0, 100, ['#96372E','#B04A3E'])}
-  ${meter('碎晶', xj.碎晶数??0, 12, ['#43617A','#2F4A5E'])}
-  ${xj.当前碎晶线索 && xj.当前碎晶线索!=='无' ? `<div class="sec-title">当前碎晶线索</div>
-  <div class="plaque"><h4>追索中<span class="k-latin">Clavis</span></h4><div class="p-desc">${esc(xj.当前碎晶线索)}</div></div>` : ''}
-  ${animaWbBlock(xj.名字)}
-  <div class="sec-title">已唤醒记忆 · ${mem.length} 条</div>
-  ${mem.length ? mem.map(m=>`<div class="plaque"><h4>${esc(m)}<span class="k-latin">Memoria</span></h4></div>`).join('') : emptyNote('记忆仍封在雾里——推进实体化进度方可唤醒。')}`
+  ${meter('碎晶', xj.碎晶数??0, 11, ['#43617A','#2F4A5E'])}
+  ${animaWbBlock(xj.名字)}`
   : emptyNote('尚未选定住民——颅内那盏灯仍是无名的。可在仪典中指定，或交给命运。')}
   ${named ? renderAnimaStage(xj) : ''}`;
 }
+function __stageOf(fav, sh, lv){
+  const t = Math.max(1, Math.min(11, Math.ceil((Number(lv)||1)/20)));
+  fav = Number(fav)||0; sh = Number(sh)||0;
+  return (fav>=100&&sh>=11&&t>=8)?5:(fav>=75&&sh>=8&&t>=6)?4:(fav>=50&&sh>=5&&t>=4)?3:(fav>=20&&sh>=2&&t>=2)?2:1;
+}
+function dexStage(xj){ return __stageOf(xj.好感度, xj.碎晶数, Stat.get('主角.等级', 1)); }
 /* 心界住民档案 —— 与女主同一套「世界书 · 实时条目」设计。
-   条目名形如「心界住民：幽灵·塞蕾丝」，内容一字不改地交给 escParas。 */
+   条目名形如「心界住民：报丧女妖·莫伊菈」，内容一字不改地交给 escParas。 */
 function animaWbBlock(name){
   if(!name || name === '未选定') return '';
   if(!__wbIndex) return wbPending('anima-wb');
@@ -8950,36 +8958,34 @@ function animaWbBlock(name){
     `<div class="dd-ver on"><div class="dw-cardlabel">住民档案<span class="wv-tag on">当前</span><span class="wv-src">${esc(e.name)}</span></div>${escParas(e.content)}</div>`,
     'anima-wb');
 }
-/* 实体化阶段 —— 严格按世界书〈心界住民系统〉的「双重进化条件」实时推算，
-   不在前端硬编码任何阶段名：
-     阶段一（默认）｜阶段二=好感≥30 且碎晶≥2｜阶段三=好感≥60 且碎晶≥5｜阶段四=好感≥90 且碎晶≥9
-   两条铁律决定了这里该怎么写：
-   ① 阶段名因住民而异（菲娜=戒备·公务期…结契·完全实体；蒂蒂阈值为80），是 AI 按专属条目
-      写入 `实体化进度` 的自由文本 → 只能原样读出来显示，前端不得编名字。
-   ② 好感与碎晶缺一不可 → 达标项打勾，未达标项显示差多少，让读者知道还差什么。 */
+/* 成长阶段 —— 按世界书〈心界住民系统：十三住民与碎晶五阶〉的「三重门槛」实时推算：
+     阶段一（默认）｜阶段二=好感20＋碎晶2＋T2｜阶段三=好感50＋碎晶5＋T4｜阶段四=好感75＋碎晶8＋T6｜阶段五=好感100＋碎晶11＋T8
+   T=⌈等级÷20⌉（上限11）；三重缺一不可 → 达标项打勾，未达标项把差额写出来，让读者知道还差什么。 */
 const ANIMA_STAGES = [
-  {n:1, fav:0,  shard:0,  hint:'默认'},
-  {n:2, fav:30, shard:2,  hint:'好感30＋碎晶2'},
-  {n:3, fav:60, shard:5,  hint:'好感60＋碎晶5'},
-  {n:4, fav:90, shard:9,  hint:'好感90＋碎晶9'},
+  {n:1, fav:0,   shard:0,  tier:1, hint:'默认'},
+  {n:2, fav:20,  shard:2,  tier:2, hint:'好感20＋碎晶2＋T2'},
+  {n:3, fav:50,  shard:5,  tier:4, hint:'好感50＋碎晶5＋T4'},
+  {n:4, fav:75,  shard:8,  tier:6, hint:'好感75＋碎晶8＋T6'},
+  {n:5, fav:100, shard:11, tier:8, hint:'好感100＋碎晶11＋T8'},
 ];
 function renderAnimaStage(xj){
   const fav = Number(xj.好感度)||0, sh = Number(xj.碎晶数)||0;
-  let cur = 1;
-  for(const s of ANIMA_STAGES) if(fav>=s.fav && sh>=s.shard) cur = s.n;
+  const lv = Number(Stat.get('主角.等级', 1))||1;
+  const t = Math.max(1, Math.min(11, Math.ceil((Number(lv)||1)/20)));
+  const cur = dexStage(xj);
   const row = ANIMA_STAGES.map(s=>{
     const done = cur >= s.n;
     /* 门槛未过但只差一线时，把差额直接写出来（比一句“未达成”有用得多） */
-    const gap = (!done && s.n<=4) ? `　差 ${Math.max(0,s.fav-fav)} 好感 · ${Math.max(0,s.shard-sh)} 碎晶` : '';
+    const gap = (!done) ? `　差 ${Math.max(0,s.fav-fav)} 好感 · ${Math.max(0,s.shard-sh)} 碎晶 · T${Math.max(0,s.tier-t)}` : '';
     return `<div class="as-row${done?' done':''}${cur===s.n?' cur':''}">
       <span class="as-no">${s.n}</span>
       <span class="as-hint">${esc(s.hint)}${gap}</span>
       <span class="as-mark">${done?'✓':''}</span></div>`;
   }).join('');
   return `
-  <div class="sec-title">实体化 · 阶段 ${cur}/4</div>
+  <div class="sec-title">成长 · 阶段 ${cur}/5</div>
   <div class="as-track">${row}</div>
-  <div class="as-note">阶段名以 <b>实体化进度</b> 变量为准（各住民专属条目不同）——当前：<b>${esc(xj.实体化进度||'未实体化')}</b></div>`;
+  <div class="as-note">三重门槛＝好感×碎晶×T阶（T=⌈等级÷20⌉，当前 <b>T${t}</b>）；各阶段形态细节以住民专属条目为准。</div>`;
 }
 function renderDexHeroines(){
   if(window.__heroineDetail != null) return renderHeroineDetail(window.__heroineDetail);
@@ -9210,7 +9216,7 @@ function renderHome(){
     <span class="dl-step">银币 ${a.银币??0}</span><span class="dl-arrow">·</span>
     <span class="dl-step">铜币 ${a.铜币??0}</span><span class="dl-arrow">·</span>
     <span class="dl-step">魔晶 ${a.魔晶??0}</span></div>
-  ${xj ? plaque(xj.名字||'未选定', 'Anima Mundi', `实体化 · ${xj.实体化进度||'未实体化'} · 碎晶 ${xj.碎晶数??0}/12 · 好感 ${xj.好感度??0}`) : ''}
+  ${xj ? plaque(xj.名字||'未选定', 'Anima Mundi', `成长 · 阶段${dexStage(xj)}/5 · 碎晶 ${xj.碎晶数??0}/11 · 好感 ${xj.好感度??0}`) : ''}
   <div class="sec-title">卷帙统计</div>
   <div class="dex-legend">
     <span class="dl-step">图鉴收录 ${lit}</span><span class="dl-arrow">·</span>
@@ -9559,29 +9565,59 @@ window.MODIAN_RITUAL = {
  ],
  "companions": [
   {
-   "id": "familiar",
-   "n": "魔宠 · 菲娜",
-   "d": "一丝不苟的契约小秘书，播报精准到时辰，连你打喷嚏都要记录在案。吐槽刻薄但脸皮极薄，被反撩会当场宕机冒烟。"
+   "id": "witch",
+   "n": "白蛇 · 雪代白子",
+   "d": "白袍巫女的完美大和抚子，微笑着说「夫君都是对的」——袖中的手指掐进掌心。看着夫君沾花惹草还必须帮忙的、无能的苦主妻子。"
   },
   {
-   "id": "mare",
-   "n": "梦魔 · 露珂",
-   "d": "只在梦里清醒的慵懒夜访者，每句话都像贴着耳膜的梦呓。预警最迟但最准——她能提前梦到数息后的危险，代价是白天叫十次醒一次。"
-  },
-  {
-   "id": "pixie",
-   "n": "小仙女 · 蒂蒂",
-   "d": "音量常年最大档的迷你应援团长，夸人和捅娄子都不过脑，忠诚却货真价实。危险预警=全脑尖叫警报，绝不漏报，但准确率与音量成反比。"
-  },
-  {
-   "id": "ghost",
-   "n": "幽灵 · 塞蕾丝",
-   "d": "贴着你灵魂翻书的安静读书人，吐槽三天憋一句、句句致命。图鉴解说四人中最详尽，预警冷静得像念旁白。"
-  },
-{
    "id": "valkyrie",
    "n": "女武神 · 西格露恩",
-   "d": "金盔白翼的天界女武神，卸下盔甲是温柔的知心大姐姐。她记得你随口提过的每件小事，会为你的每一点进步真心高兴——课程结束就离开，但你毕业那天，她留了下来。"
+   "d": "金盔白翼的天界女武神，卸下盔甲是温柔的知心大姐姐。她记得你随口提过的每件小事，会为你的每一点进步真心高兴——课程结束就离开，但你毕业那天，她留任了。"
+  },
+  {
+   "id": "bicorn",
+   "n": "双角兽 · 摩根",
+   "d": "身披暗黑婚纱的半人马新娘，把你的灵魂当成世间最棒的鸡尾酒基酒。她的爱混着酒液一滴一滴喂给你，温柔与技术并存——喝多会上头，醉的永远是你。"
+  },
+  {
+   "id": "echidna",
+   "n": "厄喀德娜 · 蕾雅",
+   "d": "魔力冠绝群魔的「魔物之母」，嫌弃随便将就——于是把你当幼崽亲手养大，享受将中意的少年培养成丈夫的全部乐趣。抱起来又冷又软，教训人时尾巴会先笑出声。"
+  },
+  {
+   "id": "hatter",
+   "n": "疯帽子 · 切茜娅",
+   "d": "在你的脑海里无限期包场开茶会的疯狂帽匠，天天为你庆祝「非生日」。茶会永不散场，终极目标是把写着「切茜娅专属新郎」的礼帽焊死在你头上。"
+  },
+  {
+   "id": "lamp",
+   "n": "灯精 · 莎赫拉",
+   "d": "本命神灯落在你心界的神灯精灵：按族规，温养神灯者即她生生世世侍奉到底的唯一主人。愿望无限量供应，擦灯请珍惜——她连惩罚都想把你伺候到骨子里。"
+  },
+  {
+   "id": "nightgaunt",
+   "n": "夜魇 · 娜希丝",
+   "d": "蹲在你心界阴影里的三无黑膜少女，寡言到极点却黏人到极点。认定你后每天最大的乐趣是往你灵魂上涂抹粘液——她的爱没有表情，只有包裹。"
+  },
+  {
+   "id": "orc",
+   "n": "高等兽人 · 赫尔加",
+   "d": "本想掳你回营寨当奴隶的兽人女头领，反被你的器量当场折服，丢掉架子摇着小猪耳献上肚皮，尊你为统御部落的唯一「大王」。武力值爆表，撒娇也是。"
+  },
+  {
+   "id": "zdrake",
+   "n": "尸龙 · 法芙娜",
+   "d": "生前孤高抱憾而终的古代巨龙，以尸龙之躯复生见到你的第一眼，几百年的悔恨全化作求偶执念——龙族矜持当场碎掉，追到天涯海角也要补完夫妻的一切。"
+  },
+  {
+   "id": "akaname",
+   "n": "垢舐鬼 · 小夜",
+   "d": "顺着你身上的雄性体味从东瀛澡堂暗角摸进心界的长舌妖娘，毕生志向是把你最私密的角落舔得干干净净。舌头是她的语言，戒断症状是你的勋章。"
+  },
+  {
+   "id": "slimeq",
+   "n": "史莱姆女王 · 莉姆露娅",
+   "d": "瘫在心界中央流淌成一片果冻湖的群体女王：本体迟钝慵懒，分体精明能干，意识全体共享。把你加冕为「专属国王兼永久粮仓」，帝国越大越黏人。"
   },
   {
    "id": "banshee",
@@ -9589,15 +9625,30 @@ window.MODIAN_RITUAL = {
    "d": "黑纱丧服的未亡人，哀艳而成熟，说话轻声细语、卑微温柔——「很抱歉打扰……如果方便的话」。她哭过太多告别，直到遇见一个让她想唱「安魂曲」的名字。"
   },
   {
-   "id": "witch",
-   "n": "白蛇 · 雪代白子",
-   "d": "白袍巫女的完美大和抚子，微笑着说「夫君都是对的」——袖中的手指掐进掌心。看着夫君沾花惹草还必须帮忙的、无能的苦主妻子。"
+   "id": "chimera",
+   "n": "奇美拉 · 艾尔托莉雅",
+   "d": "天界与机巧魔导联手打造的究极造物：高傲天使、好色巨龙、冷淡女仆三位一体，事事互相拆台，唯独在「共同的主人＝你」这件事上契合得天衣无缝。"
   },
   {
-   "id": "none",
-   "n": "独自上路",
-   "d": "不携带心界住民，系统播报改为无人格旁白。"
+   "id": "comp_random",
+   "n": "🎲 命运随机",
+   "d": "从心界名单中随机降临一位，名字与性格由AI拟定。"
   }
+ ],
+ "companionRandomRaces": [
+  "白蛇",
+  "女武神",
+  "双角兽",
+  "厄喀德娜",
+  "疯帽子",
+  "灯精",
+  "夜魇",
+  "高等兽人",
+  "尸龙",
+  "垢舐鬼",
+  "史莱姆女王",
+  "报丧女妖",
+  "奇美拉"
  ],
  "faiths": [
   {
@@ -10979,7 +11030,8 @@ const TONE_DIRECTIVE = {
   custom:'自定义开局：严格依照玩家填写的配置展开'
 };
 const FAITH_SELF = ['local','custom'];
-const COMP_SHORT = {familiar:'魔宠·菲娜',mare:'梦魔·露珂',pixie:'小仙女·蒂蒂',ghost:'幽灵·塞蕾丝',valkyrie:'女武神·西格露恩',banshee:'报丧女妖·莫伊菈',witch:'白蛇·雪代白子'};
+const COMP_SHORT = {witch:'白蛇·雪代白子',valkyrie:'女武神·西格露恩',bicorn:'双角兽·摩根',echidna:'厄喀德娜·蕾雅',hatter:'疯帽子·切茜娅',lamp:'灯精·莎赫拉',nightgaunt:'夜魇·娜希丝',orc:'高等兽人·赫尔加',zdrake:'尸龙·法芙娜',akaname:'垢舐鬼·小夜',slimeq:'史莱姆女王·莉姆露娅',banshee:'报丧女妖·莫伊菈',chimera:'奇美拉·艾尔托莉雅'};
+const COMP_IDS = Object.keys(COMP_SHORT);
 const MAX_BONDS = (RT.rules && RT.rules.maxBonds) || 4;
 const APT_DEFS = [['ling','灵感','洞察与学习·信息与熟练度'],['mei','魅力','言谈交际·说服而非交战'],['ti','体质','耐力根基·后续扩展体质池'],['xin','信仰','神恩强度·对象不固定']];
 const APT_MIN = {ling:1,mei:1,ti:1,xin:0};
@@ -11106,8 +11158,8 @@ function autoFill(toneId){
   // 4. 信仰随机（自填两档不参与）
   const fp = (RT.faiths||[]).filter(f=>FAITH_SELF.indexOf(f.id)<0);
   const f = pick(fp); if(f){ R.faith = f.id; R.faithCustom=''; }
-  // 5. 住民随机（七位之一）
-  R.companion = pick(['familiar','mare','pixie','ghost','valkyrie','banshee','witch']);
+  // 5. 住民随机（十三位之一）
+  R.companion = pick(['witch','valkyrie','bicorn','echidna','hatter','lamp','nightgaunt','orc','zdrake','akaname','slimeq','banshee','chimera']);
   // 横幅
   const toneName = pickName(RT.tones,toneId);
   const tlName = relText(R.tOff);
@@ -11830,6 +11882,11 @@ function renderRitual(keepScroll){
       else { R.tone='custom'; R.rollSummary=''; R.tOff=null; R.identity=null; R.race=null; }
     }
     else if(g==='companion' && R[g]===b.dataset.id){ R[g]=null; }
+    else if(g==='companion' && b.dataset.id==='comp_random'){
+      /* [修改 34] 命运随机住民：当场从十三位中抽一位，可重掷可改选 */
+      R.companion = COMP_IDS[Math.floor(Math.random()*COMP_IDS.length)];
+      notify('命运随机 · '+COMP_SHORT[R.companion],'gild',3000);
+    }
     else R[g]=b.dataset.id;
     /* [修改 32b] 选身份顺手填性别：只在性别为空或仍是「男/女」时改，
        用户自填的（如「扶她」「无性别」）不覆盖；填完照样可以手改 */
