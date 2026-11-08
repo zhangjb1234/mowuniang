@@ -17,7 +17,7 @@
   var LAW_LIM = { 题: 24, 文: 240, 点名: 14, 点文: 200, 条: 3, 点: 4 };
   var ORI_LIM = { 表面: 180, 外貌: 180, 成神: 200 };
   var SJ_LIM = { 名: 14, 文: 140, 提议引子: 50, 提议: 100 };
-  var STAGE_LIM = { 名: 16, 短名: 6, 速览: 22, 外貌: 220, 日常题: 14, 日常: 320, 台词: 110, 加护名: 18, 加护: 160 };
+  var STAGE_LIM = { 名: 16, 短名: 6, 速览: 22, 外貌: 220, 日常题: 14, 日常: 320, 台词: 60, 加护名: 18, 加护: 160 };
   var STAGE_KEYS = ['名', '短名', '速览', '外貌', '日常题', '日常', '台词', '加护名', '加护'];
   var STAGE_NEED = ['名', '外貌', '日常', '台词', '加护名', '加护'];
   var ROLE_CHIPS = ['专属老师', '心界正妻', '青梅竹马', '专属女仆', '姐姐', '妹妹', '专属骑士', '守护灵', '损友', '小主人'];
@@ -53,6 +53,14 @@
     s = clean(s, 0, false).replace(/\u0001/g, '<心语>').replace(/\u0002/g, '</心语>');
     return cut(s, max);
   }
+  /* [修改 35] 台词按句读截到上限内（<心语> 单条≤60字），找不到句读才硬截 */
+  function cutSay(s, max) {
+    var a = chars(s);
+    if (a.length <= max) return a.join('');
+    var head = a.slice(0, max), best = -1;
+    for (var i = head.length - 1; i >= Math.floor(max / 2); i--) { if ('。！？!?…）)」』~～—'.indexOf(head[i]) >= 0) { best = i; break; } }
+    return best >= 0 ? head.slice(0, best + 1).join('') : head.join('');
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   /* ---------- 数据 ---------- */
@@ -65,7 +73,7 @@
     var o = {};
     STAGE_KEYS.forEach(function (k) {
       var v = raw[k];
-      o[k] = (k === '外貌' || k === '日常' || k === '加护') ? cleanBody(v, STAGE_LIM[k]) : cleanLine(v, STAGE_LIM[k]);
+      o[k] = (k === '外貌' || k === '日常' || k === '加护') ? cleanBody(v, STAGE_LIM[k]) : k === '台词' ? cutSay(cleanLine(v, 400), STAGE_LIM[k]) : cleanLine(v, STAGE_LIM[k]);
     });
     if (!o.短名 && o.名) o.短名 = cut(o.名.split('·')[0], STAGE_LIM.短名);
     if (!o.日常题) o.日常题 = '日常与反应';
@@ -133,7 +141,7 @@
       { 名: '地域水脉共鸣', 文: '每当{{user}}抵达新的国家/大区域并体验当地风物时，她借整顿心界水脉之名拓印奇景' },
       { 名: '醋海翻腾共鸣', 文: '每当{{user}}经历一场魔物娘修罗场，并在事后回到心界认真哄好吃醋的她时，嫉妒之火淬炼升华' }
     ], 提议引子: '她偶尔会借「想去某地看看净水/神社/茶具」向{{user}}温和提议', 提议: '夫君，听说东瀛的温泉与神社颇有古风……（绝不是想让夫君离城里那帮魅魔远一点！）……若顺路的话，去看看可好？' },
-    阶段: [{ 名: '白蛇盘绕·雾中初见', 短名: '白蛇盘绕', 速览: '雾中纯白蛇尾与红瞳，安静守望', 外貌: '心界水边雾气中盘绕着一抹纯白蛇影——只看得清一段覆着月华般白鳞的修长蛇尾，与一双清冷专注的红宝石眼瞳。', 日常题: '日常与反应', 日常: '安静的观察与守望期。她话不多，只要{{user}}露出疲惫便吐出清凉水汽为你安神；若{{user}}跟别的女性靠得太近，心界里的白蛇尾就会冷不丁收紧一寸。', 台词: '……（红瞳静静凝视着贴向{{user}}的魔物娘，蛇尾在水雾里不悦地拍了一下水面）……夫君，外头风凉，莫要离陌生女子太近了。', 加护名: '蛇信感知', 加护: '凭借白蛇对气息与恶意的敏锐直觉，使{{user}}在先手察觉与闪避检定上获得微弱优势（被动常驻）。' }]
+    阶段: [{ 名: '白蛇盘绕·雾中初见', 短名: '白蛇盘绕', 速览: '雾中纯白蛇尾与红瞳，安静守望', 外貌: '心界水边雾气中盘绕着一抹纯白蛇影——只看得清一段覆着月华般白鳞的修长蛇尾，与一双清冷专注的红宝石眼瞳。', 日常题: '日常与反应', 日常: '安静的观察与守望期。她话不多，只要{{user}}露出疲惫便吐出清凉水汽为你安神；若{{user}}跟别的女性靠得太近，心界里的白蛇尾就会冷不丁收紧一寸。', 台词: '（红瞳盯着贴近{{user}}的魔物娘，蛇尾拍了下水面）……夫君，外头风凉，莫离陌生女子太近。', 加护名: '蛇信感知', 加护: '凭借白蛇对气息与恶意的敏锐直觉，使{{user}}在先手察觉与闪避检定上获得微弱优势（被动常驻）。' }]
   };
 
   var SCHEMA_DOC = [
@@ -146,13 +154,13 @@
     '铁律：数组，1~3 项，每项 {题≤24字, 文≤240字, 要点?:[{名≤14字, 文≤200字}] 最多4条}。第一项必须是「生理铁律」（种族正典身体构造，写清严禁写错的地方），第二项是「核心人设」机制（她最有戏的反差，用要点拆开）',
     '来历：{表面≤180字, 外貌≤180字（生理铁律已写清外貌时可留空）, 成神≤200字（集齐11枚碎晶、T8~T11 登临什么神座，执掌【……】）}',
     '碎晶：{途径:[恰好2项 {名≤14字, 文≤140字}]（第一项=游历新国度风物，第二项=该住民专属的种族本能互动；文不要写「碎晶+1」，排版会自动补）, 提议引子≤50字, 提议≤100字（一句她的闲聊提议台词）}',
-    '阶段：数组，每项 {名：「四字·四字」≤16字, 短名：名的前半≤6字, 速览：表格里的形态一句话≤22字, 外貌：外貌与爱室状态≤220字（必须写爱室装修演变）, 日常题：默认「日常与反应」≤14字, 日常≤320字, 台词≤110字（不带标签）, 加护名≤18字（可用「A & B」两条）, 加护≤160字（写清触发频率）}'
+    '阶段：数组，每项 {名：「四字·四字」≤16字, 短名：名的前半≤6字, 速览：表格里的形态一句话≤22字, 外貌：外貌与爱室状态≤220字（必须写爱室装修演变）, 日常题：默认「日常与反应」≤14字, 日常≤320字, 台词≤60字（不带标签，含括号动作心声一起算）, 加护名≤18字（可用「A & B」两条）, 加护≤160字（写清触发频率）}'
   ].join('\n');
 
   var SYS = [
     '你是《魔物娘图鉴》（Monster Girl Encyclopedia）世界观的资深角色卡作者，为文字冒险卡「魔物娘图鉴」设计一位「心界住民」——住在{{user}}心界（灵魂内侧）的唯一一位魔物娘伴侣，对除{{user}}外一切存在不可见。',
     '你只输出一个 JSON 对象：不要解释、不要 Markdown 代码块、不要思考过程。',
-    '若提示词末尾附有【种族正典】：编号、外貌、生理特征、本能与「禁止」条目一律以正典为准；正典缺失时「图鉴」字段写「未编号·种族名」，严禁编造 NO. 编号。',
+    '若提示词末尾附有【种族正典】：编号、外貌、生理特征、本能与「禁止」条目一律以正典为准，「图鉴」与第一条生理铁律照正典写编号；正典缺失时「图鉴」字段写「未编号·种族名」，严禁编造 NO. 编号。',
     '',
     '【五阶段架构（门槛锁死，不得改动）】',
     '阶段一 好感0~19·碎晶≥0·T1：初醒雾影，只有声音/轮廓与常驻直觉。',
@@ -169,7 +177,7 @@
     '',
     '【写法】',
     '- 用「她」指代住民，用 {{user}} 指代玩家（原样写 {{user}}）。',
-    '- 台词、提议只写台词本身，不要写 <心语> 标签，可以带括号心声；单条最好≤60字。',
+    '- 台词、提议只写台词本身，不要写 <心语> 标签，可以带括号心声；「台词」连括号一起严格≤60字（超出会被截断），宁短勿长。',
     '- 不要写 HTML，不要写模板符号。亲密描写点到为止，具体场面留给正文。',
     '- 玩家填写的设定是最高优先；没填的部分由你按种族正典补全。字数是上限，写满不如写准。',
     '',
@@ -197,10 +205,21 @@
     for (var i = 0; i < fr.length; i++) { try { if (fr[i].__mgeWb && fr[i].__mgeWb.get) return fr[i].__mgeWb; } catch (e) {} }
     return null;
   }
+  /* [修改 35] 魔典页面本身就能用酒馆助手的世界书接口（主页面 loadWbIndex / 宿命羁绊写条目都在用），直接接口优先，桥只作兜底 */
   function wbApi(name) {
+    var f = apiAll(name);
+    if (f) return f;
     var b = wbBridge();
     if (b && typeof b[name] === 'function') return b[name].bind(b);
-    return apiAll(name);
+    return null;
+  }
+  /* [修改 35] 条目字段归一：酒馆助手 getWorldbook 给的是 name / strategy.keys / enabled，
+     不是酒馆原始 JSON 的 comment / key / disable（修改 34+ 按 comment / key 找，所以一直「未命中」） */
+  function eName(e) { return String((e && (e.name != null ? e.name : e.comment)) || '').trim(); }
+  function eKeys(e) {
+    if (!e) return [];
+    var k = (e.strategy && Array.isArray(e.strategy.keys)) ? e.strategy.keys : Array.isArray(e.key) ? e.key : Array.isArray(e.keys) ? e.keys : [];
+    return k.map(function (x) { return x instanceof RegExp ? x.source : String(x == null ? '' : x).trim(); }).filter(Boolean);
   }
   async function wbAllBooks() {
     var out = [];
@@ -224,34 +243,88 @@
     return out;
   }
 
-  /* ---------- [修改 34+] 种族正典注入：补全前从已绑定世界书取〈种族核心模板〉喂给提示词 ---------- */
-  var canonCache = { race: '', text: null };
-  async function raceCanon(st) {
+  /* ---------- [修改 35] 种族正典：魔典自带图鉴（window.MODIAN_DEX，自动提取自卡内世界书）定编号与要点，
+     再从已绑定世界书取该种族的完整图鉴条目原文；两边都没有才走「未编号」 ---------- */
+  function dexData() {
+    var fr = [window];
+    try { if (window.parent && window.parent !== window) fr.push(window.parent); } catch (e) {}
+    try { if (window.top && window.top !== window) fr.push(window.top); } catch (e) {}
+    for (var i = 0; i < fr.length; i++) { try { if (fr[i].MODIAN_DEX && Array.isArray(fr[i].MODIAN_DEX.cats)) return fr[i].MODIAN_DEX; } catch (e) {} }
+    return null;
+  }
+  function dexFind(race) {
+    var dex = dexData(); if (!dex || !race) return null;
+    var q = String(race).replace(/[（(].*$/, '').trim(), ql = q.toLowerCase(), alias = null;
+    for (var c = 0; c < dex.cats.length; c++) {
+      var rs = dex.cats[c].races || [];
+      for (var i = 0; i < rs.length; i++) {
+        var r = rs[i]; if (!r || !r.name) continue;
+        if (r.name === q) return r;
+        if (!alias && ((r.en && String(r.en).toLowerCase() === ql) || String(r.alias || '').split(/[、,，\/\s]+/).indexOf(q) >= 0)) alias = r;
+      }
+    }
+    return alias;
+  }
+  function dexText(r) {
+    return ['NO.' + r.no + ' ' + r.name + (r.en ? '（' + r.en + '）' : '') + (r.family ? ' · ' + r.family : '') + (r.type ? ' · ' + r.type : ''),
+      r.alias ? '别名：' + r.alias : '', r.character ? '性格：' + r.character : '', r.food ? '食物：' + r.food : '',
+      r.feat ? '特征：' + r.feat : '', (r.habitat2 || r.habitat) ? '栖息地：' + (r.habitat2 || r.habitat) : '', r.intro ? '简介：' + r.intro : ''
+    ].filter(Boolean).join('\n');
+  }
+  function stripEntry(s) {
+    return String(s || '').replace(/<%[\s\S]*?%>/g, '').replace(/<\/?world_setting>/g, '').replace(/\n{3,}/g, '\n\n').trim();
+  }
+  var canonCache = {};
+  /* 返回 { no, name, family, text }；text 为空表示卡里没有这个种族 */
+  async function raceInfo(st) {
     var race = cleanLine(st.种族, BASE_LIM.种族);
-    if (!race || race.length < 2) return '';
-    if (canonCache.race === race && canonCache.text !== null) return canonCache.text;
-    var text = '';
+    var none = { no: '', name: race, family: '', text: '' };
+    if (!race || race.length < 2) return none;
+    if (canonCache[race]) return canonCache[race];
+    var r = dexFind(race);
+    var names = [race]; if (r && names.indexOf(r.name) < 0) names.push(r.name);
+    var wbText = '', diag = [];
     try {
-      var NO_RE = /^NO\.\d+\s*(.+)$/;
       var books = await wbAllBooks();
-      for (var b = 0; b < books.length && !text; b++) {
-        var wb = books[b].wb; if (!Array.isArray(wb)) continue;
-        var pass1 = null, pass2 = null;
+      for (var b = 0; b < books.length && !wbText; b++) {
+        var wb = books[b].wb, p1 = null, p2 = null, p3 = null;
+        diag.push(books[b].name + '(' + wb.length + ')');
         for (var i = 0; i < wb.length; i++) {
           var e = wb[i]; if (!e || !e.content) continue;
-          var cm = String(e.comment || '').trim();
-          var m = cm.match(NO_RE);
-          if (!pass1 && m && m[1].trim() === race) pass1 = e;   /* 第一轮：编号+种族名精确 */
-          if (!pass2 && (e.key || []).indexOf(race) >= 0) pass2 = e;   /* 第二轮：关键字精确 */
+          var nm = eName(e), mm = nm.match(/^NO\.\s*(\d+)\s*(.+)$/);
+          var base = mm ? mm[2].replace(/[（(].*$/, '').trim() : '';
+          if (!p1 && mm && (names.indexOf(base) >= 0 || (r && mm[1] === r.no))) p1 = e;   /* 第一轮：「NO.x 种族名」或编号 */
+          if (!p2 && names.indexOf(nm) >= 0) p2 = e;                                        /* 第二轮：条目名就是种族名 */
+          if (!p3) { var ks = eKeys(e); for (var k = 0; k < names.length; k++) if (ks.indexOf(names[k]) >= 0) { p3 = e; break; } }   /* 第三轮：关键字精确 */
         }
-        var hit = pass1 || pass2;
-        if (hit) text = String(hit.content).replace(/<\/?world_setting>/g, '').trim();
+        var hit = p1 || p2 || p3;
+        if (hit) wbText = stripEntry(hit.content);
       }
-      if (!text) console.info('[修改 34+] 种族正典：「' + race + '」未在已绑定世界书中命中，走未编号即兴分支');
-    } catch (e) { console.warn('[修改 34+] 种族正典读取失败：', e); text = ''; }
-    if (text.length > 4000) text = text.slice(0, 4000) + '\n……（正典过长已截断，以上仍为权威依据）';
-    canonCache.race = race; canonCache.text = text;
-    return text;
+    } catch (e) { diag.push('读取失败：' + (e && e.message ? e.message : e)); }
+    if (!wbText) console.info('[修改 35] 种族正典：「' + race + '」世界书未命中（' + diag.join('、') + '）' + (r ? '，用魔典图鉴 NO.' + r.no : '，图鉴也没有，走未编号'));
+    var text = [r ? dexText(r) : '', wbText].filter(Boolean).join('\n\n');
+    if (chars(text).length > 4000) text = cut(text, 4000) + '\n……（正典过长已截断，以上仍为权威依据）';
+    var out = { no: r ? r.no : '', name: r ? r.name : race, family: r ? (r.family || '') : '', text: text };
+    if (text) canonCache[race] = out;
+    return out;
+  }
+  async function raceCanon(st) { return (await raceInfo(st)).text; }
+  function canonBlockOf(info) {
+    return info.text
+      ? '\n\n【种族正典（卡内图鉴原文）——编号、外貌、生理特征、本能与「禁止」条目一律以此为准，不得改动' + (info.no ? '；「图鉴」写「NO.' + info.no + ' ' + info.name + (info.family ? '（' + info.family + '）' : '') + '」' : '') + '】\n' + info.text
+      : '\n\n【种族正典】卡内未收录该种族：按《魔物娘图鉴》通行设定即兴即可，但「图鉴」字段必须写「未编号·' + info.name + '」，严禁编造 NO. 编号。';
+  }
+  /* 编号由代码兜底：有正典就改成正典编号，没有就去掉 AI 编的编号 */
+  function fixNo(s, info) {
+    s = String(s || '');
+    return info.no ? s.replace(/NO\.\s*\d+/g, 'NO.' + info.no) : s.replace(/NO\.\s*\d+\s*/g, '');
+  }
+  function fixTop(top, info) {
+    var t = top.data;
+    if (info.no) { if (!/NO\.\s*\d+/.test(t.图鉴)) t.图鉴 = 'NO.' + info.no + ' ' + info.name + (info.family ? '（' + info.family + '）' : ''); else t.图鉴 = fixNo(t.图鉴, info); }
+    else if (/NO\.\s*\d+/.test(t.图鉴) || !t.图鉴) t.图鉴 = '未编号·' + info.name;
+    t.图鉴 = cut(t.图鉴, TOP_LIM.图鉴);
+    if (Array.isArray(t.铁律) && t.铁律[0]) t.铁律[0].题 = cut(fixNo(t.铁律[0].题, info), LAW_LIM.题);
   }
   function brief(st) {
     var rows = [['名字', st.名字], ['种族', st.种族], ['与{{user}}的关系定位', st.定位], ['设定', st.设定], ['外貌要点', st.外貌], ['核心反差 / 机制', st.核心梗], ['成神后执掌', st.神职]];
@@ -283,14 +356,13 @@
   }
 
   async function generateAll(st, gid, step) {
-    var canon = await raceCanon(st);
-    var canonBlock = canon
-      ? '\n\n【种族正典（卡内图鉴〈种族核心模板〉原文）——编号、外貌、生理特征、本能与「禁止」条目一律以此为准，不得改动、不得另编 NO. 编号】\n' + canon
-      : '\n\n【种族正典】卡内未收录该种族：按《魔物娘图鉴》通行设定即兴即可，但「图鉴」字段必须写「未编号·种族名」，严禁编造 NO. 编号。';
+    var info = await raceInfo(st);
+    var canonBlock = canonBlockOf(info);
     step('正在写总纲与阶段一、二……（1/2）');
     var a = await ask(brief(st) + canonBlock + '\n\n这一次输出全部总纲字段，「阶段」数组只含阶段一、阶段二两项。', gid);
     var top = normTop(a);
     if (top.missing.length) throw new Error('AI 的回复缺少：' + top.missing.join('、'));
+    fixTop(top, info);
     var stages = Array.isArray(a.阶段) ? a.阶段.slice(0, 5) : [];
     if (stages.length < 5) {
       step('正在写阶段三、四、五……（2/2）');
@@ -308,7 +380,8 @@
 
   async function generateStage(st, n, hint, gid) {
     var cur = exportable(st).档案;
-    var obj = await ask(brief(st) + '\n\n下面是这位住民的完整档案：\n' + JSON.stringify(cur) + '\n\n重写阶段' + CN[n] + '（' + META[n] + '），只输出这一阶段的单个对象 {"名":…}，与前后阶段衔接，不要照抄原文。' + (clean(hint) ? '\n玩家的修改要求：' + clean(hint, 120) : ''), gid);
+    var info = await raceInfo(st);
+    var obj = await ask(brief(st) + canonBlockOf(info) + '\n\n下面是这位住民的完整档案：\n' + JSON.stringify(cur) + '\n\n重写阶段' + CN[n] + '（' + META[n] + '），只输出这一阶段的单个对象 {"名":…}，与前后阶段衔接，不要照抄原文。' + (clean(hint) ? '\n玩家的修改要求：' + clean(hint, 120) : ''), gid);
     if (obj && Array.isArray(obj.阶段)) obj = obj.阶段[0];
     var r = normStage(obj, n);
     if (r.missing.length) throw new Error('AI 的回复缺少：' + r.missing.join('、'));
@@ -655,68 +728,71 @@
   }
 
   
-  /* ---------- [修改 34+] 定格到世界书：档案写成角色世界书条目（照抄「心界住民：自定义」模板+内嵌JSON），跨聊天永久生效 ---------- */
+  /* ---------- [修改 34+ / 35] 定格到世界书：档案写成角色世界书条目「心界住民：自定义·名字」，跨聊天生效 ----------
+     [修改 35] 改用酒馆助手的条目格式（name / enabled / strategy / position），新条目照抄模板条目的插入设置；
+     模板正文用 MCR-DATA / MCR-GATE / MCR-PIN 三对标记切换，不再按代码原文定位。 */
   var PIN_KEY = 'mge_custom_resident_wb';
-  function entryNameOf(st) { return '心界住民：自定义·' + cleanLine(st.名字, BASE_LIM.名字); }
+  var TPL_NAME = '心界住民：自定义';
+  function entryNameOf(st) { return TPL_NAME + '·' + cleanLine(st.名字, BASE_LIM.名字); }
   async function readPin() {
     var gv = host('getVariables');
     if (!gv) return '';
     try { var v = gv({ type: 'chat' }) || {}; return String(v[PIN_KEY] || ''); } catch (e) { return ''; }
   }
   async function writePin(v) { await writeChat(function (x) { if (v) x[PIN_KEY] = v; else delete x[PIN_KEY]; }); }
-  async function removeEntry(name) {
-    var rw = wbApi('replaceWorldbook');
-    if (!rw) throw new Error('找不到酒馆助手的 replaceWorldbook（三级帧均未命中）');
+  async function writeBook(name, fn) {
+    var uw = apiAll('updateWorldbookWith');
+    if (uw) { await uw(name, function (wb) { return fn(wb || []); }); return; }
+    var gw = wbApi('getWorldbook'), rw = wbApi('replaceWorldbook');
+    if (!gw || !rw) throw new Error('找不到酒馆助手的世界书写入接口（replaceWorldbook）');
+    var wb = await gw(name);
+    await rw(name, fn(Array.isArray(wb) ? wb : []));
+  }
+  function between(s, a, b) { var i = s.indexOf(a), j = i >= 0 ? s.indexOf(b, i + a.length) : -1; return (i < 0 || j < 0) ? null : { i: i, j: j + b.length }; }
+  function swap(s, a, b, rep) { var r = between(s, a, b); if (!r) return null; return s.slice(0, r.i) + rep + s.slice(r.j); }
+  async function findTemplate() {
     var books = await wbAllBooks();
-    var done = '';
     for (var b = 0; b < books.length; b++) {
       var wb = books[b].wb;
-      var has = false;
-      for (var i = 0; i < wb.length; i++) if ((wb[i].comment || '') === name) { has = true; break; }
-      if (!has) continue;
-      await rw(books[b].name, wb.filter(function (e) { return (e.comment || '') !== name; }));
+      for (var i = 0; i < wb.length; i++) if (eName(wb[i]) === TPL_NAME) return { book: books[b].name, entry: wb[i] };
+    }
+    throw new Error('已绑定世界书里没有「' + TPL_NAME + '」模板条目（修改 34a），无法定格');
+  }
+  function buildContent(tpl, st) {
+    var d = JSON.stringify(exportable(st)).replace(/<\//g, '<\\/');
+    var gate = "var mcrOn = !!mcrName && !!mcrRace && (mgeResName === mcrName || mgeResName.indexOf(mcrName) >= 0);";
+    var s = swap(tpl, '/*MCR-DATA*/', '/*/MCR-DATA*/', 'var mcr = ' + d + ';');
+    if (s != null) s = swap(s, '/*MCR-GATE*/', '/*/MCR-GATE*/', gate);
+    if (s != null) s = swap(s, '/*MCR-PIN*/', '/*/MCR-PIN*/', '');
+    if (s == null) throw new Error('「' + TPL_NAME + '」条目还是旧正文（没有 MCR 标记），请换成修改 35 的新正文后再定格');
+    return s;
+  }
+  async function removeEntry(name) {
+    var books = await wbAllBooks(), done = '';
+    for (var b = 0; b < books.length; b++) {
+      if (!books[b].wb.some(function (e) { return eName(e) === name; })) continue;
+      await writeBook(books[b].name, function (wb) { return wb.filter(function (e) { return eName(e) !== name; }); });
       done = books[b].name;
     }
-    if (!done) throw new Error('已绑定世界书里没有「' + name + '」条目');
-    return done;
-  }
-  async function buildEntryContent(st) {
-    var books = await wbAllBooks();
-    var tpl = null, bookName = '';
-    for (var b = 0; b < books.length && !tpl; b++) {
-      var wb = books[b].wb;
-      for (var i = 0; i < wb.length; i++) if ((wb[i].comment || '') === '心界住民：自定义') { tpl = String(wb[i].content || ''); bookName = books[b].name; break; }
-    }
-    if (!tpl) throw new Error('世界书里没有「心界住民：自定义」模板条目（修改34a），无法定格——请重新导入最新卡恢复该条目');
-    var d = JSON.stringify(exportable(st)).replace(/<\//g, '<\\/');
-    var i1 = tpl.indexOf('var mcr = null;');
-    var cutEnd = "if (!mcr || typeof mcr !== 'object') mcr = {};";
-    var i2 = tpl.indexOf(cutEnd);
-    var i3 = tpl.indexOf('var mcrOn =');
-    if (i1 < 0 || i2 < 0 || i3 < 0 || i2 < i1 || i3 < i2) throw new Error('模板条目结构与 34a 不符，无法定格');
-    var gate = 'var mcrOn = !!mcrName && !!mcrRace && (mgeResName === mcrName || mgeResName.indexOf(mcrName) >= 0);';
-    return { content: tpl.slice(0, i1) + 'var mcr = ' + d + ';\n' + tpl.slice(i2 + cutEnd.length, i3) + gate + tpl.slice(tpl.indexOf('\n', i3)), bookName: bookName };
+    return done;   /* 条目已经不在（手动删过）也算撤下成功 */
   }
   async function materialize(st) {
     if (!hasDossier(st)) throw new Error('还没有完整五阶段档案（先点 AI 补全）');
-    var rw = wbApi('replaceWorldbook');
-    if (!rw) throw new Error('找不到酒馆助手的 replaceWorldbook（三级帧均未命中）');
-    var built = await buildEntryContent(st);
+    var t = await findTemplate();
+    var content = buildContent(String(t.entry.content || ''), st);
     var name = entryNameOf(st);
-    var books = await wbAllBooks();
-    var book = books[0];
-    for (var b = 0; b < books.length; b++) if (books[b].name === built.bookName) book = books[b];
-    var wb = book.wb;
-    var hit = null, maxUid = -1;
-    for (var i = 0; i < wb.length; i++) {
-      if ((wb[i].comment || '') === name) hit = wb[i];
-      var u = Number(wb[i].uid); if (Number.isFinite(u) && u > maxUid) maxUid = u;
-    }
-    if (hit) { hit.content = built.content; hit.enabled = true; hit.constant = true; }
-    else wb.push({ uid: maxUid + 1, comment: name, content: built.content, key: [], keysecondary: [], constant: true,
-      selective: false, order: 205.9, position: 4, depth: 4, disable: false, addMemo: true,
-      excludeRecursion: true, preventRecursion: true, probability: 100, useProbability: true });
-    await rw(book.name, wb);
+    await writeBook(t.book, function (wb) {
+      var hit = null, maxUid = -1;
+      wb.forEach(function (e) { if (eName(e) === name) hit = e; var u = Number(e && e.uid); if (isFinite(u) && u > maxUid) maxUid = u; });
+      if (hit) { hit.content = content; hit.enabled = true; if (hit.strategy) hit.strategy.type = 'constant'; return wb; }
+      var ne = JSON.parse(JSON.stringify(t.entry));
+      ne.uid = maxUid + 1; ne.name = name; ne.content = content; ne.enabled = true;
+      if (ne.comment != null) ne.comment = name;
+      if (ne.strategy && typeof ne.strategy === 'object') { ne.strategy.type = 'constant'; ne.strategy.keys = []; }
+      if (ne.position && typeof ne.position === 'object' && isFinite(Number(ne.position.order))) ne.position.order = Number(ne.position.order) + 0.1;
+      wb.push(ne);
+      return wb;
+    });
     await writePin(name);
     return name;
   }
