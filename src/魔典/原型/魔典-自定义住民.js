@@ -189,9 +189,22 @@
     try { var th = window.TavernHelper; if (th && typeof th[name] === 'function') return th[name].bind(th); } catch (e) {}
     return null;
   }
+  /* [修改 34+] 脚本桥：酒馆助手脚本「心界档案·世界书桥」把 worldbook API 挂到页面全局 __mgeWb，iframe 内跨帧调用 */
+  function wbBridge() {
+    var fr = [window];
+    try { if (window.parent && window.parent !== window) fr.push(window.parent); } catch (e) {}
+    try { if (window.top && window.top !== window) fr.push(window.top); } catch (e) {}
+    for (var i = 0; i < fr.length; i++) { try { if (fr[i].__mgeWb && fr[i].__mgeWb.get) return fr[i].__mgeWb; } catch (e) {} }
+    return null;
+  }
+  function wbApi(name) {
+    var b = wbBridge();
+    if (b && typeof b[name] === 'function') return b[name].bind(b);
+    return apiAll(name);
+  }
   async function wbAllBooks() {
     var out = [];
-    var namesFn = apiAll('getCharWorldbookNames'), gw = apiAll('getWorldbook');
+    var namesFn = wbApi('getCharWorldbookNames'), gw = wbApi('getWorldbook');
     if (namesFn && gw) {
       try {
         var cb = await namesFn('current');
@@ -204,7 +217,7 @@
       } catch (e) {}
     }
     if (!out.length) {
-      var gw2 = apiAll('getWorldbook');
+      var gw2 = wbApi('getWorldbook');
       if (gw2) { try { var w2 = await gw2('魔物娘图鉴世界'); if (Array.isArray(w2)) out.push({ name: '魔物娘图鉴世界', wb: w2 }); } catch (e) {} }
     }
     if (!out.length) throw new Error('读不到任何已绑定世界书（getCharWorldbookNames/getWorldbook 均不可用）');
@@ -652,7 +665,7 @@
   }
   async function writePin(v) { await writeChat(function (x) { if (v) x[PIN_KEY] = v; else delete x[PIN_KEY]; }); }
   async function removeEntry(name) {
-    var rw = apiAll('replaceWorldbook');
+    var rw = wbApi('replaceWorldbook');
     if (!rw) throw new Error('找不到酒馆助手的 replaceWorldbook（三级帧均未命中）');
     var books = await wbAllBooks();
     var done = '';
@@ -686,7 +699,7 @@
   }
   async function materialize(st) {
     if (!hasDossier(st)) throw new Error('还没有完整五阶段档案（先点 AI 补全）');
-    var rw = apiAll('replaceWorldbook');
+    var rw = wbApi('replaceWorldbook');
     if (!rw) throw new Error('找不到酒馆助手的 replaceWorldbook（三级帧均未命中）');
     var built = await buildEntryContent(st);
     var name = entryNameOf(st);
