@@ -10832,7 +10832,38 @@ window.MODIAN_RITUAL = {
     JSON.stringify(EXAMPLE)
   ].join('\n');
 
-  /* ---------- [修改 34+] 种族正典注入：补全前从卡内图鉴取〈种族核心模板〉喂给提示词 ---------- */
+  /* ---------- [修改 34+] 世界书访问器：dexApi 同款三级帧查找（window/parent/top）+ TavernHelper 兜底 ---------- */
+  function apiAll(name) {
+    var fr = [window];
+    try { if (window.parent && window.parent !== window) fr.push(window.parent); } catch (e) {}
+    try { if (window.top && window.top !== window) fr.push(window.top); } catch (e) {}
+    for (var i = 0; i < fr.length; i++) { try { if (typeof fr[i][name] === 'function') return fr[i][name].bind(fr[i]); } catch (e) {} }
+    try { var th = window.TavernHelper; if (th && typeof th[name] === 'function') return th[name].bind(th); } catch (e) {}
+    return null;
+  }
+  async function wbAllBooks() {
+    var out = [];
+    var namesFn = apiAll('getCharWorldbookNames'), gw = apiAll('getWorldbook');
+    if (namesFn && gw) {
+      try {
+        var cb = await namesFn('current');
+        var names = [];
+        if (cb && cb.primary) names.push(cb.primary);
+        if (cb && Array.isArray(cb.additional)) names = names.concat(cb.additional);
+        for (var i = 0; i < names.length; i++) {
+          try { var wb = await gw(names[i]); if (Array.isArray(wb)) out.push({ name: names[i], wb: wb }); } catch (e) {}
+        }
+      } catch (e) {}
+    }
+    if (!out.length) {
+      var gw2 = apiAll('getWorldbook');
+      if (gw2) { try { var w2 = await gw2('魔物娘图鉴世界'); if (Array.isArray(w2)) out.push({ name: '魔物娘图鉴世界', wb: w2 }); } catch (e) {} }
+    }
+    if (!out.length) throw new Error('读不到任何已绑定世界书（getCharWorldbookNames/getWorldbook 均不可用）');
+    return out;
+  }
+
+  /* ---------- [修改 34+] 种族正典注入：补全前从已绑定世界书取〈种族核心模板〉喂给提示词 ---------- */
   var canonCache = { race: '', text: null };
   async function raceCanon(st) {
     var race = cleanLine(st.种族, BASE_LIM.种族);
@@ -10840,24 +10871,23 @@ window.MODIAN_RITUAL = {
     if (canonCache.race === race && canonCache.text !== null) return canonCache.text;
     var text = '';
     try {
-      var gw = host('getWorldbook');
-      if (gw) {
-        var wb = await gw('魔物娘图鉴世界');
-        if (Array.isArray(wb)) {
-          var NO_RE = /^NO\.\d+\s*(.+)$/;
-          var pass1 = null, pass2 = null;
-          for (var i = 0; i < wb.length; i++) {
-            var e = wb[i]; if (!e || !e.content) continue;
-            var cm = String(e.comment || '').trim();
-            var m = cm.match(NO_RE);
-            if (!pass1 && m && m[1].trim() === race) pass1 = e;   /* 第一轮：编号+种族名精确 */
-            if (!pass2 && (e.key || []).indexOf(race) >= 0) pass2 = e;   /* 第二轮：关键字精确 */
-          }
-          var hit = pass1 || pass2;
-          if (hit) text = String(hit.content).replace(/<\/?world_setting>/g, '').trim();
+      var NO_RE = /^NO\.\d+\s*(.+)$/;
+      var books = await wbAllBooks();
+      for (var b = 0; b < books.length && !text; b++) {
+        var wb = books[b].wb; if (!Array.isArray(wb)) continue;
+        var pass1 = null, pass2 = null;
+        for (var i = 0; i < wb.length; i++) {
+          var e = wb[i]; if (!e || !e.content) continue;
+          var cm = String(e.comment || '').trim();
+          var m = cm.match(NO_RE);
+          if (!pass1 && m && m[1].trim() === race) pass1 = e;   /* 第一轮：编号+种族名精确 */
+          if (!pass2 && (e.key || []).indexOf(race) >= 0) pass2 = e;   /* 第二轮：关键字精确 */
         }
+        var hit = pass1 || pass2;
+        if (hit) text = String(hit.content).replace(/<\/?world_setting>/g, '').trim();
       }
-    } catch (e) { text = ''; }
+      if (!text) console.info('[修改 34+] 种族正典：「' + race + '」未在已绑定世界书中命中，走未编号即兴分支');
+    } catch (e) { console.warn('[修改 34+] 种族正典读取失败：', e); text = ''; }
     if (text.length > 4000) text = text.slice(0, 4000) + '\n……（正典过长已截断，以上仍为权威依据）';
     canonCache.race = race; canonCache.text = text;
     return text;
@@ -11264,25 +11294,37 @@ window.MODIAN_RITUAL = {
   }
 
     /* ---------- [修改 34+] 定格到世界书：档案写成角色世界书条目（照抄「心界住民：自定义」模板+内嵌JSON），跨聊天永久生效 ---------- */
-  var WB_NAME = '魔物娘图鉴世界';
   var PIN_KEY = 'mge_custom_resident_wb';
   function entryNameOf(st) { return '心界住民：自定义·' + cleanLine(st.名字, BASE_LIM.名字); }
   async function readPin() {
-    var gv = host('getVariables'); if (!gv) return '';
+    var gv = host('getVariables');
+    if (!gv) return '';
     try { var v = gv({ type: 'chat' }) || {}; return String(v[PIN_KEY] || ''); } catch (e) { return ''; }
   }
   async function writePin(v) { await writeChat(function (x) { if (v) x[PIN_KEY] = v; else delete x[PIN_KEY]; }); }
   async function removeEntry(name) {
-    var gw = host('getWorldbook'), rw = host('replaceWorldbook');
-    if (!gw || !rw) throw new Error('找不到酒馆助手的 worldbook API');
-    var wb = await gw(WB_NAME); if (!Array.isArray(wb)) throw new Error('读不到世界书「' + WB_NAME + '」');
-    await rw(WB_NAME, wb.filter(function (e) { return (e.comment || '') !== name; }));
+    var rw = apiAll('replaceWorldbook');
+    if (!rw) throw new Error('找不到酒馆助手的 replaceWorldbook（三级帧均未命中）');
+    var books = await wbAllBooks();
+    var done = '';
+    for (var b = 0; b < books.length; b++) {
+      var wb = books[b].wb;
+      var has = false;
+      for (var i = 0; i < wb.length; i++) if ((wb[i].comment || '') === name) { has = true; break; }
+      if (!has) continue;
+      await rw(books[b].name, wb.filter(function (e) { return (e.comment || '') !== name; }));
+      done = books[b].name;
+    }
+    if (!done) throw new Error('已绑定世界书里没有「' + name + '」条目');
+    return done;
   }
   async function buildEntryContent(st) {
-    var gw = host('getWorldbook'); if (!gw) throw new Error('找不到酒馆助手的 getWorldbook');
-    var wb = await gw(WB_NAME);
-    var tpl = null;
-    for (var i = 0; i < wb.length; i++) { if ((wb[i].comment || '') === '心界住民：自定义') { tpl = String(wb[i].content || ''); break; } }
+    var books = await wbAllBooks();
+    var tpl = null, bookName = '';
+    for (var b = 0; b < books.length && !tpl; b++) {
+      var wb = books[b].wb;
+      for (var i = 0; i < wb.length; i++) if ((wb[i].comment || '') === '心界住民：自定义') { tpl = String(wb[i].content || ''); bookName = books[b].name; break; }
+    }
     if (!tpl) throw new Error('世界书里没有「心界住民：自定义」模板条目（修改34a），无法定格——请重新导入最新卡恢复该条目');
     var d = JSON.stringify(exportable(st)).replace(/<\//g, '<\\/');
     var i1 = tpl.indexOf('var mcr = null;');
@@ -11291,25 +11333,28 @@ window.MODIAN_RITUAL = {
     var i3 = tpl.indexOf('var mcrOn =');
     if (i1 < 0 || i2 < 0 || i3 < 0 || i2 < i1 || i3 < i2) throw new Error('模板条目结构与 34a 不符，无法定格');
     var gate = 'var mcrOn = !!mcrName && !!mcrRace && (mgeResName === mcrName || mgeResName.indexOf(mcrName) >= 0);';
-    return tpl.slice(0, i1) + 'var mcr = ' + d + ';\n' + tpl.slice(i2 + cutEnd.length, i3) + gate + tpl.slice(tpl.indexOf('\n', i3));
+    return { content: tpl.slice(0, i1) + 'var mcr = ' + d + ';\n' + tpl.slice(i2 + cutEnd.length, i3) + gate + tpl.slice(tpl.indexOf('\n', i3)), bookName: bookName };
   }
   async function materialize(st) {
     if (!hasDossier(st)) throw new Error('还没有完整五阶段档案（先点 AI 补全）');
-    var gw = host('getWorldbook'), rw = host('replaceWorldbook');
-    if (!gw || !rw) throw new Error('找不到酒馆助手的 worldbook API');
+    var rw = apiAll('replaceWorldbook');
+    if (!rw) throw new Error('找不到酒馆助手的 replaceWorldbook（三级帧均未命中）');
+    var built = await buildEntryContent(st);
     var name = entryNameOf(st);
-    var content = await buildEntryContent(st);
-    var wb = await gw(WB_NAME);
+    var books = await wbAllBooks();
+    var book = books[0];
+    for (var b = 0; b < books.length; b++) if (books[b].name === built.bookName) book = books[b];
+    var wb = book.wb;
     var hit = null, maxUid = -1;
     for (var i = 0; i < wb.length; i++) {
       if ((wb[i].comment || '') === name) hit = wb[i];
       var u = Number(wb[i].uid); if (Number.isFinite(u) && u > maxUid) maxUid = u;
     }
-    if (hit) { hit.content = content; hit.enabled = true; hit.constant = true; }
-    else wb.push({ uid: maxUid + 1, comment: name, content: content, key: [], keysecondary: [], constant: true,
+    if (hit) { hit.content = built.content; hit.enabled = true; hit.constant = true; }
+    else wb.push({ uid: maxUid + 1, comment: name, content: built.content, key: [], keysecondary: [], constant: true,
       selective: false, order: 205.9, position: 4, depth: 4, disable: false, addMemo: true,
       excludeRecursion: true, preventRecursion: true, probability: 100, useProbability: true });
-    await rw(WB_NAME, wb);
+    await rw(book.name, wb);
     await writePin(name);
     return name;
   }
