@@ -10665,7 +10665,7 @@ window.MODIAN_RITUAL = {
   var CN = ['一', '二', '三', '四', '五'];
   var META = ['好感0~19 · 碎晶0~1 · T1', '好感20~49 · 碎晶2~4 · T2~T3', '好感50~74 · 碎晶5~7 · T4~T5', '好感75~99 · 碎晶8~10 · T6~T7', '好感100 · 碎晶11/11 · T8~T11'];
   var BASE_LIM = { 名字: 12, 种族: 20, 定位: 24, 设定: 80, 外貌: 80, 核心梗: 120, 神职: 20 };
-  var TOP_LIM = { 图鉴: 30, 称呼: 8, 语气: 30, 等待: 30, 加护类型: 14, 爱室: 14 };
+  var TOP_LIM = { 图鉴: 30, 称呼: 8, 语气: 30, 等待: 40, 加护类型: 14, 爱室: 14 };   // [修改 36] 等待 30→40
   var LAW_LIM = { 题: 24, 文: 240, 点名: 14, 点文: 200, 条: 3, 点: 4 };
   var ORI_LIM = { 表面: 180, 外貌: 180, 成神: 200 };
   var SJ_LIM = { 名: 14, 文: 140, 提议引子: 50, 提议: 100 };
@@ -10713,6 +10713,22 @@ window.MODIAN_RITUAL = {
     for (var i = head.length - 1; i >= Math.floor(max / 2); i--) { if ('。！？!?…）)」』~～—'.indexOf(head[i]) >= 0) { best = i; break; } }
     return best >= 0 ? head.slice(0, best + 1).join('') : head.join('');
   }
+  /* [修改 36] 短字段（等待 / 语气 / 速览…）超长时退到最后一个逗号或句号，并去掉句尾逗号，避免「蛇形附肢却」这种半句；
+     已经存成半句的（结尾是「却 / 但 / 而…」这类连接字）也退到前一个逗号，保存档案时自动修好 */
+  function cutSoft(s, max) {
+    var a = chars(s);
+    var out = a;
+    if (a.length > max) {
+      var head = a.slice(0, max), best = -1;
+      for (var i = head.length - 1; i >= Math.floor(max / 2); i--) { if ('，、；：,;:。！？!?…）)」』'.indexOf(head[i]) >= 0) { best = i; break; } }
+      out = best >= 0 ? head.slice(0, best + 1) : head;
+    }
+    if (out.length && '却但而且并与和及或便就则'.indexOf(out[out.length - 1]) >= 0) {
+      for (var j = out.length - 2; j > 0; j--) { if ('，、；：,;:'.indexOf(out[j]) >= 0) { out = out.slice(0, j); break; } }
+    }
+    while (out.length && '，、；：,;:'.indexOf(out[out.length - 1]) >= 0) out = out.slice(0, -1);
+    return out.join('');
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   /* ---------- 数据 ---------- */
@@ -10725,7 +10741,7 @@ window.MODIAN_RITUAL = {
     var o = {};
     STAGE_KEYS.forEach(function (k) {
       var v = raw[k];
-      o[k] = (k === '外貌' || k === '日常' || k === '加护') ? cleanBody(v, STAGE_LIM[k]) : k === '台词' ? cutSay(cleanLine(v, 400), STAGE_LIM[k]) : cleanLine(v, STAGE_LIM[k]);
+      o[k] = (k === '外貌' || k === '日常' || k === '加护') ? cleanBody(v, STAGE_LIM[k]) : k === '台词' ? cutSay(cleanLine(v, 400), STAGE_LIM[k]) : k === '速览' ? cutSoft(cleanLine(v, 400), STAGE_LIM[k]) : cleanLine(v, STAGE_LIM[k]);
     });
     if (!o.短名 && o.名) o.短名 = cut(o.名.split('·')[0], STAGE_LIM.短名);
     if (!o.日常题) o.日常题 = '日常与反应';
@@ -10736,7 +10752,7 @@ window.MODIAN_RITUAL = {
   function normTop(raw) {
     raw = raw && typeof raw === 'object' ? raw : {};
     var o = {}, miss = [];
-    Object.keys(TOP_LIM).forEach(function (k) { o[k] = cleanLine(raw[k], TOP_LIM[k]); });
+    Object.keys(TOP_LIM).forEach(function (k) { o[k] = cutSoft(cleanLine(raw[k], 400), TOP_LIM[k]); });   // [修改 36] 超长时在逗号句号处截，不截半句
     ['语气', '爱室'].forEach(function (k) { if (!o[k]) miss.push(k); });
     var laws = Array.isArray(raw.铁律) ? raw.铁律 : [];
     o.铁律 = laws.slice(0, LAW_LIM.条).map(function (L) {
@@ -10800,7 +10816,7 @@ window.MODIAN_RITUAL = {
     '图鉴：图鉴编号与种族，≤30字（不确定编号就只写种族与属别）',
     '称呼：她对{{user}}的称呼，≤8字',
     '语气：台词语气，≤30字，接在「单条≤60字，」后面读得通',
-    '等待：门槛未达标时她的表现，≤30字，接在「未达标时她」后面读得通',
+    '等待：门槛未达标时她的表现，一个完整短句≤36字，接在「未达标时她」后面读得通，不要写半句',
     '加护类型：神契加护的总体方向，≤14字，例「被动特权」「武勇/主动权特权」',
     '爱室：心界爱室的总名，≤14字',
     '铁律：数组，1~3 项，每项 {题≤24字, 文≤240字, 要点?:[{名≤14字, 文≤200字}] 最多4条}。第一项必须是「生理铁律」（种族正典身体构造，写清严禁写错的地方），第二项是「核心人设」机制（她最有戏的反差，用要点拆开）',
