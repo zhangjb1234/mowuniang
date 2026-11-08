@@ -152,13 +152,14 @@
   var SYS = [
     '你是《魔物娘图鉴》（Monster Girl Encyclopedia）世界观的资深角色卡作者，为文字冒险卡「魔物娘图鉴」设计一位「心界住民」——住在{{user}}心界（灵魂内侧）的唯一一位魔物娘伴侣，对除{{user}}外一切存在不可见。',
     '你只输出一个 JSON 对象：不要解释、不要 Markdown 代码块、不要思考过程。',
+    '若提示词末尾附有【种族正典】：编号、外貌、生理特征、本能与「禁止」条目一律以正典为准；正典缺失时「图鉴」字段写「未编号·种族名」，严禁编造 NO. 编号。',
     '',
     '【五阶段架构（门槛锁死，不得改动）】',
     '阶段一 好感0~19·碎晶≥0·T1：初醒雾影，只有声音/轮廓与常驻直觉。',
     '阶段二 好感20~49·碎晶≥2·T2：半透明灵体凝形，日常吐槽陪伴。',
     '阶段三 好感50~74·碎晶≥5·T4：半实体化，【初级爱室】成型，可贴身接触与温养。',
     '阶段四 好感75~99·碎晶≥8·T6：爱室常驻实体+现实月下/私密处真身，【高级爱室】扩建，情感与种族本能高发期。',
-    '阶段五 好感100·碎杦11/11·T8~T11：完全实体化+登临专属神座，终局级爱室与完满结合。',
+    '阶段五 好感100·碎晶11/11·T8~T11：完全实体化+登临专属神座，终局级爱室与完满结合。',
     '每一阶段都要写出心界爱室（随身亚空间爱巢）的装修演变；形态只能逐级解锁，前一阶段不能出现后一阶段的外貌与能力。',
     '',
     '【三大系统】',
@@ -179,6 +180,36 @@
     JSON.stringify(EXAMPLE)
   ].join('\n');
 
+  /* ---------- [修改 34+] 种族正典注入：补全前从卡内图鉴取〈种族核心模板〉喂给提示词 ---------- */
+  var canonCache = { race: '', text: null };
+  async function raceCanon(st) {
+    var race = cleanLine(st.种族, BASE_LIM.种族);
+    if (!race || race.length < 2) return '';
+    if (canonCache.race === race && canonCache.text !== null) return canonCache.text;
+    var text = '';
+    try {
+      var gw = host('getWorldbook');
+      if (gw) {
+        var wb = await gw('魔物娘图鉴世界');
+        if (Array.isArray(wb)) {
+          var NO_RE = /^NO\.\d+\s*(.+)$/;
+          var pass1 = null, pass2 = null;
+          for (var i = 0; i < wb.length; i++) {
+            var e = wb[i]; if (!e || !e.content) continue;
+            var cm = String(e.comment || '').trim();
+            var m = cm.match(NO_RE);
+            if (!pass1 && m && m[1].trim() === race) pass1 = e;   /* 第一轮：编号+种族名精确 */
+            if (!pass2 && (e.key || []).indexOf(race) >= 0) pass2 = e;   /* 第二轮：关键字精确 */
+          }
+          var hit = pass1 || pass2;
+          if (hit) text = String(hit.content).replace(/<\/?world_setting>/g, '').trim();
+        }
+      }
+    } catch (e) { text = ''; }
+    if (text.length > 4000) text = text.slice(0, 4000) + '\n……（正典过长已截断，以上仍为权威依据）';
+    canonCache.race = race; canonCache.text = text;
+    return text;
+  }
   function brief(st) {
     var rows = [['名字', st.名字], ['种族', st.种族], ['与{{user}}的关系定位', st.定位], ['设定', st.设定], ['外貌要点', st.外貌], ['核心反差 / 机制', st.核心梗], ['成神后执掌', st.神职]];
     return '玩家填写（空着的交给你）：\n' + rows.map(function (r) { return r[0] + '：' + (clean(r[1]) || '（未填）'); }).join('\n');
@@ -209,15 +240,19 @@
   }
 
   async function generateAll(st, gid, step) {
+    var canon = await raceCanon(st);
+    var canonBlock = canon
+      ? '\n\n【种族正典（卡内图鉴〈种族核心模板〉原文）——编号、外貌、生理特征、本能与「禁止」条目一律以此为准，不得改动、不得另编 NO. 编号】\n' + canon
+      : '\n\n【种族正典】卡内未收录该种族：按《魔物娘图鉴》通行设定即兴即可，但「图鉴」字段必须写「未编号·种族名」，严禁编造 NO. 编号。';
     step('正在写总纲与阶段一、二……（1/2）');
-    var a = await ask(brief(st) + '\n\n这一次输出全部总纲字段，「阶段」数组只含阶段一、阶段二两项。', gid);
+    var a = await ask(brief(st) + canonBlock + '\n\n这一次输出全部总纲字段，「阶段」数组只含阶段一、阶段二两项。', gid);
     var top = normTop(a);
     if (top.missing.length) throw new Error('AI 的回复缺少：' + top.missing.join('、'));
     var stages = Array.isArray(a.阶段) ? a.阶段.slice(0, 5) : [];
     if (stages.length < 5) {
       step('正在写阶段三、四、五……（2/2）');
       var draft = Object.assign({}, top.data, { 阶段: stages.slice(0, 2).map(function (s, i) { return normStage(s, i).data; }) });
-      var b = await ask(brief(st) + '\n\n下面是已经定稿的总纲与阶段一、二：\n' + JSON.stringify(draft) + '\n\n这一次只输出 {"阶段":[阶段三, 阶段四, 阶段五]}，与前两阶段衔接、逐级递进。', gid);
+      var b = await ask(brief(st) + canonBlock + '\n\n下面是已经定稿的总纲与阶段一、二：\n' + JSON.stringify(draft) + '\n\n这一次只输出 {"阶段":[阶段三, 阶段四, 阶段五]}，与前两阶段衔接、逐级递进，外貌与设定必须与正典及前两阶段一致。', gid);
       stages = stages.slice(0, 2).concat(Array.isArray(b.阶段) ? b.阶段.slice(0, 3) : []);
     }
     if (stages.length < 5) throw new Error('AI 只写了 ' + stages.length + ' 个阶段');
