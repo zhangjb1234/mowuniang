@@ -391,6 +391,11 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
 .choice-slip:hover{border-color:var(--cinnabar);background:linear-gradient(168deg,#F7F2E4,#EDE6D4);box-shadow:0 10px 20px rgba(96,66,28,.22),inset 0 1px 0 rgba(255,255,255,.6)}
 .choice-slip:active{transform:translateY(-1px)}
 @media (max-width:760px){.choices{grid-template-columns:1fr}}
+/* [修改 37] Ny 预设 tips：选项下方的只读小注（不可点），羊皮纸 / 紫曜夜读各一套 */
+.choices .choice-tips{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;margin-top:2px;padding:8px 14px;border-left:2px solid var(--cinnabar);border-radius:0 3px 3px 0;background:rgba(120,88,40,.07);color:var(--ink-faint);font-size:12.5px;line-height:1.75;letter-spacing:.03em}
+.choices .choice-tips .ctp-k{flex:none;font-size:10px;letter-spacing:.22em;color:var(--gilt-dim)}
+.choices .choice-tips .ctp-v{flex:1;min-width:0;word-break:break-word}
+html[data-mdx-theme="night"] .choices .choice-tips{background:var(--nt-violet-dim);border-left-color:var(--nt-rose)}
 
 /* 翻页把手 */
 .leaf-handle{position:absolute;top:50%;z-index:8;transform:translateY(-50%);display:flex;align-items:center;gap:9px;padding:13px 15px;background:linear-gradient(165deg,rgba(246,242,231,.92),rgba(229,221,201,.9));border:1px solid rgba(120,88,40,.45);color:var(--ink-soft);font-size:12.5px;letter-spacing:.2em;box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .3s var(--ease-spring),padding .3s}
@@ -2353,6 +2358,35 @@ t = t.replace(/<Interleaving>([\s\S]*?)(?:<\/Interleaving\s*>|$)/gi, (whole, inn
        .replace(/<danmu\b[^>]*>[\s\S]*?<\/danmu\s*>/gi,'')
        .replace(/<\/?game\b[^>]*>\n?/gi,'')
        .replace(/<details\b[^>]*>[\s\S]*?<\/details\s*>/gi,'');
+  // ⑤‴ [修改 37] Ny 预设（Ny-Gemini 1.4.x）四选项：<small> 请选择…：1️⃣ … 2️⃣ … tips: […] </small>。
+  //    只认「<small> 里至少两个 1️⃣ 式数字键帽」这一 Ny 专有写法，其余预设（含普通 <small> 小字）行为不变。
+  //    · 选项 → <options> 的「> 标签：文字」行，标签取键帽后的表情（如 😊），没有表情则用「选项一」等默认名
+  //    · 整块挪到文末（AI 偶尔把 <small> 写进 <正文> 里，不挪会连标签带字印进正文）
+  //    · tips 收进 out.nyTips，书页在选项下方显示一行只读小注；流式中 <small> 未闭合时先不显示
+  {
+    const NY_KEY = /(?:[0-9]\uFE0F?\u20E3|\u{1F51F})/gu;
+    const NY_EMO = /^(\p{Extended_Pictographic}\uFE0F?(?:\u200D\p{Extended_Pictographic}\uFE0F?)*)\s*/u;
+    const nyOpts = [];
+    t = t.replace(/<small\b[^>]*>([\s\S]*?)<\/small\s*>/gi, (w, inner)=>{
+      if((inner.match(NY_KEY)||[]).length < 2) return w;
+      const tm = inner.match(/(?:^|\n)[ \t]*(?:💡\s*)?tips?\s*[:：]\s*([\s\S]*)$/i);
+      const head = tm ? inner.slice(0, tm.index) : inner;
+      if(tm){
+        const tip = tm[1].trim().replace(/^\[\s*["“]?/, '').replace(/["”]?\s*\]$/, '').replace(/^["“](.*)["”]$/s, '$1').replace(/\s*\n\s*/g, ' ').trim();
+        if(tip && !/^需替换$/.test(tip)) out.nyTips = tip;
+      }
+      head.split(NY_KEY).slice(1).forEach(seg=>{
+        let s = seg.replace(/\s*\n\s*/g, ' ').trim();
+        let label = '';
+        const em = s.match(NY_EMO);
+        if(em){ label = em[1].length <= 6 ? em[1] : Array.from(em[1])[0]; s = s.slice(em[0].length).trim(); }
+        if(s) nyOpts.push('> ' + (label || ('选项' + ('一二三四五六七八九十'[nyOpts.length] || (nyOpts.length + 1)))) + '：' + s);
+      });
+      return '';
+    });
+    t = t.replace(/<small\b[^>]*>\s*(?:请选择|[0-9]\uFE0F?\u20E3)(?![\s\S]*<\/small\s*>)[\s\S]*$/i, '');
+    if(nyOpts.length) t = t.replace(/\s+$/, '') + '\n<options>\n' + nyOpts.join('\n') + '\n</options>\n';
+  }
   // ⑥ Interleaving / content（Gemini Dramatron）＝杂质：整块删除，不再当容器选留
   // 2026-10 定稿（朋友方案）：正文只认 <正文></正文>，功能标签只认五件套（⓿已抢救）；
   // Interleaving 无论开在哪、闭在哪、闭合与否，一律整块剔除——
@@ -2579,6 +2613,7 @@ function parseFloor(raw){
   r.konataTail = r.konataNotes.length ? r.konataNotes[r.konataNotes.length-1] : null;
   r.midTucao = r.konataNotes.slice(0, -1).filter(n => n.type === 'tucao');
   r.notes = cl.notes;
+  if(cl.nyTips) r.nyTips = cl.nyTips;   // [修改 37] Ny 预设 tips（只在 Ny 楼层出现，其余预设输出不变）
   // 正文后的功能标签（按源码出现顺序）
   r.cards = [];
   const tagMeta = {'魔物生成':['monstrum','魔物娘档案','MONSTRVM'],'获得物品':['res','获得物品','RES'],'获取任务':['mandatum','委托录','MANDATVM'],'技能生成':['artes','技能习得','ARS'],'较量面板':['certamen','较量记录','CERTAMEN']};
@@ -3037,8 +3072,10 @@ function renderFloor(f, floorIdx){
   const r = parseFloor(f.raw);
   const cards = r.cards.map((c,i)=>cardHtml(c, i===r.cards.length-1)).join('');
   const statusCard = statusCardHtml(f, idx, r);   // [修改 3] 书页状态簿
-  const choices = r.options.length ? `<div class="choices">${r.options.map((o,i)=>
-    `<button class="choice-slip" data-choice="${esc(o.text)}"><span class="cs-text">${esc(o.text)}</span><span class="cs-tag">${esc(o.label)}</span></button>`).join('')}</div>` : '';
+  // [修改 37] Ny 预设 tips：选项下方一行只读小注；r.nyTips 只在 Ny 楼层存在，其余预设输出不变
+  const nyTip = r.nyTips ? `<div class="choice-tips"><span class="ctp-k">TIPS</span><span class="ctp-v">${esc(r.nyTips)}</span></div>` : '';
+  const choices = (r.options.length || nyTip) ? `<div class="choices">${r.options.map((o,i)=>
+    `<button class="choice-slip" data-choice="${esc(o.text)}"><span class="cs-text">${esc(o.text)}</span><span class="cs-tag">${esc(o.label)}</span></button>`).join('')}${nyTip}</div>` : '';
   const scribe = r.updates ? '命运已誊录 · 状态簿已归档' : '';
   /* 预设留言（只读标签，不生成）：
      猫神留言（Reborn）+ 小此末尾留言（Izumi）常显在页末；
