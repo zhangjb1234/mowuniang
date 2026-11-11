@@ -414,6 +414,21 @@ html[data-mdx-theme="night"] .choices .choice-tips{background:var(--nt-violet-di
 .lx-label .lx-tags span{padding:1px 8px;font-size:10.5px;letter-spacing:.12em;border:1px solid rgba(138,112,64,.45);border-radius:9px;color:var(--gilt-dim);background:rgba(169,138,70,.1)}
 html[data-mdx-theme="night"] .lx-label{background:var(--nt-violet-dim);border-left-color:var(--nt-rose)}
 html[data-mdx-theme="night"] .lx-label .lx-tags span{border-color:var(--nt-hair-strong);background:var(--nt-gilt-dim)}
+/* [修改 39] 小猫之神 2.x 折叠：内心话（正文里原位）/ 背景剧情（页末），默认收起，羊皮纸 / 紫曜夜读各一套 */
+.m-fold{max-width:88%;margin:14px auto 14px 6%;border-left:3px solid var(--lapis);border-radius:0 6px 6px 0;background:rgba(47,74,94,.06);font-size:13.5px;line-height:1.85;color:var(--ink-soft)}
+.m-fold.bg{border-left-color:var(--gilt);background:rgba(169,138,70,.08)}
+.m-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:6px 12px;user-select:none}
+.m-fold>summary::-webkit-details-marker{display:none}
+.m-fold>summary::before{content:'▸';font-size:10px;color:var(--gilt-dim);transition:transform .2s}
+.m-fold[open]>summary::before{transform:rotate(90deg)}
+.m-fold .mf-k{font-size:11px;letter-spacing:.2em;color:var(--lapis-hi)}
+.m-fold.bg .mf-k{color:var(--gilt-dim)}
+.m-fold .mf-who{font-size:12.5px;font-weight:700;letter-spacing:.08em;color:var(--ink)}
+.m-fold .mf-body{padding:0 14px 10px 26px;white-space:pre-wrap;word-break:break-word}
+@media (max-width:760px){.m-fold{max-width:96%;margin-left:2%}}
+html[data-mdx-theme="night"] .m-fold{background:var(--nt-violet-dim);border-left-color:var(--nt-violet)}
+html[data-mdx-theme="night"] .m-fold.bg{background:var(--nt-gilt-dim);border-left-color:var(--nt-rose)}
+html[data-mdx-theme="night"] .m-fold .mf-k{color:var(--gilt)}
 
 /* 翻页把手 */
 .leaf-handle{position:absolute;top:50%;z-index:8;transform:translateY(-50%);display:flex;align-items:center;gap:9px;padding:13px 15px;background:linear-gradient(165deg,rgba(246,242,231,.92),rgba(229,221,201,.9));border:1px solid rgba(120,88,40,.45);color:var(--ink-soft);font-size:12.5px;letter-spacing:.2em;box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .3s var(--ease-spring),padding .3s}
@@ -6525,6 +6540,28 @@ function cleanseFloor(raw){
   // ② <SUOT> 选项块先提（滤净链将删之）
   const sm = SUOT_RE.exec(t);
   if(sm) out.suot = sm[1];
+  // ②½ [修改 39] 小猫之神 2.x（Meowssiah 2.0.x）两种折叠，只认它专有的写法，其余预设行为不变：
+  //    · <details><summary>内心-角色名</summary>…</details>（穿插在正文里）和 <thought> / <os> → 原位一个默认收起的「内心 · 角色名」
+  //    · <background>…</background>（不在场角色的独立发展）→ 页末一个默认收起的「背景剧情」
+  //    · 必须先于 ③：角色名带「猫」时 ③ 会把内心话错收成猫神留言；也必须先于 ⑤：⑤ 会把 details / background 整块删掉
+  //    · 原位用占位行 <魔典折叠>N</魔典折叠>（前后空行，独占一段），parseFloor 再换成折叠节点；流式中未闭合先不显示
+  {
+    const folds = [], bgs = [];
+    const fold = (who, body)=>{
+      body = String(body||'').trim().replace(/^\*([^*][\s\S]*[^*])\*$/, '$1').trim();
+      if(!body) return '';
+      folds.push({ title: (who||'').trim(), text: body });
+      return '\n\n<魔典折叠>' + (folds.length - 1) + '</魔典折叠>\n\n';
+    };
+    t = t.replace(/<details\b[^>]*>\s*<summary\b[^>]*>\s*(?:\*\*)?\s*内心话?\s*(?:[-－—–·・:：|｜]\s*([^<\n*]{1,30}?))?\s*(?:\*\*)?\s*<\/summary\s*>([\s\S]*?)<\/details\s*>/gi, (w, who, body)=>fold(who, body))
+         .replace(/<details\b[^>]*>\s*<summary\b[^>]*>\s*(?:\*\*)?\s*内心[^<\n]{0,32}<\/summary\s*>(?![\s\S]*?<\/details\s*>)[\s\S]*$/i, '')
+         .replace(/<(thought|os)>([\s\S]*?)<\/\1\s*>/gi, (w, tag, body)=>fold('', body))
+         .replace(/<(?:thought|os)>(?![\s\S]*?<\/(?:thought|os)\s*>)[\s\S]*$/i, '')
+         .replace(/<background>([\s\S]*?)<\/background\s*>\n?/gi, (w, body)=>{ body = body.trim(); if(body) bgs.push(body); return ''; })
+         .replace(/<background>(?![\s\S]*?<\/background\s*>)[\s\S]*$/i, '');
+    if(folds.length) out.mFolds = folds;
+    if(bgs.length) out.mBg = bgs;
+  }
   // ③ 猫神留言（Reborn 小猫之神）—— 必须先于 ⑥ 的 <details> 整块滤净收，否则必丢
   {
     const ranges = [];
@@ -6861,6 +6898,12 @@ function parseFloor(raw){
                .replace(/<choice>[\s\S]*?<\/choice>/gi, '');
   }
   body = body.replace(/<\s*\/?\s*(正文|content)\s*>/gi,'');
+  // [修改 39] 选项块写进了 <正文> 里（小猫之神 2.x 常见）：书页正文不再印出 <options> / <option> / <choice> 原文。
+  //   选项签照旧从全文 t 里取，按钮不受影响；正文里没有这几个标签的楼层结果不变
+  if(bodies.length) body = body.replace(/<options\b[^>]*>[\s\S]*?(?:<\/options\s*>|$)/gi, '')
+                               .replace(/<option\b[^>]*>[\s\S]*?(?:<\/option\s*>|$)/gi, '')
+                               .replace(/<\/?options?\b[^>]*>/gi, '')
+                               .replace(/<choice>[\s\S]*?<\/choice>/gi, '');
   // [修改 3] 正文里残留的 <状态栏> 块 / <状态面板/> 不进书页（状态栏由 statusCardHtml 单独绘制）
   body = body.replace(/<\s*状态栏\s*>[\s\S]*?(?:<\/\s*状态栏\s*>|$)/gi,'').replace(/<\s*\/?\s*状态面板\s*\/?>/gi,'');
   // 顺序游走：保真还原 正文段落 / 心语 / 大陆见闻 / 战况 的出现次序
@@ -6875,6 +6918,14 @@ function parseFloor(raw){
     last = walk.lastIndex;
   }
   pushProse(body.slice(last));
+  // [修改 39] 小猫之神 2.x 内心话：占位段换成折叠节点（只在 cleanseFloor 收到内心话时才有 cl.mFolds）
+  if(cl.mFolds){
+    r.flow = r.flow.map(n=>{
+      const m = n.type === 'prose' && n.text.match(/^<魔典折叠>(\d+)<\/魔典折叠>$/);
+      return m && cl.mFolds[+m[1]] ? { type:'fold', title: cl.mFolds[+m[1]].title, text: cl.mFolds[+m[1]].text } : n;
+    }).filter(n=>!(n.type === 'prose' && /<魔典折叠>\d+<\/魔典折叠>/.test(n.text)));
+    if(/^<魔典折叠>\d+<\/魔典折叠>$/.test(r.header)) r.header = '';
+  }
   /* 小此留言（Izumi）分楼：按出现顺序的最后一个留言块 = 末尾留言（常显，对齐猫爪笺）；
      其余 tucao = 穿插吐槽，锚到它后面那一段正文，书页上就落在该段旁边。
      锚定失败回退到「上一条之后」，保证笺仍会出现。 */
@@ -6884,6 +6935,7 @@ function parseFloor(raw){
   r.notes = cl.notes;
   if(cl.nyTips) r.nyTips = cl.nyTips;   // [修改 37] Ny 预设 tips（只在 Ny 楼层出现，其余预设输出不变）
   if(cl.lxLabel){ r.lxLabel = cl.lxLabel; r.header = cl.lxLabel.title || r.header; }   // [修改 38] 拉刻西斯酒签（只在拉刻西斯楼层出现）
+  if(cl.mBg) r.mBg = cl.mBg;   // [修改 39] 小猫之神 2.x 背景剧情（只在带 <background> 的楼层出现）
   // 正文后的功能标签（按源码出现顺序）
   r.cards = [];
   const tagMeta = {'魔物生成':['monstrum','魔物娘档案','MONSTRVM'],'获得物品':['res','获得物品','RES'],'获取任务':['mandatum','委托录','MANDATVM'],'技能生成':['artes','技能习得','ARS'],'较量面板':['certamen','较量记录','CERTAMEN']};
@@ -7077,6 +7129,8 @@ function flowHtml(flow, midTucao, konataImg){
       }
       return html;
     }
+    // [修改 39] 小猫之神 2.x 内心话：原位折叠，默认收起
+    if(node.type==='fold') return `<details class="m-fold"><summary><span class="mf-k">内心</span>${node.title?`<span class="mf-who">${esc(node.title)}</span>`:''}</summary><div class="mf-body">${esc(node.text)}</div></details>`;
     if(node.type==='mind') return `<aside class="mind-slip"><span class="ms-sigil" style="color:var(--cinnabar)">${ICON.quill}</span>${esc(node.text)}</aside>`;
     if(node.type==='news') return `<aside class="news-clip"><div class="nc-head">${ICON.news}<span>大陆见闻 · 旅志剪页</span></div><div class="nc-body">${esc(node.text)}</div></aside>`;
     if(node.type==='para') return `<aside class="news-clip para-clip"><div class="nc-head">${ICON.news}<span>平行线 · 彼方剪影</span></div><div class="nc-body">${node.text.split(/\n+/).map(p=>p.trim()).filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('')}</div></aside>`;
@@ -7382,7 +7436,7 @@ function renderFloor(f, floorIdx){
       ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}${r.lxLabel && (r.lxLabel.meta || r.lxLabel.taste || r.lxLabel.tags.length) ? `<div class="lx-label">${r.lxLabel.meta?`<div class="lx-meta">${esc(r.lxLabel.meta)}</div>`:''}${r.lxLabel.taste?`<div class="lx-taste">${esc(r.lxLabel.taste)}</div>`:''}${r.lxLabel.tags.length?`<div class="lx-tags">${r.lxLabel.tags.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>` : ''/* [修改 38] 拉刻西斯酒签签面：只在拉刻西斯楼层出现，其余楼层输出不变 */}
       <div class="prose">${flowHtml(r.flow||[], r.midTucao, konataImg)}</div>
       ${catSlip}${foxSlip}${mieSlip}${tailSlip}
-      ${cards}${statusCard}${choices}
+      ${r.mBg ? r.mBg.map(x=>`<details class="m-fold bg"><summary><span class="mf-k">背景剧情</span></summary><div class="mf-body">${esc(x)}</div></details>`).join('') : ''/* [修改 39] 小猫之神 2.x 背景剧情：页末折叠，默认收起 */}${cards}${statusCard}${choices}
     </div>
     <footer class="folio-foot">
       <button class="ff-nav ff-prev" data-fnav="prev" ${prevOk?'':'disabled'} aria-label="上一页">‹ 上一页</button>
