@@ -1135,13 +1135,13 @@ function heroMsg(){
 function collectProfile(){
   const comps=[]; R.bonds.forEach((entry,npcId)=>{ comps.push({npcId:npcId,rel:entry.rel?entry.rel.v:null,dir:entry.dir?entry.dir.v:null,catOpen:entry.catOpen}); });
   const heroines=[]; R.heroines.forEach((h,id)=>{ heroines.push({id:id,fav:h.fav}); });
-  d.customRes = (R.customRes && MCR()) ? MCR().exportable(R.customRes) : null;   // [修改 34] 含五阶段档案，约 6–10KB
   return {mode:R.tone,timeline:R.tOff==null?null:(R.tOff<0?'before':'after'),tlCustom:R.tlCustom,tOff:R.tOff,heroines:heroines,layout:6,
     identity:R.identity,race:R.race,raceCustom:R.identityCustom,
     name:R.hero.name,gender:R.hero.gender,age:R.hero.age,height:R.hero.appearance,faction:R.hero.faction,
     bg:R.hero.bg,outfit:R.hero.outfit,inventory:R.hero.inventory,pLevel:R.pLevel,apt:R.apt,aptMode:R.aptMode,tuneLeft:R.tuneLeft,
     region:R.region,locCustom:R.regionCustom,comps:comps,customNpcs:R.customNpcs,
     companion:R.companion,
+    customRes:(R.customRes && MCR()) ? MCR().exportable(R.customRes) : null,   // [修改 41] 含五阶段档案，约 6–10KB
     faith:R.faith,faithCustom:R.faithCustom};
 }
 function profileSave(){
