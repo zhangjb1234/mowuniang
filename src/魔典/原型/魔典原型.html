@@ -396,6 +396,14 @@ body.modian-fs-on .tome{width:min(980px,78vw);height:min(calc(100dvh / 1.2),1000
 .choices .choice-tips .ctp-k{flex:none;font-size:10px;letter-spacing:.22em;color:var(--gilt-dim)}
 .choices .choice-tips .ctp-v{flex:1;min-width:0;word-break:break-word}
 html[data-mdx-theme="night"] .choices .choice-tips{background:var(--nt-violet-dim);border-left-color:var(--nt-rose)}
+/* [修改 38] 拉刻西斯酒签：章题下的只读签面，羊皮纸 / 紫曜夜读各一套 */
+.lx-label{margin:-10px 0 20px;padding:8px 14px 9px;border-left:2px solid var(--gilt);border-radius:0 3px 3px 0;background:rgba(169,138,70,.08);color:var(--ink-soft);font-size:12.5px;line-height:1.75;letter-spacing:.03em}
+.lx-label .lx-meta{font-size:11.5px;letter-spacing:.08em;color:var(--ink-faint)}
+.lx-label .lx-taste{margin-top:2px}
+.lx-label .lx-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.lx-label .lx-tags span{padding:1px 8px;font-size:10.5px;letter-spacing:.12em;border:1px solid rgba(138,112,64,.45);border-radius:9px;color:var(--gilt-dim);background:rgba(169,138,70,.1)}
+html[data-mdx-theme="night"] .lx-label{background:var(--nt-violet-dim);border-left-color:var(--nt-rose)}
+html[data-mdx-theme="night"] .lx-label .lx-tags span{border-color:var(--nt-hair-strong);background:var(--nt-gilt-dim)}
 
 /* 翻页把手 */
 .leaf-handle{position:absolute;top:50%;z-index:8;transform:translateY(-50%);display:flex;align-items:center;gap:9px;padding:13px 15px;background:linear-gradient(165deg,rgba(246,242,231,.92),rgba(229,221,201,.9));border:1px solid rgba(120,88,40,.45);color:var(--ink-soft);font-size:12.5px;letter-spacing:.2em;box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .3s var(--ease-spring),padding .3s}
@@ -2269,9 +2277,68 @@ function cleanseFloor(raw){
     t = t.replace(/<\/?(?:recorder_output|recorder_body|recorder_after_format|gametxt)\b[^>]*>\n?/gi, '');
     t = t.replace(/<options\b[^>]*>[\s\S]*?(?:<\/options\s*>|$)/gi, w=>w.replace(/^([ \t]*)[0-9０-９]{1,2}[ \t]*[.．、)）][ \t]*/gm, '$1'));
   }
+  // ⓪⁶ [修改 38] 拉刻西斯 V1.8：只在楼层带它专有的标签 / 标记时生效（lx），其余预设行为不变。
+  //    提纲 <blend> 里会提到 <正文> <魔物生成> 等标签名，必须先于 ⓿ 抢救删：
+  //    [finire] 及之前全截 → 固定首句「夜客，我在柜台后面听」→ </blend> 及之前全截 → 流式中未闭合从 <blend> 截到尾
+  const lx = /<\/?(?:酒签|柜台单据)\s*>|<\/?(?:blend|branches|player|pour)\b|\[LAST_CALL_COMPLETE\]|\[finire\]|夜客\s*[，,]?\s*我在柜台后面听|^[ \t]*序号[ \t]*[:：][^\n]*\n[ \t]*日期[ \t]*[:：]/im.test(t);
+  if(lx){
+    t = t.replace(/^[\s\S]*?\[finire\][ \t]*\n?/i, '')
+         .replace(/^\s*(?:拉刻西斯[:：]\s*)?夜客\s*[，,]?\s*我在柜台后面听\s*[。.]?[ \t]*\n?/, '')
+         .replace(/^[\s\S]*?<\/blend\s*>/i, '')
+         .replace(/<blend\b[^>]*>[\s\S]*$/i, '');
+  }
   // ⓿ 功能标签白名单抢救：先提走、留到末尾拼回（见上方说明）
   let held = [];
   try{ const r = rescueFuncTags(t); t = r.t; held = r.held; }catch(e){}
+  // ⓪⁶ 续 [修改 38]：其余栏目放在 ⓿ 之后拆（功能标签已提走，下面的截尾碰不到它们）
+  if(lx){
+    // 酒签 → 章题「第一杯 · 酒名」+ 签面（日期 · 时刻 · 地点 · 天气 / 这一杯 / 标签），「未明」不显示。
+    // 认 <酒签>…</酒签> 和预设美化正则也认的无标签写法（序号：… 起、标签：… 止）；流式中未闭合先不显示
+    const lxTake = (b)=>{
+      if(out.lxLabel) return '';
+      const f = {}; let last = '';
+      b.split('\n').forEach(l=>{
+        const m = l.match(/^[ \t]*(序号|日期|时刻|地点|天气|酒名|这一杯|标签)[ \t]*[:：][ \t]*(.*)$/);
+        if(m){ last = m[1]; f[last] = m[2].trim(); }
+        else if(last === '这一杯' && l.trim()) f[last] += l.trim();
+      });
+      const ok = v=>v && !/^(?:未明|不明|无|[—-]+)$/.test(v);
+      out.lxLabel = {
+        title: [f['序号'], f['酒名']].filter(ok).join(' · '),
+        meta: ['日期','时刻','地点','天气'].map(k=>f[k]).filter(ok).join(' · '),
+        taste: ok(f['这一杯']) ? f['这一杯'] : '',
+        tags: ok(f['标签']) ? f['标签'].split(/\s*[\/／]\s*/).filter(Boolean) : [],
+      };
+      return '';
+    };
+    t = t.replace(/<酒签\s*>([\s\S]*?)<\/酒签\s*>\n?/g, (w, b)=>lxTake(b))
+         .replace(/<酒签\s*>[\s\S]*?(?=<content\b|<\s*正文\s*>|$)/i, '')
+         .replace(/^[ \t]*序号[ \t]*[:：][^\n]*\n(?=[ \t]*日期[ \t]*[:：])(?:[^\n<]*\n){0,10}?[ \t]*标签[ \t]*[:：][^\n<]*\n?/m, w=>lxTake(w));
+    // <branches> 下一杯 → <options> 的「> 签名：做法」行，挪到文末（签名超 6 字时用 A–F）；流式中未闭合先不显示
+    const lxOpts = [];
+    t = t.replace(/<branches\b[^>]*>([\s\S]*?)<\/branches\s*>/gi, (w, b)=>{
+      b.replace(/<\/?(?:details|summary)\b[^>]*>/gi, '\n').split('\n').forEach(l=>{
+        const m = l.replace(/\*\*/g, '').trim().match(/^([A-Za-zＡ-Ｚａ-ｚ])\s*[.．、)）]\s*(?:([^｜|:：\n]{1,12}?)\s*[｜|]\s*)?(.+)$/);
+        if(m) lxOpts.push('> ' + (m[2] && m[2].length <= 6 ? m[2] : m[1].toUpperCase()) + '：' + m[3].trim());
+      });
+      return '';
+    }).replace(/<branches\b[^>]*>[\s\S]*$/i, '');
+    // 杯外栏目只做显示剔除（与预设自带显示正则同口径；发给模型的上下文仍由预设正则管）：
+    // 听酒 / 免责短评 / 拉刻西斯说 / 小剧场 / 推特 / 摘要 / 伏笔 / 日历日程 / 个人状态栏 / 防截断与防路由单据 / 注释。
+    // 成对整块删；流式中未闭合从开标签截到尾
+    const LX_DROP = 'player|disclaimer|finish|柜台单据|pour|author_note|wine|feed|snow|prologue|ice|meow_FM|seeds|month_cal|calendar_widget|user状态|角色状态|novel_header';
+    t = t.replace(new RegExp(String.raw`<(${LX_DROP})(?=[\s>])[^>]*>[\s\S]*?<\/\1\s*>\n?`, 'gi'), '')
+         .replace(new RegExp(String.raw`<(?:${LX_DROP})(?=[\s>])[^>]*>[\s\S]*$`, 'i'), '')
+         .replace(/`?<\/?drink>`?|<\/?(?:player|branches)\b[^>]*>|<\/?酒签\s*>|\[LAST_CALL_COMPLETE\]/gi, '')
+         .replace(/<!--[\s\S]*?-->\n?/g, '').replace(/<!--[\s\S]*$/, '');
+    // 无 <正文> 时 <content> 即正文（有 <正文> 时 ⑥ 照旧只剥 <content> 壳）
+    if(!/<\s*正文\s*>/.test(t) && /<content\b/i.test(t)){
+      t = t.replace(/<content\b[^>]*>/i, '<正文>');
+      const close = [...t.matchAll(/<\/content\s*>/gi)].pop();
+      t = close ? t.slice(0, close.index) + '</正文>' + t.slice(close.index + close[0].length) : t + '\n</正文>';
+    }
+    if(lxOpts.length) t = t.replace(/\s+$/, '') + '\n<options>\n' + lxOpts.join('\n') + '\n</options>\n';
+  }
   // ① 泉此方思维链前缀：闭标签前全截
   t = t.replace(/[\s\S]*?<\/konatan_planning~>/i, '');
   // ② <SUOT> 选项块先提（滤净链将删之）
@@ -2614,6 +2681,7 @@ function parseFloor(raw){
   r.midTucao = r.konataNotes.slice(0, -1).filter(n => n.type === 'tucao');
   r.notes = cl.notes;
   if(cl.nyTips) r.nyTips = cl.nyTips;   // [修改 37] Ny 预设 tips（只在 Ny 楼层出现，其余预设输出不变）
+  if(cl.lxLabel){ r.lxLabel = cl.lxLabel; r.header = cl.lxLabel.title || r.header; }   // [修改 38] 拉刻西斯酒签（只在拉刻西斯楼层出现）
   // 正文后的功能标签（按源码出现顺序）
   r.cards = [];
   const tagMeta = {'魔物生成':['monstrum','魔物娘档案','MONSTRVM'],'获得物品':['res','获得物品','RES'],'获取任务':['mandatum','委托录','MANDATVM'],'技能生成':['artes','技能习得','ARS'],'较量面板':['certamen','较量记录','CERTAMEN']};
@@ -3091,7 +3159,7 @@ function renderFloor(f, floorIdx){
   const html = `
     <header class="folio-head">${worldHeader(f.idx)}</header>
     <div class="scroll">
-      ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}
+      ${r.header?`<div class="chapter-tag"><h2>${esc(r.header)}</h2><span class="ct-rule"></span><span class="ct-latin">CAPVT ${f.idx}</span></div>`:''}${r.lxLabel && (r.lxLabel.meta || r.lxLabel.taste || r.lxLabel.tags.length) ? `<div class="lx-label">${r.lxLabel.meta?`<div class="lx-meta">${esc(r.lxLabel.meta)}</div>`:''}${r.lxLabel.taste?`<div class="lx-taste">${esc(r.lxLabel.taste)}</div>`:''}${r.lxLabel.tags.length?`<div class="lx-tags">${r.lxLabel.tags.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>` : ''/* [修改 38] 拉刻西斯酒签签面：只在拉刻西斯楼层出现，其余楼层输出不变 */}
       <div class="prose">${flowHtml(r.flow||[], r.midTucao, konataImg)}</div>
       ${catSlip}${tailSlip}
       ${cards}${statusCard}${choices}
