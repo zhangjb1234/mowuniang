@@ -9178,6 +9178,126 @@ function renderDexHeroines(){
      '史莱姆（蓝）' 会把「史莱姆女王」也一并点亮 —— 玩家明确只遇见了蓝色史莱姆，
      却解锁了女王。图鉴的紧张感就靠这种精确度撑着，不能慷慨。
      全名（莉莉姆·堤露埃拉）才是真正需要前缀兜底的场景。 */
+/* [修改 42 · 种族图鉴收录 纯逻辑 开始] —— 独立可测（node 回归从此标记间提取 eval）
+   证据四源：已遭遇数组 / 羁绊记录 / 心界住民 / 魔物生成遭遇卡。只读派生，不回写 MVU。
+   种族解析：正典名 → 受控别名 → 带括号回退 → 「种族·人物名」首段；禁止前缀扩散与模糊匹配。 */
+function __buildRaceIndex(roster){
+  const canon = new Map();      // 归一正典名 → race
+  const canonRaw = new Map();   // 原样正典名 → race
+  const alias = new Map();      // 归一别名 → race（仅收录唯一且无冲突的别名）
+  const W = s => String(s ?? '')
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[（]/g, '(').replace(/[）]/g, ')')
+    .replace(/\s+/g, '').trim();
+  (roster.cats || []).forEach(c => (c.races || []).forEach(r => {
+    canonRaw.set(r.name, r);
+    canon.set(W(r.name), r);
+  }));
+  (roster.cats || []).forEach(c => (c.races || []).forEach(r => {
+    String(r.alias || '').split('/').forEach(a => {
+      const k = W(a);
+      if (!k || k === W(r.name)) return;                                     // 空片段 / 与自身正典同名
+      if (canon.has(k) && canon.get(k) !== r) return;                        // 撞别人正典名 → 弃用
+      if (alias.has(k) && alias.get(k) !== r) { alias.delete(k); return; }   // 一名多种族 → 弃用
+      alias.set(k, r);
+    });
+  }));
+  return { canon, canonRaw, alias, W };
+}
+function __resolveRace(idx, input){
+  const W = idx.W;
+  const raw = String(input ?? '').trim();
+  const s = W(raw);
+  if (!s || s.length < 2) return null;
+  let r = idx.canonRaw.get(raw) || idx.canon.get(s);
+  if (r) return r;
+  r = idx.alias.get(s);
+  if (r) return r;
+  const pm = raw.match(/^(.*?)[（(]([^（()）]*)[)）]\s*$/);
+  if (pm) {
+    const base = W(pm[1]);
+    if (base && base.length >= 2 && idx.canon.get(base)) return idx.canon.get(base);  // 魅魔（魔界勇者）→ 魅魔
+    return null;                                                                        // 无裸名正典（食人草变体）→ 不猜
+  }
+  const dot = s.split(/[·・･]/)[0];
+  if (dot && dot !== s && dot.length >= 2) {
+    r = idx.canon.get(dot) || idx.alias.get(dot);
+    if (r) return r;                                             // 史莱姆女王·莉姆露娅 → 史莱姆女王（不扩散）
+  }
+  return null;
+}
+function __extractEncounterRaces(raw){
+  let t = String(raw || '');
+  t = t.replace(/<(?:think|thinking|thought|os)\b[^>]*>[\s\S]*?(?:<\/(?:think|thinking|thought|os)\s*>|$)/gi, '')
+       .replace(/<options\b[^>]*>[\s\S]*?(?:<\/options\s*>|$)/gi, '')
+       .replace(/<comment\b[^>]*>[\s\S]*?(?:<\/comment\s*>|$)/gi, '');
+  const out = [];
+  const re = /<\s*魔物生成\s*>([\s\S]*?)<\/\s*魔物生成\s*>/g;
+  let m;
+  while ((m = re.exec(t))) {
+    let found = null;
+    m[1].split(/\r?\n/).forEach(l => {
+      const mm = l.match(/^[ \t*]*(?:\*\*)?[ \t]*种族[ \t]*[:：][ \t]*(.*)$/);
+      if (mm) found = mm[1].replace(/\*\*/g, '').trim();
+    });
+    if (found) out.push(found);
+  }
+  return out;
+}
+function __buildRaceEvidence(input){
+  const idx = __buildRaceIndex(input.roster || { cats: [] });
+  const map = new Map();   // no -> {no, name, sources[]}
+  const add = (src, raw) => {
+    const r = __resolveRace(idx, raw);
+    if (!r) return;
+    let e = map.get(r.no);
+    if (!e) { e = { no: r.no, name: r.name, sources: [] }; map.set(r.no, e); }
+    if (!e.sources.includes(src)) e.sources.push(src);
+  };
+  (Array.isArray(input.metList) ? input.metList : []).forEach(x =>
+    add('已遭遇', typeof x === 'string' ? x : (x && (x.名称 || x.名 || x.name)) || ''));
+  Object.values(input.bonds || {}).forEach(b => { if (b && typeof b === 'object') add('羁绊', b && b.种族); });
+  const res = input.resident;
+  if (res && typeof res === 'object') {
+    const nm = String(res.名字 || '').trim();
+    if (nm && nm !== '未选定') add('住民', res.种族);
+  }
+  (Array.isArray(input.floors) ? input.floors : []).forEach(f => {
+    if (f.isUser || f.cover || typeof f.raw !== 'string') return;   // 用户楼层与开局封面不算遭遇
+    __extractEncounterRaces(f.raw).forEach(raw => add('遭遇卡', raw));
+  });
+  return {
+    map,
+    count: map.size,
+    hasNo: no => map.has(no),
+    sourcesOf: no => (map.get(no) || { sources: [] }).sources,
+  };
+}
+/* [修改 42 · 种族图鉴收录 纯逻辑 结束] */
+/* [修改 42 · 装配层] 证据指纹缓存：楼层长度指纹 + MVU 相关片段指纹，变化才重扫。
+   FLOORS 由既有楼层事件（新楼/改楼/swipe/换聊天）维护，此处不新增事件订阅与计时器。 */
+function dexRaceEvidence(){
+  try{
+    const bonds = Stat.get('羁绊', {}) || {};
+    const fp = FLOORS.map(f => f.idx + ':' + (f.raw || '').length).join('|') + '#' +
+      (Stat.get('图鉴.已遭遇种族', []) || []).length + '#' +
+      Object.keys(bonds).map(k => k + ':' + String(JSON.stringify(bonds[k] || {})).length).join(',') + '#' +
+      String(JSON.stringify(Stat.get('心界住民', null) || {}));
+    if (window.__dexRaceEvidence && window.__dexRaceEvidence.fp === fp) return window.__dexRaceEvidence;
+    const idx = __buildRaceIndex(window.MODIAN_DEX || { cats: [] });
+    const ev = __buildRaceEvidence({
+      roster: window.MODIAN_DEX || { cats: [] },
+      metList: Stat.get('图鉴.已遭遇种族', []) || [],
+      bonds,
+      resident: Stat.get('心界住民', null),
+      floors: FLOORS.map(f => ({ raw: f.raw || '', idx: f.idx, cover: f.idx === 0 })),
+    });
+    const box = { fp, idx, ev, count: ev.count, hasNo: ev.hasNo };
+    window.__dexRaceEvidence = box;
+    return box;
+  }catch(e){ return { idx: __buildRaceIndex({ cats: [] }), ev: { count: 0, hasNo: () => false }, count: 0, hasNo: () => false }; }
+}
+
 function makeMetMatcher(list){
   const norm = (s)=> String(s??'')
     .replace(/[（(][^）)]*[）)]/g, '')   // 去掉括号注释
@@ -9214,8 +9334,12 @@ function renderDexRaces(){
      名册侧 r.name 却只有短名（莉莉姆）——精确匹配必然 miss，图鉴于是永不亮。
      修法：名册短名建索引，命中判定放宽为「相等 / 互为前缀 / 去·去空格后相等」，
      仍要求长度≥2 防止单字误命中。图鉴条目是权威名单表，宁可多亮一格也不吞掉真遭遇。 */
-  const metList = Stat.get('图鉴.已遭遇种族', []) || [];
-  const isMet = makeMetMatcher(metList);
+  /* [修改 42] 种族收录证据系统：图鉴.已遭遇种族 之外，羁绊（实际关系记录的种族）、
+     心界住民（实际入住的种族）、魔物生成遭遇卡（当前聊天已完成闭合的卡）同为本格证据。
+     只读派生不回写 MVU；解析走正典名册 + 受控别名，禁止前缀扩散（史莱姆（蓝）不再点亮
+     史莱姆女王）；食人草双变体按全名独立；「种族·人物名」仅按可独立解析的种族段识别。 */
+  const EV = dexRaceEvidence();
+  const isMet = (name)=>{ const r = EV.idx.resolve(name); return !!(r && EV.ev.hasNo(r.no)); };
   /* 进度计数按名册逐条判定，与格子点亮用的是同一个 isMet —— 否则会出现
      「已收录 7」但只亮了 5 格」的自相矛盾（此前计数用 metSet.size 是另一个口径）。 */
   const metCount = cats.flatMap(c=>c.races).filter(r=>isMet(r.name)).length;
@@ -9321,7 +9445,7 @@ function renderHome(){
   const f  = Stat.get('阵营声望', g(D,'schemaDefaults.阵营声望', {}));
   const a  = Stat.get('资产', g(D,'schemaDefaults.资产', {}));
   const xj = Stat.get('心界住民', g(D,'schemaDefaults.心界住民', {}));
-  const lit = Stat.get('图鉴.已遭遇种族', []).length;
+  const lit = dexRaceEvidence().count;   // [修改 42] 四源证据汇总计数
   const bonds = Object.keys(Stat.get('羁绊', {}) || {});
   const quests = Object.keys(Stat.get('任务', {}) || {});
   const chain = Object.keys(Stat.get('事件记录.进行中', {}) || {});
@@ -9550,7 +9674,7 @@ function renderMandata(){
   const repNow = Stat.get('阵营声望', {});
   const maxRep = Math.max(Math.abs(repNow.魔界友好度||0), Math.abs(repNow.教团信任度||0), Math.abs(repNow.佳婿风评||0));
   const holdNow = Stat.get('据点', {});
-  const litNow = Stat.get('图鉴.已遭遇种族', []).length;
+  const litNow = dexRaceEvidence().count;   // [修改 42] 四源证据汇总计数
   const bondedNow = Stat.get('图鉴.结缘对象', []).length;
   const deeds = [
     ['初次结缘','与任意 1 位魔物娘结缘', bondedNow>=1],
