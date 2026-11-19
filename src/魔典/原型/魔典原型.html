@@ -4789,7 +4789,10 @@ function renderDex(){
   const bar = `<div class="dx-subtabs" role="tablist">${DEX_TABS.map(x=>
     `<button class="dx-subtab${x.k===cur?' on':''}" role="tab" aria-selected="${x.k===cur}" data-dextab="${x.k}">
       <span class="dxs-ic">${ICON[x.icon]}</span><span class="dxs-lb">${x.label}</span></button>`).join('')}</div>`;
-  return bar + `<div class="dx-subpane">${t.render()}</div>`;
+  let pane;
+  try{ pane = t.render(); }
+  catch(e){ console.error('[魔典] 图鉴「'+t.label+'」渲染失败', e); pane = `<div class="p-desc" style="padding:24px 4px">这一栏暂时打不开（${esc(String((e && e.message) || e))}），可以先看其他分栏。</div>`; }   // [修改 43] 单栏出错不拖垮整个图鉴
+  return bar + `<div class="dx-subpane">${pane}</div>`;
 }
 function renderDexAnima(){
   if(!__wbIndex && !__wbIndexing) loadWbIndex();
@@ -5044,7 +5047,7 @@ function renderDexRaces(){
      只读派生不回写 MVU；解析走正典名册 + 受控别名，禁止前缀扩散（史莱姆（蓝）不再点亮
      史莱姆女王）；食人草双变体按全名独立；「种族·人物名」仅按可独立解析的种族段识别。 */
   const EV = dexRaceEvidence();
-  const isMet = (name)=>{ const r = EV.idx.resolve(name); return !!(r && EV.ev.hasNo(r.no)); };
+  const isMet = (name)=>{ const r = __resolveRace(EV.idx, name); return !!(r && EV.ev.hasNo(r.no)); };   // [修改 43] idx 上没有 resolve 方法
   /* 进度计数按名册逐条判定，与格子点亮用的是同一个 isMet —— 否则会出现
      「已收录 7」但只亮了 5 格」的自相矛盾（此前计数用 metSet.size 是另一个口径）。 */
   const metCount = cats.flatMap(c=>c.races).filter(r=>isMet(r.name)).length;
